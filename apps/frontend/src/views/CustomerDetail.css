@@ -1,0 +1,541 @@
+/* ============================================================
+   CustomerDetail (客户360视图) — 100% 还原 DEMO 设计
+   参考: /CRM DEMO/customer_detail.html
+   颜色体系:
+     --primary: #6366F1
+     --bg-dark: #0B0F19
+     --glass-bg: rgba(30, 41, 59, 0.7)
+     --glass-border: rgba(255, 255, 255, 0.08)
+     --text-main: #F8FAFC
+     --text-secondary: #94A3B8
+   ============================================================ */
+
+.customer-detail-page {
+  padding: 0 32px 32px;
+  color: #F8FAFC;
+  min-height: 100%;
+}
+
+/* ── 顶部区域 ─────────────────────────────────────── */
+.cd-top-section {
+  margin-bottom: 24px;
+}
+
+.cd-customer-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.cd-name-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cd-customer-name {
+  font-size: 28px;
+  font-weight: 700;
+  color: #F8FAFC;
+}
+
+.cd-edit-icon {
+  font-size: 16px;
+  color: #94A3B8;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.cd-edit-icon:hover {
+  color: #6366F1;
+}
+
+/* Tags — 严格匹配 DEMO 的 .tag 样式 */
+.cd-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cd-tag-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.cd-tag-primary {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38BDF8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.cd-tag-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Action buttons — 匹配 DEMO 的 .btn-outline */
+.cd-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cd-action-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #F8FAFC;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.cd-action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── 信息卡片 — 匹配 DEMO 的 .info-card ───────────── */
+.cd-info-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.cd-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.cd-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cd-info-label {
+  color: #94A3B8;
+  font-size: 14px;
+}
+
+.cd-info-value {
+  color: #F8FAFC;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cd-wechat-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cd-wechat-added {
+  color: #10B981;
+  font-weight: 500;
+}
+
+.cd-wechat-pending {
+  color: #F97316;
+  font-weight: 500;
+}
+
+.cd-wechat-not-added {
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+/* ── Tabs — 匹配 DEMO 的 .tabs-nav / .tab-btn ────── */
+.cd-tabs {
+  margin-top: 24px;
+}
+
+.cd-tabs .ant-tabs-nav::before {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.cd-tabs .ant-tabs-tab {
+  color: #94A3B8 !important;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 12px 24px;
+  margin: 0 8px 0 0 !important;
+  transition: color 0.3s;
+}
+
+.cd-tabs .ant-tabs-tab:hover {
+  color: #F8FAFC !important;
+}
+
+.cd-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #6366F1 !important;
+  font-weight: 500;
+}
+
+.cd-tabs .ant-tabs-ink-bar {
+  background: #6366F1 !important;
+  height: 3px !important;
+  border-radius: 3px 3px 0 0 !important;
+}
+
+/* ── 车辆卡片区 — 匹配 DEMO 的 .vehicle-grid ──────── */
+.cd-vehicle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.cd-vehicle-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.cd-vehicle-card.unbound {
+  opacity: 0.85;
+}
+
+/* Vehicle header: plate + status */
+.cd-vehicle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.cd-vehicle-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.cd-vehicle-card:hover .cd-vehicle-actions {
+  opacity: 1;
+}
+
+/* 车牌号 — 匹配 DEMO 的 .plate-number */
+.cd-vehicle-plate {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #1E40AF;
+  border: 1px solid #3B82F6;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 18px;
+  color: white;
+  letter-spacing: 1px;
+}
+
+.cd-vehicle-plate.unbound {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #94A3B8;
+}
+
+/* 车辆状态标签 */
+.cd-vehicle-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cd-vehicle-status.status-normal {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38BDF8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.cd-vehicle-status.status-unbound {
+  background: rgba(239, 68, 68, 0.1);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Vehicle detail grid — 匹配 DEMO 的 .vehicle-details */
+.cd-vehicle-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+.cd-vehicle-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cd-vehicle-label {
+  color: #94A3B8;
+  font-size: 14px;
+}
+
+.cd-vehicle-value {
+  color: #F8FAFC;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cd-vehicle-value.subdued {
+  color: #94A3B8;
+}
+
+/* Unbound reason */
+.cd-vehicle-reason {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cd-reason-label {
+  color: #94A3B8;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.cd-reason-text {
+  color: #F87171;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ── 跟进记录 — 匹配 DEMO 的 .timeline-item ──────── */
+.cd-follow-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cd-follow-item {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 16px;
+  border-left: 3px solid #6366F1;
+}
+
+.cd-follow-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #94A3B8;
+}
+
+.cd-follow-header .divider {
+  color: #475569;
+  margin: 0 4px;
+}
+
+.cd-follow-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cd-follow-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cd-follow-tag.tag-green {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.cd-follow-tag.tag-yellow {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.cd-follow-tag.tag-purple {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818CF8;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.cd-follow-tag.tag-red {
+  background: rgba(239, 68, 68, 0.15);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.cd-follow-tag.tag-blue {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60A5FA;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.cd-follow-tag.tag-orange {
+  background: rgba(249, 115, 22, 0.15);
+  color: #FB923C;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.cd-follow-content {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #F8FAFC;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── 备注 ───────────────────────────────────────── */
+.cd-notes-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cd-note-item {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.cd-note-time {
+  color: #94A3B8;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.cd-note-content {
+  color: #F8FAFC;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── 历史线索 ─────────────────────────────────────── */
+.cd-lead-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cd-lead-item {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cd-lead-code {
+  color: #818CF8;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.cd-lead-info {
+  color: #94A3B8;
+  font-size: 13px;
+}
+
+/* ── Empty state (参考图四：暂无数据图标) ──────────── */
+.cd-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: #94A3B8;
+}
+
+.cd-empty-icon {
+  font-size: 56px;
+  color: #475569;
+  margin-bottom: 16px;
+}
+
+.cd-empty-text {
+  font-size: 14px;
+  color: #94A3B8;
+}
+
+/* ── Notes header (添加备注 button) ────────────────── */
+.cd-notes-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  margin-bottom: 12px;
+}
+
+.cd-action-btn-primary {
+  background: #6366F1 !important;
+  border-color: #6366F1 !important;
+  color: #fff !important;
+}
+.cd-action-btn-primary:hover {
+  background: #4F46E5 !important;
+  border-color: #4F46E5 !important;
+}
+
+/* ── Note item (gradient left border) ──────────────── */
+.cd-note-item {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid #6366F1;
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.cd-note-header {
+  color: #94A3B8;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.cd-note-header .divider {
+  color: #475569;
+  margin: 0 6px;
+}
+
+.cd-note-content {
+  color: #F8FAFC;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── Follow header strong ──────────────────────────── */
+.cd-follow-header strong {
+  color: #F8FAFC;
+  font-weight: 600;
+}
+
+/* ── Leads table ──────────────────────────────────── */
+.cd-leads-table-wrapper {
+  margin-top: 4px;
+}

@@ -1,0 +1,37 @@
+# ===== 依赖与构建产物 =====
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+dist-backend/
+**/dist-backend/
+*.tsbuildinfo
+.vite/
+
+# ===== 环境变量与密钥（严禁入库）=====
+.env
+.env.*
+!.env.example
+.agents/
+.claude/
+
+# ===== 一次性调试/迁移脚本（含硬编码数据库密码，不入库）=====
+apps/backend/*.js
+!apps/backend/ecosystem.config.js
+scripts/init_db.js
+scripts/add_sub_permissions.js
+scripts/sync_dict_20260720.js
+
+# ===== 系统/编辑器 =====
+.DS_Store
+*.log
+npm-debug.log*
+.idea/
+.vscode/
+
+# ===== 临时/测试产物 =====
+test_image.png
+模拟线索导入数据_*.xlsx
+
+# backend 根目录的一次性 .ts 脚本（含密钥）
+apps/backend/*.ts

@@ -1,0 +1,41 @@
+.permission-drawer .ant-drawer-body {
+  padding: 16px;
+  background-color: #f0f2f5;
+}
+
+.permission-drawer.dark-theme-layout .ant-drawer-body {
+  background-color: transparent;
+}
+
+.permission-card-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.permission-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 2px -2px rgba(0, 0, 0, 0.16), 0 3px 6px 0 rgba(0, 0, 0, 0.12), 0 5px 12px 4px rgba(0, 0, 0, 0.09);
+}
+
+.permission-card .ant-card-head {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0 24px;
+}
+
+.permission-card .ant-card-head-title {
+  padding: 16px 0;
+}
+
+.permission-card .ant-card-extra {
+  padding: 16px 0;
+}
+
+.permission-card .ant-card-body {
+  padding: 24px;
+}
+
+/* Customizing the switch to match modern style */
+.permission-card .ant-switch-checked {
+  background-color: #1890ff;
+}

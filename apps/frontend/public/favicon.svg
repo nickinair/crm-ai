@@ -1,0 +1,9 @@
+<svg width="32" height="32" viewBox="4 3 16 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lightningGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A855F7" />
+      <stop offset="100%" stop-color="#3B82F6" />
+    </linearGradient>
+  </defs>
+  <path fill="url(#lightningGradient)" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+</svg>
