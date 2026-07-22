@@ -35,3 +35,6 @@ test_image.png
 
 # backend 根目录的一次性 .ts 脚本（含密钥）
 apps/backend/*.ts
+
+# 部署本地配置（含服务器密码，严禁入库）
+deploy.config.sh
