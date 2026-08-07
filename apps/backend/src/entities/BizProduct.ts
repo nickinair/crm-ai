@@ -74,6 +74,38 @@ export class BizProduct {
   })
   status: number;
 
+  @Column("varchar", {
+    name: "product_attribute",
+    nullable: true,
+    comment: "商品属性（选项随商品类型联动，字典驱动）",
+    length: 64,
+  })
+  productAttribute: string | null;
+
+  @Column("varchar", {
+    name: "applicable_model",
+    nullable: true,
+    comment: "适用车型（字典驱动，非必填）",
+    length: 128,
+  })
+  applicableModel: string | null;
+
+  @Column("varchar", {
+    name: "install_attribute",
+    nullable: true,
+    comment: "安装属性（字典驱动，非必填）",
+    length: 64,
+  })
+  installAttribute: string | null;
+
+  @Column("varchar", {
+    name: "product_remark",
+    nullable: true,
+    comment: "商品备注",
+    length: 500,
+  })
+  productRemark: string | null;
+
   @Column("datetime", {
     name: "created_at",
     default: () => "CURRENT_TIMESTAMP",

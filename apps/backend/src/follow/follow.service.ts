@@ -52,6 +52,11 @@ export class FollowService {
       leadStatus: numericStatus,
       lastFollowAt: new Date(),
     };
+    // 线索转为已战败时立即进入「战败冷却期」（冻结30天后由定时任务解冻，PRD 4.8）
+    if (numericStatus === 4 && oldLead?.leadStatus !== 4) {
+      leadUpdate.assignControl = 1;
+      leadUpdate.updatedAt = new Date(); // 冷却计时起点 = 战败时刻
+    }
     if (!oldLead?.firstFollowAt) {
       leadUpdate.firstFollowAt = new Date();
     }

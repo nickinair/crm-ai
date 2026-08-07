@@ -4,6 +4,8 @@ import request from '../utils/request';
 interface DictItem {
   id: string;
   dictTypeId: string;
+  /** 父级字典项值，用于联动字典（如商品属性按商品类型分组），无联动时为 null */
+  parentValue: string | null;
   itemCode: string;
   itemLabel: string;
   itemValue: string;
@@ -67,5 +69,16 @@ export function useDict() {
     }));
   }, [allDict]);
 
-  return { allDict, dictLoading, getDictItems, getDictOptions };
+  /**
+   * 联动字典取值：按父级值过滤（如商品属性随商品类型变化）
+   * parentValue 为空时返回空数组——未选父级前下拉应无可选项
+   */
+  const getDictOptionsByParent = useCallback((typeCode: string, parentValue?: string | null): { label: string; value: string }[] => {
+    if (!parentValue) return [];
+    return (allDict[typeCode] || [])
+      .filter(item => item.parentValue === parentValue)
+      .map(item => ({ label: item.itemLabel, value: item.itemValue }));
+  }, [allDict]);
+
+  return { allDict, dictLoading, getDictItems, getDictOptions, getDictOptionsByParent };
 }

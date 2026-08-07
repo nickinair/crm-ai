@@ -61,6 +61,14 @@ export class BizOrderItem {
   })
   subtotal: string;
 
+  @Column("varchar", {
+    name: "product_code",
+    nullable: true,
+    comment: "快照-商品编码",
+    length: 64,
+  })
+  productCode: string | null;
+
   @Column("datetime", {
     name: "created_at",
     default: () => "CURRENT_TIMESTAMP",

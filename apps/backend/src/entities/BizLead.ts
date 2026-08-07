@@ -158,11 +158,40 @@ export class BizLead {
   @Column("text", { name: "remark", nullable: true, comment: "备注" })
   remark: string | null;
 
+  @Column("tinyint", {
+    name: "create_type",
+    comment: "线索创建类型：1=普通新建，2=战败线索复活",
+    default: () => "'1'",
+  })
+  createType: number;
+
+  @Column("tinyint", {
+    name: "assign_control",
+    nullable: true,
+    comment: "分配管控标识：1=战败冷却期，2=战败已复活；非空时不可分配/领取",
+  })
+  assignControl: number | null;
+
+  @Column("tinyint", {
+    name: "order_situation",
+    comment: "订单情况：0=未下单,1=存在未完结订单,2=全部订单已作废,3=全部订单已完结",
+    default: () => "'0'",
+  })
+  orderSituation: number;
+
   @Column("datetime", {
     name: "created_at",
     default: () => "CURRENT_TIMESTAMP",
   })
   createdAt: Date;
+
+  @Column("bigint", {
+    name: "created_by",
+    nullable: true,
+    comment: "创建人ID",
+    unsigned: true,
+  })
+  createdBy: string | null;
 
   @Column("datetime", { name: "updated_at", nullable: true })
   updatedAt: Date | null;

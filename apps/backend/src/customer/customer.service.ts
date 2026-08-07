@@ -230,6 +230,7 @@ export class CustomerService {
       .addSelect('f.call_result', 'callResult')
       .addSelect('acc.realName', 'accountName')
       .addSelect('acc.username', 'accountUsername')
+      .addSelect('f.account_id', 'accountId')
       .addSelect('ld.leadCode', 'leadCode')
       .addSelect('IFNULL(f.communication_tendency, ld.communicationTendency)', 'communicationTendency')
       .addSelect('IFNULL(f.purchase_intention, ld.purchaseIntention)', 'purchaseIntention')
@@ -332,9 +333,23 @@ export class CustomerService {
     return { brands, models, styles };
   }
 
+  // 数字/日期/布尔列传空字符串会导致 MySQL 写库报错（如 Incorrect integer value: '' for 'mileage'），统一转为 null
+  private normalizeVehicleDto(dto: any) {
+    const nonTextFields = [
+      'mileage', 'purchaseDate',
+      'isMileageOver40k', 'isMileageOver95k', 'hasExtendedWarranty',
+      'hasBatteryWarranty', 'hasPeaceOfMind', 'hasTireProtection'
+    ];
+    for (const f of nonTextFields) {
+      if (dto[f] === '') dto[f] = null;
+    }
+  }
+
   async updateVehicle(id: string, updateDto: any) {
     const vehicle = await this.vehicleRepo.findOne({ where: { id } });
     if (!vehicle) throw new Error('Vehicle not found');
+
+    this.normalizeVehicleDto(updateDto);
 
     // 里程数容错：数据库列为数字类型，非数字输入直接拦截，避免写库报错
     if (updateDto.mileage !== undefined && updateDto.mileage !== null && updateDto.mileage !== '') {
@@ -370,13 +385,22 @@ export class CustomerService {
 
   async createVehicle(createDto: any) {
     if (!createDto.customerId) throw new Error('customerId is required');
-    
+
+    this.normalizeVehicleDto(createDto);
+    if (createDto.mileage !== undefined && createDto.mileage !== null) {
+      const mileageNum = Number(String(createDto.mileage).trim());
+      if (Number.isNaN(mileageNum) || mileageNum < 0) {
+        throw new BadRequestException('里程数必须为非负数字');
+      }
+      createDto.mileage = Math.floor(mileageNum);
+    }
+
     const vehicle = this.vehicleRepo.create();
     vehicle.customerId = createDto.customerId;
     const fields = [
       'brand', 'model', 'style', 'vin', 'plateNo', 'purchaseDate', 'mileage',
       'isMileageOver40k', 'isMileageOver95k', 'hasExtendedWarranty',
-      'hasBatteryWarranty', 'hasPeaceOfMind', 'hasTireProtection'
+      'hasBatteryWarranty', 'hasPeaceOfMind', 'hasTireProtection', 'remark'
     ];
 
     for (const f of fields) {
@@ -402,6 +426,14 @@ export class CustomerService {
       }
       throw error;
     }
+  }
+
+  /** 客户名下未失效（vehicle_status=1）的车辆，订单创建第三步下拉用 */
+  async getActiveVehicles(customerId: string) {
+    return this.vehicleRepo.find({
+      where: { customerId, vehicleStatus: 1 },
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async deleteVehicle(id: string) {

@@ -1,0 +1,804 @@
+2026-07-27 - V1.1.0 -CRM-商品批量导入+订单
+背景
+公司已上线 CRM 系统 V1.0.0 版本，原计划在该版本中实现“订单管理”模块，但因版本上线时间紧迫，该模块未能如期交付，暂未上线。
+同时，CRM 系统需要承载赛力斯体系中数百个产品的商品数据，供业务侧在订单处理、报价、结算等环节使用。这些商品数据当前维护在问界 DSP 系统中，CRM 商品库尚为空，需完成数据同步后方可支撑后续业务流程。
+痛点
+商品数据量大，人工维护成本极高
+赛力斯体系下当前共计数五百多个产品，全部需要录入 CRM 商品库
+系统当前仅支持单个手动添加，若由业务人员手动逐条创建商品，工作量大、耗时长，且易出错，无法在短期内完成全量数据的准确录入
+商品数据来源与 CRM 割裂，无法及时同步
+商品数据当前维护在问界 DSP 系统中，CRM 商品库与 DSP 系统无数据同步机制
+若 DSP 中商品信息发生变更（新增、下架、价格调整、规格更新），CRM 侧无法实时感知，需业务人工核对后再次手动调整，滞后性严重
+订单管理模块缺失，业务闭环不完整
+订单管理模块原计划在 V1.0.0 中交付，实际未能上线，导致 CRM 系统在商品数据就绪后仍无法支撑订单创建、关联商品等业务场景
+目标
+订单管理模块补全交付：在 V1.0.1 或后续版本中完成订单管理模块的开发与上线，与商品库联动，形成“商品 → 订单 → 结算”的业务闭环
+建立商品自动同步机制：通过技术手段，从问界 DSP 系统自动抓取商品数据至 CRM 商品库，替代人工逐条创建，确保商品数据同步的及时性、准确性和零人工成本
+支撑后续业务扩展：以自动同步机制为基础，实现商品信息变更的自动感知与增量同步，为订单管理、报价、结算等下游模块提供准确、实时、完整的商品数据底座
+功能需求
+4.1 实体关系
+ [图片]
+4.2 订单
+订单的创建基于两个原则：1. 基于线索创建（关联线索）；2. 基于客户创建（不关联线索）
+基于线索创建的订单可单独分配销售
+4.2.1 业务流程（延保产品）
+ [图片]
+4.2.2 订单状态
+待发送电子签、待签署电子签、待三方下单、待发货、已完结、已作废
+ [图片]
+4.2.3 订单管理
+订单管理页面，展示订单列表，列表字段包含：订单编号、客户姓名、客户电话、下单平台、平台订单编号、三方订单编号、车架号、订单状态、实付金额、跟进人、创建时间、创建人、更新时间、更新人
+ [图片]
+订单状态与操作的关系
+=====表格开始=====
+<w:tblStyle w:val="tableHeader" /><w:tblW w:w="5000" w:type="pct" /><w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="0" /></w:tblPr><w:tblGrid>
+    <w:gridCol w:w="5610" />
+    <w:gridCol w:w="5610" />
+  </w:tblGrid><w:tr><w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">状态
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">操作
+<w:trPr>
+  <w:trHeight w:val="615" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">待发送电子签 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">详情 作废
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">待签署电子签 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">详情 作废
+<w:trPr>
+  <w:trHeight w:val="615" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">待三方下单 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">详情 作废
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">待发货 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">详情 作废
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">已完结 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">详情
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">已作废 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">详情
+点击详情，进入 订单详情页面 [/行]
+=====表格结束=====
+ [图片]
+作废状态的订单，展示作废原因
+ [图片]
+当前登录用户为 订单跟进人，则具备 订单操作权限，否则不具备；跟进人具备的操作 功能如 销售工作台 -> 我的跟单订单列表
+订单存在关联线索时，展示关联线索的线索编码，点击跳转 线索详情页；未关联线索时，关联线索 字段为“-”
+4.2.3 销售工作台
+增加“我的跟单订单”tab，会计二工具栏增加“新增线索”、“创建订单” 按钮
+ [图片]
+4.2.3.1 我的跟单订单
+我的跟单订单列表 支持按照状态、客户手机号进行数据筛选，支持分页；默认选中“全部”，切换其他状态时，可多选；仅展示跟进人 = 当前登录人的订单
+排序规则：先按照 创建时间倒叙排序
+列表增加 创建时间、更新时间的排序功能
+ [图片]
+状态与操作按钮关系
+=====表格开始=====
+<w:tblStyle w:val="tableHeader" /><w:tblW w:w="5000" w:type="pct" /><w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="0" /></w:tblPr><w:tblGrid>
+    <w:gridCol w:w="5610" />
+    <w:gridCol w:w="5610" />
+  </w:tblGrid><w:tr><w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">状态
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">操作
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">待发送电子签 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">已发送电子签   作废   详情
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">待签署电子签 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">已签署电子签   作废  详情
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">待三方下单 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">录入三方订单编号  作废 详情
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">待发货 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">已完成发货  作废  详情
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">已作废 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">详情
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">已完成 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">详情
+列表点击“已发送电子签”，弹框提示：确定已将电子签已发送给客户？ [/行]
+=====表格结束=====
+点击确定，更新订单状态为“待签署电子签”，toast提示：订单状态修改成功！
+订单绑定线索时，增加一条线索跟进记录，操作人：系统；跟进内容：订单XXX已给用户发送电子签；XXX为订单编号
+ [图片]
+列表点击“已签署电子签”，弹框提示：确定用户已完成电子签签署？
+点击确定，更新订单状态为“待三方下单”，toast提示：订单状态修改成功！
+订单绑定线索时，增加一条线索跟进记录，操作人：系统；跟进内容：订单XXX已完成用户电子签签署；XXX为订单编号
+ [图片]
+列表点击“录入三方订单编号”，弹框展示：订单编号、下单平台、平台订单编号、三方订单编号，三方订单编号为文本框，其他字段做内容回显，不可编辑；三方订单编号必填，长度限制30字符。
+点击确定，文本框校验，校验通过，更新订单信息及状态，状态更新为“待发货”，toast提示：三方订单编号提交成功！
+订单绑定线索时，增加一条线索跟进记录，操作人：系统；跟进内容：订单XXX已完成三方平台下单；XXX为订单编号
+ [图片]
+列表点击“已完成发货”，判断流程如下：
+ [图片]
+二次确认弹框，提示：提交后，订单将不可跟进，确定三方平台订单已完结？
+点击确定，更新订单状态为“已完成”，toast提示：订单已完结！
+订单绑定线索时，增加一条线索跟进记录，操作人：系统；跟进内容：订单XXX已完结；XXX为订单编号
+订单完结将完结线索弹框，提示：1. 请确认三方平台订单已完结；2. 完结订单将一并完结线索； 确定要完结订单吗？
+点击确定，更新订单状态，并更新线索状态，toast提示：订单已完结！
+订单绑定线索时，增加一条线索跟进记录，操作人：系统；跟进内容：订单XXX已完结，线索XX跟进结束；XXX为订单编号，XX为线索编码
+ [图片]
+列表点击“作废”，弹框填写作废原因
+ [图片]
+点击确定，更新订单状态，并toast提示：订单已作废！
+订单绑定线索时，增加一条线索跟进记录，操作人：系统；跟进内容：订单XXX被XX作废！XXX为订单编号，XX为作废订单的用户姓名（账号）
+订单关联线索时，订单状态变更均需校验是否更新 线索 订单情况
+详情 当前页跳转订单详情
+ [图片]
+4.2.3.2 快捷工具栏 -> 创建订单
+弹出创建订单的弹框
+ [图片]
+创建订单弹框，为三步结构
+第一步： 填写客户信息
+默认选择系统客户，支持通过手机号/客户姓名搜索筛选；
+可新增客户，填写客户姓名，电话，点击下一步，进行客户电话的唯一性校验
+验证通过，直接保存客户
+ [图片]
+第二步：填写订单信息和商品信息，下单平台、平台订单编号、实付金额、商品信息 必填
+平台订单编号 限制30字符；实付金额仅支持数字，10字符
+商品仅支持选择 正常 状态的商品
+订单和商品信息存草稿
+ [图片]
+第三步：填写车辆信息
+选项为客户关联的未失效的车辆信息，按照 车型（车架号）_车牌  作为选项；三个字段中，只拼接值存在的字段信息，若全不存在，则统一展示“未获取到车辆展示信息”
+当选中的商品中，存在电池延保、整车延保类型的产品时，页面做红字部分的提醒
+ [图片]
+支持 新增车辆，点击弹出新增车辆弹框；新增提交后，车辆信息保存为草稿，车辆信息按照拼接规则拼接展示到下拉框
+ [图片]
+若第二步的商品中包含商品类型 = 电池延保 / 整车延保，则必须选择车辆信息，若不包含，则整个车量信息非必填；
+提交订单，按照订单校验流程进行校验和提示
+校验流程：
+ [图片]
+提示信息：
+=====表格开始=====
+<w:tblStyle w:val="tableHeader" /><w:tblW w:w="5000" w:type="pct" /><w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="0" /></w:tblPr><w:tblGrid>
+    <w:gridCol w:w="3736" />
+    <w:gridCol w:w="3736" />
+    <w:gridCol w:w="3747" />
+  </w:tblGrid><w:tr><w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3736" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">提示场景
+<w:tcPr>
+  <w:tcW w:w="3736" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">提示内容
+<w:tcPr>
+  <w:tcW w:w="3747" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">备注
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3736" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">客户存在未完结的订单，且车辆相同，商品有重叠 [/行]
+<w:tcPr>
+  <w:tcW w:w="3736" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">客户车辆XXX存在未完结订单，且商品XX在该订单中，确定要继续下单吗？
+<w:tcPr>
+  <w:tcW w:w="3747" w:type="dxa" />
+</w:tcPr><w:p><w:pPr><w:numPr><w:ilvl w:val="0" /><w:numId w:val="13" /></w:numPr></w:pPr><w:r><w:t xml:space="preserve">XXX为车架号；
+XX为重复的商品名称，多个以“；”隔开
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3736" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">客户存在未完结线索 [/行]
+<w:tcPr>
+  <w:tcW w:w="3736" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">客户XX存在未完结线索，线索信息如下：XXXX；是否要绑定该线索创建订单？
+<w:tcPr>
+  <w:tcW w:w="3747" w:type="dxa" />
+</w:tcPr><w:p><w:pPr><w:numPr><w:ilvl w:val="0" /><w:numId w:val="14" /></w:numPr></w:pPr><w:r><w:t xml:space="preserve">XX为车辆的 车型（车架号）_车牌
+XXX为悬索信息
+点击绑定，关闭提示弹框
+订单关联上线索编码
+点击不绑定，关闭弹框，不关联线索
+订单从草稿变成正式订单
+车辆若为新增车辆，则车辆信息从草稿变为正式车辆
+车辆与客户关联
+客户信息若为新增客户，则创建客户与销售的关联关系
+ [图片][/行]
+=====表格结束=====
+订单提交成功，toast提示：订单创建成功！
+订单提交成功，需存储 车辆和商品快照；
+商品存储：商品编码、商品名称、售价；
+车辆存储：品牌、车型、VIN
+客户信息：客户姓名、手机号
+线索：关联线索编码
+取消：删除订单草稿和车辆草稿，客户信息不删除
+4.2.3.3 快捷工具栏 -> 新增线索
+新增线索弹框，与线索池管理 点击 新增线索弹框 完全一致，也更换成三步式
+销售工作台 新增线索，保存后，自动分配给当前新增线索的销售
+客户信息
+ [图片]
+车辆信息：默认采用选择的方式
+默认 [图片]
+点击新增车辆 [图片]
+商品信息
+ [图片]
+当为新增客户时，点击下一步，直接保存客户信息；当车辆信息为新增车辆信息时，点击下一步 创建车辆信息并关联客户
+4.2.4 我的线索私池
+4.2.4.1 订单情况
+线索池增加 “订单情况” 字段，值为枚举值，有未下单、存在未完结订单、全部订单已作废、全部订单已完结；
+订单完结时，若绑定了线索，则判断线索下所有订单的状态
+=====表格开始=====
+<w:tblStyle w:val="tableHeader" /><w:tblW w:w="5000" w:type="pct" /><w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="0" /></w:tblPr><w:tblGrid>
+    <w:gridCol w:w="5610" />
+    <w:gridCol w:w="5610" />
+  </w:tblGrid><w:tr><w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:rPr><w:b w:val="1" /></w:rPr><w:t xml:space="preserve">线索下所有订单状态
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:rPr><w:b w:val="1" /></w:rPr><w:t xml:space="preserve">订单情况
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">无订单 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">未下单
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">存在订单未完结（已完结状态） [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">存在未完结订单
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">所有订单状态 = 已作废 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">全部订单已作废
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">所有订单状态 = 已完结 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">全部订单已完结
+4.2.4.1 线索列表 [/行]
+=====表格结束=====
+列表字段更新为：序号、线索编码、客户姓名、客户电话、来源时间、购买意向、线索状态、添加微信状态、客户沟通倾向、呼叫结果、是否购买整车延保、是否购买电池延保、订单情况、最新跟进时间、下次计划跟进时间、操作；仍然保持 序号、线索编码、客户姓名、客户电话、最新跟进时间、下次计划跟进时间、操作列固定
+增加订单情况的筛选条件，单选
+ [图片]
+4.2.4.2 线索详情 -> 创建订单
+创建订单，仍然分三步
+第一步：线索信息，默认展示当前线索的线索编码，不可修改
+ [图片]
+第二步：订单及商品，逻辑同 销售工作台 -> 快捷工具栏 -> 创建订单 -> 订单及产品信息步骤
+ [图片]
+第三步：车辆信息，逻辑同 销售工作台 -> 快捷工具栏 -> 创建订单 -> 订单及产品信息步骤
+ [图片]
+提交订单，逻辑同 销售工作台 -> 快捷工具栏 -> 创建订单 -> 提交订单流程及提示
+4.2.5 客户360视图
+4.2.5.1 创建订单
+1.默认带入客户信息，且不可编辑，不可新增客户
+ [图片]
+其他逻辑同 销售工作台 -> 快捷工具栏 -> 创建订单
+2.增加 历史订单  tab，展示该用户的所有订单
+点击详情，跳转订单详情页
+ [图片]
+4.2.5.2 新增线索
+同 销售工作台首页 -> 快捷工具栏 -> 新增线索，改为三步式结构
+客户信息步，默认为当前客户信息，不可新增及修改
+4.3  线索池管理
+4.3.1 线索池管理 列表
+状态机： 去掉 “战败已领取” 状态
+增加锁定表，进入线索详情，创建锁定关系，关闭线索详情，释放锁定，分别记录线索编码、销售编码、锁定时间、解锁时间、浏览器会话标识
+session 过期，也自动解除锁定关系
+线索池列表，增加“订单情况”、“线索创建类型”、“分配管控标识”；“线索创建类型” 放在“创建时间”前，“订单情况” 放在“关联订单编号”前，“分配管控标识”放在“线索状态”前
+订单情况，同 4.2.4.1
+线索创建类型，枚举值：普通新建、战败线索复活；通过战败线索重新领取后的线索，线索创建类型 = 战败线索复活；其他方式创建的线索，线索创建类型 = 普通新建
+分配管控标识，枚举值：战败冷却期、战败已复活；
+线索 存在 分配管控标识 时，不可进行分配和领取
+战败冷却期 通过 定时任务设置，战败已复活 通过 战败线索被分配或被领取时 设置
+操作列固定
+筛选条件增加订单情况、线索创建类型、分配管控标识 的筛选，分配管控标识 放到线索状态后面
+操作列与状态、分配管控标识间的关系如下：
+=====表格开始=====
+<w:tblStyle w:val="tableHeader" /><w:tblW w:w="5000" w:type="pct" /><w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="0" /></w:tblPr><w:tblGrid>
+    <w:gridCol w:w="3739" />
+    <w:gridCol w:w="3739" />
+    <w:gridCol w:w="3740" />
+  </w:tblGrid><w:tr><w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:rPr><w:b w:val="1" /></w:rPr><w:t xml:space="preserve">线索状态
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">分配管控标识
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:rPr><w:b w:val="1" /></w:rPr><w:t xml:space="preserve">操作
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">待分配 [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">-
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">编辑、分配、作废
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">回收待分配 [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">-
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">编辑、分配、作废
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">待跟进 [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">-
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">详情、重新分配
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">跟进中 [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">-
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">详情、重新分配
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">已完成 [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">-
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">详情
+<w:trPr>
+  <w:trHeight w:val="615" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+  <w:vMerge w:val="restart" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">已战败 [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">-
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">详情、重新分配
+ [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:rPr /><w:t xml:space="preserve">战败冷却期
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:rPr /><w:t xml:space="preserve">详情
+ [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:rPr /><w:t xml:space="preserve">战败已复活
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:rPr /><w:t xml:space="preserve">详情
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">已作废 [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">-
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">详情
+关联订单编号，多个换行展示，所有状态的订单均展示，点击跳转订单详情 [/行]
+=====表格结束=====
+ [图片]
+增加“重新分配” 单条和批量操作
+ [图片]
+仅“待跟进“、”跟进中“的数据可被执行重新分配，若勾选数据中存在其他状态数据，toast提示：XXX状态的线索不可重新分配，请重新勾选后重试！
+二次弹框提示：线索关联未完结订单是否一并重新分配？选项有 是 ， 否 两种，默认选中 是
+ [图片]
+对重新分配的线索进行 锁定判断，未锁定的线索可正常重新分配，已被锁定的线索不可重新分配
+存在不可重新分配的线索时，可分配的直接分配，不可分配的进行弹框提示，提示：成功重新分配 X条，失败X条；以下线索销售正在跟进中，请等待销售跟进结束再操作：XXX，XXX ；
+XXX为重新分配失败的线索编码，多个以“，”隔开
+执行重新分配时，若 选择一并将 线索未完结订单一并重新分配，则即自行线索重新分配，也执行 线索下除 已完成、已作废订单外，其他状态订单的重新分配。
+历史数据处理
+线索创建类型 ，无 关联线索编号的线索，统一刷为“普通创建”；有关联线索编号的，统一刷为“战败线索复活”
+线索状态 = 战败已领取 的，分配管控标识 统一刷成 “战败已复活”
+分配管控标识，执行定时任务
+4.3.2 战败线索领取 / 分配
+线索池管理 -> （已战败线索）重新分配；公域池抢单 -> （已战败线索）领取
+原线索不变，copy 新的线索，线索创建类型 = 战败线索复活，原线索（父线索） 线索管控标识 = 战败已复活；
+4.3.3 新增线索
+新增线索 改为三步流程，第一步 填写客户信息，第二步 填写车辆信息，第三步选择商品
+客户信息，若为新增客户，点击下一步，直接保存客户信息
+ [图片]
+车辆信息：默认采用选择的方式；新增车辆信息，点击下一步，直接保存车辆信息，并创建客户与车辆的关联
+默认 [图片]
+点击新增车辆 [图片]
+商品信息
+ [图片]
+4.3.3 线索详情
+线索详情要展示 线索创建类型、分配管控标识、订单情况的字段展示
+若线索创建类型 = 战败线索复活，跟进记录中，取所有父级线索中的跟进记录 + 当前线索的跟进记录，按照跟进记录创建时间倒叙展示；若线索创建类型 = 普通创建，则跟进记录中，仅展示当前线索的跟进记录
+ [图片]
+历史订单 列表
+ [图片]
+点击详情，跳转订单详情页
+点击 关联线索，可跳转 线索详情 页
+ [图片]
+操作日志的记录方式为：操作类型、操作人、操作时间、操作内
+操作类型如：创建、编辑、作废
+操作人记录：姓名（账号）
+操作内容：字段名：变更前字段内容 -> 变更后字段内容
+按照操作时间倒叙排序，有分页，每页展示10条数据，滚动条下滑加载更多
+添加跟进记录弹框中，线索状态中，去掉“已完成” 状态的选项
+4.4 首页
+ [图片]
+1. 增加“核心经营指标” 模块，展示 今日新增线索、线索转化率、接通率、本月成交额
+进入新增线索 ：创建时间 =当天 & 线索创建类型 = 普通新建 的线索数量
+线索转化率：（已完成的线索总数 /  总线索数）*100% ，均只统计 线索创建类型 = 普通新建 的线索
+接通率：呼叫结果 = 已接听 的跟进记录数量 / 跟进记录总数 ，仅统计 存在呼叫结果的跟进记录
+本月成交额：订单 状态 = 已完结，且更行时间 在当前月 的 订单 实付金额之和。
+2. 增加 “销售线索分布”模块，列表展示，列表字段有：销售名称、待跟进、跟进中、已完成、已战败、合计、线索转化
+线索转化率 = （已完成的线索 / 合计）*100%
+4.5 商品管理
+4.5.1 商品列表
+商品管理增加筛选
+增加 商品名称、商品编码、商品类型、商品属性、状态、创建时间 的筛选条件；创建时间为一个时间区间
+商品名称 模糊查询
+创建时间只要在对应时间段内创建的均可查询
+其他字段精确查询
+增加商品属性、商品备注 字段
+商品备注，鼠标hover 展示全部
+ [图片]
+4.5.2 商品管理增加批量导入
+增加“批量导入”按钮，点击批量导入，弹出批量导入弹框
+ [图片]
+批量分两个环节，第一个环节下载模板，第二个上传文件
+导入模板字段如下图所示，所有必填字段标红展示，模板名称：商品批量导入模板
+ [图片]
+仅支持：.xlsx  .xls，文件大小5M内
+上传时，进行以下校验：
+=====表格开始=====
+<w:tblStyle w:val="tableHeader" /><w:tblW w:w="5000" w:type="pct" /><w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="0" /></w:tblPr><w:tblGrid>
+    <w:gridCol w:w="5610" />
+    <w:gridCol w:w="5610" />
+  </w:tblGrid><w:tr><w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:rPr><w:b w:val="1" /></w:rPr><w:t xml:space="preserve">校验点
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:rPr><w:b w:val="1" /></w:rPr><w:t xml:space="preserve">提示信息
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">空表格 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">文件内容不能为空
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">表头内容有误 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+  <w:vAlign w:val="top" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">文件表头有误，请下载上传模板，根据模板表头进行上传
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">文件格式有误 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">仅支持上传.xlsx  .xls 的文件
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">文件大小有误 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">仅支持上传5M内的文件
+点击开始导入，进行以下校验: [/行]
+=====表格结束=====
+ [图片]
+=====表格开始=====
+<w:tblStyle w:val="tableHeader" /><w:tblW w:w="5000" w:type="pct" /><w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="0" /></w:tblPr><w:tblGrid>
+    <w:gridCol w:w="3739" />
+    <w:gridCol w:w="3739" />
+    <w:gridCol w:w="3740" />
+  </w:tblGrid><w:tr><w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:rPr><w:b w:val="1" /></w:rPr><w:t xml:space="preserve">校验点
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:rPr><w:b w:val="1" /></w:rPr><w:t xml:space="preserve">提示信息
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">备注
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">必填字段未填 [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">XXX未填写
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+</w:tcPr><w:p><w:pPr><w:numPr><w:ilvl w:val="0" /><w:numId w:val="32" /></w:numPr></w:pPr><w:r><w:t xml:space="preserve">XXX为必填未填的字段名
+多个以“；”隔开
+<w:trPr>
+  <w:trHeight w:val="615" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">字段超长度 [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">XXX超过最大长度X
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+</w:tcPr><w:p><w:pPr><w:numPr><w:ilvl w:val="0" /><w:numId w:val="33" /></w:numPr></w:pPr><w:r><w:t xml:space="preserve">XXX为错误字段名
+X为字段限制的最大长度
+多个以“；”隔开
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">数据已存在于系统 [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">该商品已存在，不可重复新增
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+</w:tcPr><w:p><w:pPr><w:numPr><w:ilvl w:val="0" /><w:numId w:val="34" /></w:numPr></w:pPr><w:r><w:t xml:space="preserve">商品编码唯一性校验
+商品名称唯一性校验
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">列表内数据重复 [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">该商品与X行数据重复
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+</w:tcPr><w:p><w:pPr><w:numPr><w:ilvl w:val="0" /><w:numId w:val="35" /></w:numPr></w:pPr><w:r><w:t xml:space="preserve">X 为重复数据所在行
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">数据不匹配（用于枚举选项的校验） [/行]
+<w:tcPr>
+  <w:tcW w:w="3739" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">XXX值有误，仅支持输入：XX,XX,XX
+<w:tcPr>
+  <w:tcW w:w="3740" w:type="dxa" />
+</w:tcPr><w:p><w:pPr><w:numPr><w:ilvl w:val="0" /><w:numId w:val="36" /></w:numPr></w:pPr><w:r><w:t xml:space="preserve">XXX为错误字段名
+XX为字段的所有枚举值
+导入完成，校验无误的数据直接导入，展示总共操作的数据量，导入成功的数据量，导入失败的数据量，并刷新商品列表 [/行]
+=====表格结束=====
+ [图片]
+导入失败的数据>0时，出现下载错误文件按钮，点击下载错误文件；
+错误文件表头同下载模板，且增加一列错误信息列，错误信息列标红展示；校验有误的数据放入错误数据列表进行下载查看
+ [图片]
+4.5.3 新增/编辑 商品
+适用车型、安装属性、成本价，改为非必填项；
+适用车型、安装属性 选项改为数据字典配置
+增加 商品属性、商品备注字段
+商品属性 根据商品类型 展示不同的选项值，取 数据字段配置的值展示
+ [图片]
+ [图片]
+4.6 外呼相关
+4.6.1 账号管理
+ [图片]
+位置：组织管理 -> 账号管理
+列表 登录密码 后，增加 关联外呼账号 、关联外呼账号密码 字段
+新增员工账号 ，弹框中， 账号（工号） 字段后，增加 “关联外呼账号” 、 “关联外呼账号密码” 字段，非必填，关联外呼账号30字符以内，关联外呼账号密码 50字符；密码文本框支持查看明文
+编辑 弹框，同 新增
+新增保存 / 编辑保存时，关联外呼账号 、 关联外呼账号密码 必须同时存在或不存在，否则对应文本框下提示：关联外呼账号/关联外呼账号密码 必须同时存在！
+增加 关联外呼账号 的唯一性校验，否则 文本框标红提示： 该外呼账号已被关联
+筛选条件增加 关联外呼账号 的筛选
+新增/编辑 弹框
+增加“关联外呼账号”、“关联外呼账号密码”，两个字段必须同时存在，否则，为空文本框下提示：关联外呼账号、关联外呼账号密码 必须同时存在
+关联外呼账号密码，默认为密文形式，点击 明文 按钮，可展示明文
+ [图片]
+ [图片]
+4.6.2 工作台外呼
+线索详情页，客户电话后，增加 明文展示的按钮，及外呼按钮；
+点击明文 按钮，手机号明文展示
+点击 外呼 按钮，新启web页面，跳转 “https://tccc.qcloud.com/agent/1600152197”
+获取当前账号关联的“关联外呼账号”、“关联外呼账号密码” 、“客户手机号”，模拟登录后，进入 工作台页面
+将“客户手机号” 放入外呼文本框
+若未获取到 关联账号，则跳转停留在登录页面即可
+ [图片]
+客户详情页 同 线索详情页
+ [图片]
+订单详情页，同 线索详情页
+ [图片]
+腾讯云外呼平台登录至外呼的页面流程如下：
+ [图片]
+ [图片]
+ [图片]
+4.7  数据字典
+订单相关字段：下单平台、营销活动名称 做成数据字段配置
+车辆相关字段：品牌、 车型、款式 做成数据字段配置
+商品相关字段：适用车型、安装属性、商品属性 做成数据字典配置
+商品属性的选项根据商品类型的不同而不同
+=====表格开始=====
+<w:tblStyle w:val="tableHeader" /><w:tblW w:w="5000" w:type="pct" /><w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="0" /></w:tblPr><w:tblGrid>
+    <w:gridCol w:w="5610" />
+    <w:gridCol w:w="5610" />
+  </w:tblGrid><w:tr><w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">商品类型
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">商品属性
+<w:trPr>
+  <w:trHeight w:val="0" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+  <w:vMerge w:val="restart" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">整车延保 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">交付之日起90天内
+ [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">交付之日起91天~45个月
+<w:trPr>
+  <w:trHeight w:val="615" />
+</w:trPr><w:tc><w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+  <w:vMerge w:val="restart" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">电池延保 [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">交付之日起45个月且行驶里程9.5万公里内
+ [/行]
+<w:tcPr>
+  <w:tcW w:w="5610" w:type="dxa" />
+</w:tcPr><w:p><w:pPr /><w:r><w:t xml:space="preserve">交付之日起24个月内且行驶里程4万公里
+战败线索冷却期 做成数据字段配置，单位为天 [/行]
+=====表格结束=====
+4.8 定时任务
+增加 分配管控标识 的定时任务，每天早上0点开启
+提取所有线索状态 =  已战败 & 分配管控标识 = 空 or “战败线索冷却期”  的线索
+取线索 最新更新时间 的日期 + 战败线索冷却期设置的天数 ，与当前日期对比，若小于 当前日期，则添加 或保持  分配管控标识 = 战败冷却期；若大于等于 当前日期，则 清空 分配管控标识；
+所有操作均要更新线索 最新更新时间。
+业务问题：
+会不会存在客户直接在抖音、淘宝平台下单的情况？这种情况需要销售跟进吗？
+答：会，这种情况目前需要销售在CRM下单后跟进电子签，完成电子签后在DMS系统中下单；可创建线索，也可不创建线索
+2.会不会存在一个线索要下多个订单的情况？
+答：业务本质是希望基于客户创建订单，线索在未完结状态下可创建多个订单，完结状态下不可创建订单
+3.在订单环节，销售还需要基于线索去跟进订单状态的变更吗？如在待签署电子签环节，销售需要基于线索对客户进行跟进，督促客户签署电子签吗？
+答：当前业务销售一条龙跟进状态下，基于线索创建的订单，基于线索跟进；不基于线索创建的订单，单独基于订单进行跟进
+4.如果在订单环节，对应线索的销售离职了，线索要转给其他销售吗？线索对应的销售和线索对应订单的销售一定是同一个吧？
+答：对

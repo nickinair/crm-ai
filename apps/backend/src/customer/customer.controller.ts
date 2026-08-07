@@ -84,6 +84,13 @@ export class CustomerController {
     return this.customerService.createVehicle(createDto);
   }
 
+  /** 客户名下未失效的车辆列表（订单三步式创建第三步的车辆下拉，PRD 4.2.3.2） */
+  @Get(':id/vehicles')
+  async getCustomerVehicles(@Param('id') id: string, @Request() req: any) {
+    await this.assertCustomerAccess(req, id);
+    return this.customerService.getActiveVehicles(id);
+  }
+
   @Delete('vehicle/:id')
   deleteVehicle(@Param('id') id: string) {
     return this.customerService.deleteVehicle(id);

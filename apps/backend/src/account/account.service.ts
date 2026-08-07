@@ -25,7 +25,33 @@ export class AccountService {
     return crypto.createHash('sha256').update(phone).digest('hex');
   }
 
+  /**
+   * 外呼字段校验（PRD 4.6.1）：
+   * 两字段必须同时存在或同时为空；外呼账号全局唯一；空串规范为 null（避免唯一索引冲突）
+   */
+  private async validateCallout(dto: any, excludeId?: string) {
+    if (dto.calloutAccount === undefined && dto.calloutPassword === undefined) return;
+    const acc = dto.calloutAccount === undefined ? undefined : (String(dto.calloutAccount || '').trim() || null);
+    const pwd = dto.calloutPassword === undefined ? undefined : (String(dto.calloutPassword || '').trim() || null);
+    if (acc !== undefined) dto.calloutAccount = acc;
+    if (pwd !== undefined) dto.calloutPassword = pwd;
+
+    // 成对校验：必须同时存在或同时不存在
+    if ((acc && !pwd) || (!acc && pwd)) {
+      throw new BadRequestException({ code: 'CALLOUT_PAIR_REQUIRED', message: '关联外呼账号/关联外呼账号密码 必须同时存在！' });
+    }
+    if (acc) {
+      if (acc.length > 30) throw new BadRequestException('关联外呼账号最多30个字符');
+      if (pwd && pwd.length > 50) throw new BadRequestException('关联外呼账号密码最多50个字符');
+      const exist = await this.accountRepo.findOne({ where: { calloutAccount: acc } });
+      if (exist && String(exist.id) !== String(excludeId || '')) {
+        throw new BadRequestException({ code: 'CALLOUT_ACCOUNT_EXIST', message: '该外呼账号已被关联' });
+      }
+    }
+  }
+
   async create(createDto: Partial<SysAccount> & { orgIds?: string[], roleIds?: string[] }) {
+    await this.validateCallout(createDto);
     // Check duplicates
     if (createDto.username) {
       const existUsername = await this.accountRepo.findOne({ where: { username: createDto.username } });
@@ -71,8 +97,12 @@ export class AccountService {
   }
 
   async findAll(query: any = {}) {
-    const { page = 1, pageSize = 10, username, orgId, status } = query;
+    const { page = 1, pageSize = 10, username, orgId, status, calloutAccount } = query;
     const qb = this.accountRepo.createQueryBuilder('acc');
+    // 关联外呼账号筛选（PRD 4.6.1）
+    if (calloutAccount) {
+      qb.andWhere('acc.calloutAccount LIKE :calloutAccount', { calloutAccount: `%${calloutAccount}%` });
+    }
 
     if (username) {
       qb.andWhere('(acc.username LIKE :keyword OR acc.realName LIKE :keyword OR acc.phone LIKE :keyword)', { keyword: `%${username}%` });
@@ -146,6 +176,7 @@ export class AccountService {
   }
 
   async update(id: string, updateDto: Partial<SysAccount> & { orgIds?: string[], roleIds?: string[] }) {
+    await this.validateCallout(updateDto, id);
     if (updateDto.username) {
       const existUsername = await this.accountRepo.findOne({ where: { username: updateDto.username } });
       if (existUsername && existUsername.id !== id) {

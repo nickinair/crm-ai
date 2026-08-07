@@ -8,6 +8,8 @@ import { useDict } from '../hooks/useDict';
 import { maskPhone, maskIdCard } from '../utils/mask';
 import EditCustomerModal from './Customer360EditCustomerModal';
 import LeadAddModal from './LeadAddModal';
+import OrderCreateModal from '../components/OrderCreateModal';
+import { getOrderStatusTag } from './Order';
 import LinkVehicleModal from './LinkVehicleModal';
 import LoadingLogo from '../components/LoadingLogo';
 import EditVehicleModal from './EditVehicleModal';
@@ -47,6 +49,16 @@ const CustomerDetail: React.FC = () => {
   
   const [editCustomerVisible, setEditCustomerVisible] = useState(false);
   const [addLeadVisible, setAddLeadVisible] = useState(false);
+  // 创建订单（客户360入口，PRD 4.2.5.1：客户信息带入且不可编辑）
+  const [orderCreateVisible, setOrderCreateVisible] = useState(false);
+  const [customerOrders, setCustomerOrders] = useState<any[]>([]);
+
+  const fetchCustomerOrders = async (custId: string) => {
+    try {
+      const res: any = await request.get(`/order/customer/${custId}`);
+      setCustomerOrders(Array.isArray(res) ? res : []);
+    } catch { setCustomerOrders([]); }
+  };
   const [addFollowUpVisible, setAddFollowUpVisible] = useState(false);
   const [addNoteVisible, setAddNoteVisible] = useState(false);
   const [linkVehicleVisible, setLinkVehicleVisible] = useState(false);
@@ -73,6 +85,7 @@ const CustomerDetail: React.FC = () => {
       const res = await request.get(`/customer/360/${id}`) as any;
       if (res && res.id) {
         setData(res);
+        fetchCustomerOrders(String(res.id));
       } else {
         message.error('加载客户数据失败');
       }
@@ -222,6 +235,7 @@ const CustomerDetail: React.FC = () => {
             {statusLabel && <span className="cd-tag cd-tag-primary">{statusLabel}</span>}
           </div>
           <div className="cd-actions">
+            <button className="cd-action-btn" onClick={() => setOrderCreateVisible(true)}>创建订单</button>
             <button className="cd-action-btn" onClick={handleAddLeadClick}>新增线索</button>
             {!isCtxLeadClosed && <>
               <button className="cd-action-btn" onClick={() => setLinkVehicleVisible(true)}>关联车辆</button>
@@ -260,6 +274,10 @@ const CustomerDetail: React.FC = () => {
                     autoFocus
                     style={{ width: '150px' }}
                     popupMatchSelectWidth={false}
+                    labelRender={(p: any) => {
+                      const v = String(p.value ?? '');
+                      return <span style={{ color: wechatColor(v), display: 'inline-flex', alignItems: 'center', gap: 4 }}>{wechatIcon(v)}{v || '未添加'}</span>;
+                    }}
                   >
                   {getDictOptions('wechat_add_status').map(o => (
                     <Select.Option key={o.value} value={o.value}>
@@ -410,7 +428,7 @@ const CustomerDetail: React.FC = () => {
                 <div key={f.id || idx} className="cd-follow-item">
                   <div className="cd-follow-header">
                     <span>
-                      <strong>{f.accountName || '销售'}{f.accountUsername ? ` (${f.accountUsername})` : ''}</strong>
+                      <strong>{f.accountName || (String(f.accountId) === '0' ? '系统' : '销售')}{f.accountUsername ? ` (${f.accountUsername})` : ''}</strong>
                       {f.leadCode && <><span className="divider">|</span>线索: {f.leadCode}</>}
                       <span className="divider">|</span>
                       {f.followTime ? dayjs(f.followTime).format('YYYY-MM-DD HH:mm') : '-'}
@@ -504,6 +522,44 @@ const CustomerDetail: React.FC = () => {
             renderEmpty('暂无历史线索')
           )}
         </Tabs.TabPane>
+
+        {/* ──── 历史订单（PRD 4.2.5.1 / 配图 image32）──── */}
+        <Tabs.TabPane tab="历史订单" key="5">
+          {customerOrders.length > 0 ? (
+            <div className="cd-leads-table-wrapper">
+              <Table
+                dataSource={customerOrders}
+                rowKey="id"
+                className="workbench-table"
+                scroll={{ x: 'max-content' }}
+                pagination={{ pageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'], showTotal: (t: number) => `共 ${t} 条数据` }}
+                columns={[
+                  { title: '订单编号', dataIndex: 'orderCode', width: 150, fixed: 'left' as const },
+                  { title: '客户姓名', key: 'cname', width: 90, render: (_: any, r: any) => r.customer?.customerName || r.snapCustomerName || '-' },
+                  { title: '客户电话', key: 'cphone', width: 120, render: (_: any, r: any) => r.customer?.phone || r.snapCustomerPhone || '-' },
+                  { title: '车品牌', dataIndex: 'snapVehicleBrand', width: 90, render: (v: any) => v || '-' },
+                  { title: '车型', dataIndex: 'snapVehicleModel', width: 110, render: (v: any) => v || '-' },
+                  { title: '车架号', dataIndex: 'snapVehicleVin', width: 170, render: (v: any) => v || '-' },
+                  { title: '下单平台', dataIndex: 'orderPlatform', width: 100, render: (v: any) => v || '-' },
+                  { title: '平台订单编号', dataIndex: 'platformOrderNo', width: 140, render: (v: any) => v || '-' },
+                  { title: '三方订单编号', dataIndex: 'thirdOrderNo', width: 140, render: (v: any) => v || '-' },
+                  { title: '订单状态', dataIndex: 'orderStatus', width: 115, render: (v: number) => getOrderStatusTag(v) },
+                  { title: '实付金额', dataIndex: 'totalAmount', width: 100, render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
+                  { title: '跟进人', key: 'sales', width: 90, render: (_: any, r: any) => r.salesperson?.realName || r.salesperson?.username || '-' },
+                  { title: '创建时间', dataIndex: 'createdAt', width: 150, render: (v: string) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-' },
+                  { title: '创建人', key: 'creator', width: 90, render: (_: any, r: any) => r.creator?.realName || r.creator?.username || '系统' },
+                  { title: '更新时间', dataIndex: 'updatedAt', width: 150, render: (v: string) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-' },
+                  { title: '更新人', key: 'updater', width: 90, render: (_: any, r: any) => r.updater?.realName || r.updater?.username || '系统' },
+                  { title: '操作', key: 'op', width: 70, fixed: 'right' as const, render: (_: any, r: any) => (
+                    <a style={{ color: '#6366F1' }} onClick={() => navigate(`/order/detail/${r.id}`)}>详情</a>
+                  ) },
+                ]}
+              />
+            </div>
+          ) : (
+            renderEmpty('暂无订单信息')
+          )}
+        </Tabs.TabPane>
       </Tabs>
 
       {/* Modals */}
@@ -515,6 +571,17 @@ const CustomerDetail: React.FC = () => {
           fetchData();
         }}
         customerData={data}
+      />
+
+      {/* 三步式创建订单（客户360入口，PRD 4.2.5.1）：客户信息带入且不可编辑、不可新增 */}
+      <OrderCreateModal
+        open={orderCreateVisible}
+        onClose={() => setOrderCreateVisible(false)}
+        onSuccess={() => {
+          if (data?.id) fetchCustomerOrders(String(data.id));
+          fetchData();
+        }}
+        fixedCustomer={data ? { id: String(data.id), customerName: data.customerName, phone: data.phone } : null}
       />
 
       <LeadAddModal 

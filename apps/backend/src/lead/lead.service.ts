@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable , OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, Not, In } from 'typeorm';
 import { BizLead } from '../entities/BizLead';
+import { BizLeadLock } from '../entities/BizLeadLock';
 import { BizCustomer } from '../entities/BizCustomer';
 import { BizVehicle } from '../entities/BizVehicle';
 import { BizLeadProduct } from '../entities/BizLeadProduct';
@@ -93,7 +94,12 @@ function pruneImportProgress() {
 }
 
 @Injectable()
-export class LeadService {
+export class LeadService implements OnModuleInit {
+  onModuleInit() {
+    // 每天 0 点执行「战败冷却期」定时任务（PRD 4.8）
+    this.scheduleDefeatCooldownTask();
+  }
+
   constructor(
     @InjectRepository(BizLead)
     private readonly leadRepo: Repository<BizLead>,
@@ -101,7 +107,7 @@ export class LeadService {
   ) {}
 
   async getLeads(query: any) {
-    const { page = 1, limit = 10, channelSource, customerName, customerPhone, leadStatus, leadCode, isAddWechat, purchaseIntention, communicationTendency, callResult, assignedAccountId, publicPool, sourceMethod, sortField, sortOrder } = query;
+    const { page = 1, limit = 10, channelSource, customerName, customerPhone, leadStatus, leadCode, isAddWechat, purchaseIntention, communicationTendency, callResult, assignedAccountId, publicPool, sourceMethod, sortField, sortOrder, orderSituation, createType, assignControl } = query;
 
     const qb = this.leadRepo.createQueryBuilder('lead')
       .leftJoinAndMapOne('lead.customer', BizCustomer, 'customer', 'customer.id = lead.customerId')
@@ -109,6 +115,7 @@ export class LeadService {
       .leftJoinAndMapMany('lead.products', BizLeadProduct, 'leadProduct', 'leadProduct.leadId = lead.id')
       .leftJoinAndMapOne('leadProduct.product', BizProduct, 'product', 'product.id = leadProduct.productId')
       .leftJoinAndMapOne('lead.assignee', SysAccount, 'assignee', 'assignee.id = lead.assignedAccountId')
+      .leftJoinAndMapOne('lead.creator', SysAccount, 'creator', 'creator.id = lead.createdBy')
       .orderBy('lead.createdAt', 'DESC');
 
     if (channelSource) {
@@ -123,6 +130,17 @@ export class LeadService {
 
     if (customerName) {
       qb.andWhere('customer.customerName LIKE :customerName', { customerName: `%${customerName}%` });
+    }
+
+    // 订单情况（单选）、线索创建类型、分配管控标识 筛选（PRD 4.3.1）
+    if (orderSituation !== undefined && orderSituation !== null && orderSituation !== '') {
+      qb.andWhere('lead.orderSituation = :orderSituation', { orderSituation: Number(orderSituation) });
+    }
+    if (createType !== undefined && createType !== null && createType !== '') {
+      qb.andWhere('lead.createType = :createType', { createType: Number(createType) });
+    }
+    if (assignControl !== undefined && assignControl !== null && assignControl !== '') {
+      qb.andWhere('lead.assignControl = :assignControl', { assignControl: Number(assignControl) });
     }
 
     if (customerPhone) {
@@ -223,6 +241,8 @@ export class LeadService {
     // 公域池模式：排除已被分配且正在跟进的线索（状态1+有assignee的属于私池，不展示）
     if (publicPool === '1') {
       qb.andWhere('(lead.assignedAccountId IS NULL OR lead.leadStatus IN (0, 4, 6))');
+      // 分配管控标识（战败冷却期/战败已复活）非空的线索不可领取（PRD 4.3.1）
+      qb.andWhere('lead.assignControl IS NULL');
     }
 
     const pageNum = Number(page);
@@ -234,7 +254,15 @@ export class LeadService {
     };
     const orderField = allowedSortFields[sortField] || 'lead.createdAt';
     const orderDirection: 'ASC' | 'DESC' = sortOrder === 'ascend' ? 'ASC' : 'DESC';
-    if (sortField === 'sourceDate') {
+    if (sortField === 'workbench') {
+      // 工作台私池：按 待跟进(1)→跟进中(2)→已战败(4)→已完成(3) 分组，
+      // 组内按最新跟进时间升序（越早越靠前，从未跟进的排最前）。
+      // 表达式需先 addSelect 成别名再排序，否则 TypeORM 分页解析 ORDER BY 会报错；
+      // 其他状态（作废/战败已被领取等）排最后
+      qb.addSelect('CASE lead.lead_status WHEN 1 THEN 0 WHEN 2 THEN 1 WHEN 4 THEN 2 WHEN 3 THEN 3 ELSE 9 END', 'status_group')
+        .orderBy('status_group', 'ASC')
+        .addOrderBy('lead.last_follow_at', 'ASC');
+    } else if (sortField === 'sourceDate') {
       // Use raw column name directly to avoid TypeORM quoting issues
       qb.orderBy('lead.source_date', orderDirection);
     } else {
@@ -245,6 +273,19 @@ export class LeadService {
     // 简单脱敏身份证号并填充商品
     if (items.length > 0) {
       const leadIds = items.map((l: any) => l.id);
+      // 关联订单编号：所有状态的订单均展示（PRD 4.3.1），草稿除外
+      const leadOrders = await this.leadRepo.query(
+        `SELECT id, order_code AS orderCode, lead_id AS leadId, order_status AS orderStatus
+         FROM biz_order WHERE lead_id IN (${leadIds.map(() => '?').join(',')}) AND is_draft = 0`,
+        leadIds
+      );
+      const ordersByLead = new Map<string, any[]>();
+      leadOrders.forEach((o: any) => {
+        const k = String(o.leadId);
+        if (!ordersByLead.has(k)) ordersByLead.set(k, []);
+        ordersByLead.get(k)!.push(o);
+      });
+      items.forEach((item: any) => { item.orders = ordersByLead.get(String(item.id)) || []; });
       const leadProducts = await this.leadRepo.query(
         `SELECT lp.lead_id AS leadId, lp.product_role AS productRole, lp.product_id AS productId, p.product_name AS productName, p.product_code AS productCode
          FROM biz_lead_product lp
@@ -284,6 +325,84 @@ export class LeadService {
     };
   }
 
+  // ============================================================
+  // 首页经营指标（PRD 4.4）
+  // ============================================================
+
+  /**
+   * 核心经营指标：
+   * - 今日新增线索：创建时间=当天 且 线索创建类型=普通新建
+   * - 线索转化率：已完成线索数 / 总线索数（均只统计普通新建）
+   * - 接通率：呼叫结果=已接听 的跟进记录数 / 存在呼叫结果的跟进记录总数
+   * - 本月成交额：状态=已完结 且 更新时间在当月 的订单实付金额之和
+   */
+  async getHomeMetrics() {
+    const [todayRow] = await this.dataSource.query(
+      `SELECT COUNT(*) AS n FROM biz_lead WHERE create_type = 1 AND DATE(created_at) = CURDATE()`);
+    const [convRow] = await this.dataSource.query(
+      `SELECT COUNT(*) AS total, SUM(CASE WHEN lead_status = 3 THEN 1 ELSE 0 END) AS done
+       FROM biz_lead WHERE create_type = 1`);
+    // 接通率：仅统计存在呼叫结果的跟进记录；分子严格取「呼叫结果 = 已接听」（PRD 4.4 原文口径）
+    // 注意不可用模糊匹配：字典里还有「打通未接听」「空号/无法接通」等含相同字样但语义相反的取值
+    const [callRow] = await this.dataSource.query(
+      `SELECT COUNT(*) AS total,
+              SUM(CASE WHEN call_result = '已接听' THEN 1 ELSE 0 END) AS answered
+       FROM biz_follow_record
+       WHERE call_result IS NOT NULL AND call_result <> ''`);
+    const [amountRow] = await this.dataSource.query(
+      `SELECT IFNULL(SUM(total_amount), 0) AS amount FROM biz_order
+       WHERE is_draft = 0 AND order_status = 4
+         AND updated_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+         AND updated_at < DATE_ADD(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 1 MONTH)`);
+
+    const totalLeads = Number(convRow.total || 0);
+    const doneLeads = Number(convRow.done || 0);
+    const callTotal = Number(callRow.total || 0);
+    const answered = Number(callRow.answered || 0);
+
+    return {
+      todayNewLeads: Number(todayRow.n || 0),
+      leadConversionRate: totalLeads ? Number(((doneLeads / totalLeads) * 100).toFixed(1)) : 0,
+      answerRate: callTotal ? Number(((answered / callTotal) * 100).toFixed(1)) : 0,
+      monthAmount: Number(amountRow.amount || 0),
+    };
+  }
+
+  /**
+   * 销售线索分布（PRD 4.4）：销售名称、待跟进、跟进中、已完成、已战败、合计、线索转化率
+   * 转化率 =（已完成 / 合计）*100%
+   */
+  async getSalesLeadDistribution() {
+    const rows = await this.dataSource.query(
+      `SELECT a.id AS accountId, IFNULL(a.real_name, a.username) AS salesName,
+              SUM(CASE WHEN l.lead_status = 1 THEN 1 ELSE 0 END) AS pending,
+              SUM(CASE WHEN l.lead_status = 2 THEN 1 ELSE 0 END) AS following,
+              SUM(CASE WHEN l.lead_status = 3 THEN 1 ELSE 0 END) AS done,
+              SUM(CASE WHEN l.lead_status = 4 THEN 1 ELSE 0 END) AS defeated,
+              COUNT(l.id) AS total
+       FROM sys_account a
+       INNER JOIN sys_account_role ar ON ar.account_id = a.id
+       INNER JOIN sys_role r ON r.id = ar.role_id AND r.role_code = 'sales'
+       LEFT JOIN biz_lead l ON l.assigned_account_id = a.id AND l.lead_status IN (1, 2, 3, 4)
+       WHERE a.status = 1
+       GROUP BY a.id, salesName
+       ORDER BY total DESC`);
+    return rows.map((r: any) => {
+      const total = Number(r.total || 0);
+      const done = Number(r.done || 0);
+      return {
+        accountId: r.accountId,
+        salesName: r.salesName,
+        pending: Number(r.pending || 0),
+        following: Number(r.following || 0),
+        done,
+        defeated: Number(r.defeated || 0),
+        total,
+        conversionRate: total ? Number(((done / total) * 100).toFixed(1)) : 0,
+      };
+    });
+  }
+
   async getWorkbenchStats(accountId: string) {
     const todayStart = dayjs().startOf('day').toDate();
     const todayEnd = dayjs().endOf('day').toDate();
@@ -308,17 +427,38 @@ export class LeadService {
     // 2. 可抢公域池数量: 0=待分配, 4=已战败, 6=回收待分配
     const publicPoolCount = await this.leadRepo.createQueryBuilder('lead')
       .where('lead.leadStatus IN (:...statuses)', { statuses: [0, 4, 6] })
+      .andWhere('lead.assignControl IS NULL')
       .getCount();
+
+    // 3. 私池各状态数量（工作台筛选按钮上的统计）
+    const statusRows = await this.leadRepo.createQueryBuilder('lead')
+      .select('lead.leadStatus', 'status')
+      .addSelect('COUNT(*)', 'cnt')
+      .where('lead.assignedAccountId = :accountId', { accountId })
+      .andWhere('lead.leadStatus IN (:...poolStatuses)', { poolStatuses: [1, 2, 4, 3] })
+      .groupBy('lead.leadStatus')
+      .getRawMany();
+    const poolStatusCounts: Record<number, number> = { 1: 0, 2: 0, 4: 0, 3: 0 };
+    statusRows.forEach((r: any) => { poolStatusCounts[Number(r.status)] = Number(r.cnt); });
+    const poolTotal = Object.values(poolStatusCounts).reduce((a, b) => a + b, 0);
 
     return {
       todayPendingFollowUp,
-      publicPoolCount
+      publicPoolCount,
+      poolStatusCounts,
+      poolTotal
     };
   }
 
-  async assignLead(id: string, accountId: string) {
+  async assignLead(id: string, accountId: string, operatorId?: string) {
     const lead = await this.leadRepo.findOne({ where: { id } });
     if (!lead) throw new Error('Lead not found');
+
+    // 存在分配管控标识（战败冷却期/战败已复活）的线索不可分配/领取（PRD 4.3.1）
+    if (lead.assignControl != null) {
+      const controlName = lead.assignControl === 1 ? '战败冷却期' : '战败已复活';
+      throw { code: 'ASSIGN_CONTROL_BLOCKED', message: `${lead.leadCode}处于${controlName}，不可分配/领取！`, leadCodes: [lead.leadCode] };
+    }
 
     // Check if this salesperson was previously assigned and returned
     const prevAssignees = lead.previousAssignees ? lead.previousAssignees.split(',') : [];
@@ -349,8 +489,16 @@ export class LeadService {
         newLead.assignedAt = new Date();
         newLead.leadStatus = 1;
         newLead.parentLeadId = String(lead.id);
+        newLead.createType = 2; // 战败线索复活（PRD 4.3.1）
         
         await queryRunner.manager.save(BizLead, newLead);
+
+        // 原线索状态不变，标记「分配管控标识=战败已复活」退出公域池，杜绝重复领取克隆（PRD 4.3.2）
+        {
+          const prevList = lead.previousAssignees ? lead.previousAssignees.split(',') : [];
+          if (!prevList.includes(String(accountId))) prevList.push(String(accountId));
+          await queryRunner.manager.update(BizLead, lead.id, { assignControl: 2, previousAssignees: prevList.join(','), updatedAt: new Date() });
+        }
 
         const products = await queryRunner.manager.find(BizLeadProduct, { where: { leadId: lead.id } });
         for (const p of products) {
@@ -401,6 +549,8 @@ export class LeadService {
           }
         }
         await queryRunner.commitTransaction();
+        this.addLeadLog(lead.id, operatorId, '分配', `战败线索被领取/分配，克隆新线索 ${newLead.leadCode}`);
+        this.addLeadLog(newLead.id, operatorId, '创建', `战败线索复活，来源线索 ${lead.leadCode}`);
         return this.leadRepo.findOne({ where: { id: newLead.id } });
       } catch (error) {
         await queryRunner.rollbackTransaction();
@@ -419,7 +569,7 @@ export class LeadService {
     }
   }
 
-  async createLead(data: any) {
+  async createLead(data: any, creatorId?: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -475,7 +625,12 @@ export class LeadService {
 
       // 2. Handle Vehicle - create/update when ANY vehicle field is provided
       let vehicleId = null;
-      const hasAnyVehicleField = data.carVin || data.carBrand || data.carModel || data.carStyle || data.carPlate || data.carMileage || data.purchaseDate || data.invoiceDate || data.remark;
+      // 三步式新增线索（PRD 4.3.3）：车辆已在第二步单独落库，直接关联，不再重复建车
+      if (data.vehicleId) {
+        const existed = await queryRunner.manager.findOne(BizVehicle, { where: { id: String(data.vehicleId) } });
+        if (existed) vehicleId = existed.id;
+      }
+      const hasAnyVehicleField = !vehicleId && (data.carVin || data.carBrand || data.carModel || data.carStyle || data.carPlate || data.carMileage || data.purchaseDate || data.invoiceDate || data.remark);
       if (hasAnyVehicleField) {
         if (data.carVin) {
           // VIN already bound to another customer: ask for confirmation first;
@@ -572,6 +727,7 @@ export class LeadService {
       if (sDate && sDate.length > 10) sDate = sDate.substring(0, 10);
       lead.sourceDate = sDate;
       lead.isAddWechat = data.isAddWechat;
+      if (creatorId) lead.createdBy = creatorId;
       if (data.assigneeId) {
         lead.assignedAccountId = data.assigneeId;
         lead.leadStatus = 1; // 待跟进
@@ -623,6 +779,7 @@ export class LeadService {
       }
 
       await queryRunner.commitTransaction();
+      this.addLeadLog(lead.id, creatorId, '创建', `创建线索 ${lead.leadCode}`);
       return savedLead;
     } catch (err: any) {
       await queryRunner.rollbackTransaction();
@@ -1157,6 +1314,7 @@ export class LeadService {
             sourceMethod: d['线索来源方式'],
             sourceDate: trimDate(d['来源日期']),
             leadStatus: 0,
+            createdBy: accountId,
           }));
           if (vehValues.length > 0) {
             const vehRes = await em.createQueryBuilder().insert().into(BizVehicle).values(vehValues).execute();
@@ -1421,6 +1579,89 @@ export class LeadService {
 
     return { success: true };
   }
+  // ============================================================
+  // 线索操作日志（PRD 4.3.3）：操作类型/操作人/操作时间/操作内容
+  // ============================================================
+
+  /** 写线索操作日志（尽力而为，失败不影响主流程） */
+  private async addLeadLog(leadId: string, operatorId: string | null | undefined, action: string, content: string) {
+    try {
+      await this.dataSource.query(
+        `INSERT INTO sys_operation_log (account_id, module, action, target_type, target_id, detail)
+         VALUES (?, 'lead', ?, 'lead', ?, ?)`,
+        [operatorId || 0, action, leadId, JSON.stringify({ content })],
+      );
+    } catch (e: any) {
+      console.error('[线索操作日志] 写入失败:', e.message);
+    }
+  }
+
+  /** 线索操作日志分页（倒序，每页默认10条，前端滚动加载） */
+  async getLeadLogs(leadId: string, page = 1, limit = 10) {
+    const offset = (Number(page) - 1) * Number(limit);
+    const rows = await this.dataSource.query(
+      `SELECT l.id, l.action, l.detail, l.created_at AS createdAt, l.account_id AS accountId,
+              a.real_name AS realName, a.username AS username
+       FROM sys_operation_log l
+       LEFT JOIN sys_account a ON a.id = l.account_id
+       WHERE l.target_type = 'lead' AND l.target_id = ?
+       ORDER BY l.created_at DESC, l.id DESC
+       LIMIT ? OFFSET ?`,
+      [leadId, Number(limit), offset],
+    );
+    const totalRow = await this.dataSource.query(
+      `SELECT COUNT(*) AS n FROM sys_operation_log WHERE target_type = 'lead' AND target_id = ?`, [leadId]);
+    return {
+      items: rows.map((r: any) => {
+        let content = '';
+        try { content = (typeof r.detail === 'string' ? JSON.parse(r.detail) : r.detail)?.content || ''; } catch { /* */ }
+        return {
+          id: r.id,
+          action: r.action,
+          // 操作人记录格式：姓名（账号）；account_id=0 为系统
+          operator: r.realName || r.username ? `${r.realName || r.username}（${r.username}）` : '系统（system）',
+          content,
+          createdAt: r.createdAt,
+        };
+      }),
+      total: Number(totalRow[0].n),
+      page: Number(page),
+      limit: Number(limit),
+    };
+  }
+
+  /**
+   * 线索跟进记录（PRD 4.3.3）：
+   * 战败线索复活的线索，取所有父级线索的跟进记录 + 当前线索的跟进记录，按创建时间倒序；
+   * 普通创建的线索仅展示当前线索的（无父链时自然退化）。
+   */
+  async getLeadFollows(leadId: string) {
+    // 沿 parent_lead_id 向上收集线索链（限depth防环）
+    const chain: string[] = [];
+    let cursor: string | null = leadId;
+    for (let depth = 0; cursor && depth < 10; depth++) {
+      if (chain.includes(String(cursor))) break;
+      chain.push(String(cursor));
+      const row = await this.leadRepo.findOne({ where: { id: cursor } });
+      cursor = row?.parentLeadId ? String(row.parentLeadId) : null;
+    }
+    const rows = await this.dataSource.query(
+      `SELECT f.id, f.lead_id AS leadId, f.follow_time AS followTime, f.created_at AS createdAt,
+              f.follow_content AS followContent, f.call_result AS callResult,
+              f.communication_tendency AS communicationTendency, f.purchase_intention AS purchaseIntention,
+              f.next_plan_time AS nextFollowAt, f.lead_status AS leadStatus, f.account_id AS accountId,
+              a.real_name AS accountName, a.username AS accountUsername,
+              ld.lead_code AS leadCode
+       FROM biz_follow_record f
+       LEFT JOIN sys_account a ON a.id = f.account_id
+       LEFT JOIN biz_lead ld ON ld.id = f.lead_id
+       WHERE f.lead_id IN (${chain.map(() => '?').join(',')})
+       ORDER BY f.created_at DESC, f.id DESC`,
+      chain,
+    );
+    return rows.map((r: any) => ({ ...r, isHistory: String(r.leadId) !== String(leadId) }));
+  }
+
   async getLeadById(id: string) {
     return this.leadRepo.createQueryBuilder('lead')
       .leftJoinAndMapOne('lead.customer', BizCustomer, 'customer', 'customer.id = lead.customerId')
@@ -1431,13 +1672,36 @@ export class LeadService {
       .getOne();
   }
 
-  async updateLead(id: string, data: any) {
+  async updateLead(id: string, data: any, operatorId?: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
       const lead = await queryRunner.manager.findOne(BizLead, { where: { id } });
       if (!lead) throw new Error('Lead not found');
+
+      // 编辑日志：字段名：变更前 -> 变更后（PRD 4.3.3）
+      const oldVehicle = lead.vehicleId
+        ? await queryRunner.manager.findOne(BizVehicle, { where: { id: lead.vehicleId } })
+        : null;
+      const diffs: string[] = [];
+      const cmp = (label: string, oldVal: any, newVal: any) => {
+        if (newVal === undefined) return;
+        const o = oldVal === null || oldVal === undefined ? '' : String(oldVal);
+        const n = newVal === null ? '' : String(newVal);
+        if (o !== n) diffs.push(`${label}：${o || '空'} -> ${n || '空'}`);
+      };
+      cmp('渠道来源', lead.channelSource, data.channelSource);
+      cmp('线索来源方式', lead.sourceMethod, data.sourceMethod);
+      cmp('来源日期', lead.sourceDate ? String(lead.sourceDate).substring(0, 10) : '', data.sourceDate);
+      cmp('品牌', oldVehicle?.brand, data.carBrand);
+      cmp('车型', oldVehicle?.model, data.carModel);
+      cmp('款式', oldVehicle?.style, data.carStyle);
+      cmp('车架号', oldVehicle?.vin, data.carVin);
+      cmp('车牌号', oldVehicle?.plateNo, data.carPlate);
+      cmp('里程数', oldVehicle?.mileage, data.carMileage);
+      cmp('发票日期', oldVehicle?.purchaseDate ? String(oldVehicle.purchaseDate).substring(0, 10) : '', data.purchaseDate);
+      cmp('车辆备注', oldVehicle?.remark, data.remark);
 
       let customerId = data.customerId || lead.customerId;
       if (data.customerName || data.customerPhone) {
@@ -1567,6 +1831,7 @@ export class LeadService {
       }
 
       await queryRunner.commitTransaction();
+      if (diffs.length) await this.addLeadLog(id, operatorId, '编辑', diffs.join('；'));
       return true;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -1633,7 +1898,7 @@ export class LeadService {
     }
   }
 
-  async batchAssignLeads(leadIds: string[], accountId: string) {
+  async batchAssignLeads(leadIds: string[], accountId: string, requesterId?: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -1642,14 +1907,25 @@ export class LeadService {
       // 批量加载全部线索（外网库延迟高，逐条查询会导致大批量分配超时）
       const leads = await queryRunner.manager.find(BizLead, { where: { id: In(leadIds) } });
 
-      // 1. 曾跟进人冲突校验
-      const conflictLeadCodes = leads
-        .filter(l => (l.previousAssignees ? l.previousAssignees.split(',') : []).includes(accountId))
-        .map(l => l.leadCode);
-      if (conflictLeadCodes.length > 0) {
-        const account = await queryRunner.manager.findOne(SysAccount, { where: { id: accountId } });
-        const salesName = account?.realName || account?.username || '未知销售';
-        throw { code: 'ASSIGN_PREV_CONFLICT', message: `${conflictLeadCodes.join('，')}曾被${salesName}销售跟进过，不可再次分配给该销售！`, leadCodes: conflictLeadCodes, salesName };
+      // 0. 分配管控校验：存在管控标识（战败冷却期/战败已复活）的线索不可分配/领取（PRD 4.3.1）
+      const controlled = leads.filter(l => l.assignControl != null);
+      if (controlled.length > 0) {
+        const codes = controlled.map(l => l.leadCode);
+        throw { code: 'ASSIGN_CONTROL_BLOCKED', message: `${codes.join('，')}处于分配管控中（战败冷却期/战败已复活），不可分配/领取！`, leadCodes: codes };
+      }
+
+      // 1. 曾跟进人冲突校验：仅限制销售在公域池自领（requester=被分配人）；
+      //    管理员从线索池管理分配给他人时不受限，战败线索照常克隆为待跟进
+      const isSelfClaim = requesterId != null && String(requesterId) === String(accountId);
+      if (isSelfClaim) {
+        const conflictLeadCodes = leads
+          .filter(l => (l.previousAssignees ? l.previousAssignees.split(',') : []).includes(String(accountId)))
+          .map(l => l.leadCode);
+        if (conflictLeadCodes.length > 0) {
+          const account = await queryRunner.manager.findOne(SysAccount, { where: { id: accountId } });
+          const salesName = account?.realName || account?.username || '未知销售';
+          throw { code: 'ASSIGN_PREV_CONFLICT', message: `${conflictLeadCodes.join('，')}曾被${salesName}销售跟进过，不可再次分配给该销售！`, leadCodes: conflictLeadCodes, salesName };
+        }
       }
 
       // 2. 状态校验
@@ -1690,8 +1966,16 @@ export class LeadService {
         newLead.assignedAt = now;
         newLead.leadStatus = 1; // 待跟进
         newLead.parentLeadId = String(lead.id);
+        newLead.createType = 2; // 战败线索复活（PRD 4.3.1）
 
         await queryRunner.manager.save(BizLead, newLead);
+
+        // 原线索状态不变，标记「分配管控标识=战败已复活」退出公域池，杜绝重复领取克隆（PRD 4.3.2）
+        {
+          const prevList = lead.previousAssignees ? lead.previousAssignees.split(',') : [];
+          if (!prevList.includes(String(accountId))) prevList.push(String(accountId));
+          await queryRunner.manager.update(BizLead, lead.id, { assignControl: 2, previousAssignees: prevList.join(','), updatedAt: new Date() });
+        }
 
         const products = await queryRunner.manager.find(BizLeadProduct, { where: { leadId: lead.id } });
         if (products.length > 0) {
@@ -1743,6 +2027,13 @@ export class LeadService {
       }
 
       await queryRunner.commitTransaction();
+      // 操作日志：普通线索记「分配」；战败克隆在克隆处理内已记
+      for (const l of normalLeads) {
+        this.addLeadLog(l.id, requesterId, '分配', `线索分配给账号 ${accountId}`);
+      }
+      for (const l of defeatedLeads) {
+        this.addLeadLog(l.id, requesterId, '分配', `战败线索被领取/分配（克隆复活）`);
+      }
       return true;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -1752,14 +2043,236 @@ export class LeadService {
     }
   }
 
-  async voidLead(id: string) {
+  async voidLead(id: string, operatorId?: string) {
     const lead = await this.leadRepo.findOne({ where: { id } });
     if (!lead) {
       throw new Error('线索未找到');
     }
     lead.leadStatus = 5;
     await this.leadRepo.save(lead);
+    await this.addLeadLog(id, operatorId, '作废', '线索状态：变更为 已作废');
     return true;
+  }
+
+  // ============================================================
+  // 重新分配（PRD 4.3.1）：仅待跟进/跟进中可重新分配；锁定中的不可；
+  // 可选连带线索未完结订单一并改派
+  // ============================================================
+  async reassignLeads(leadIds: string[], accountId: string, moveOrders: boolean, operatorId?: string) {
+    if (!leadIds?.length) throw new BadRequestException('请选择要重新分配的线索');
+    if (!accountId) throw new BadRequestException('请选择分配的销售');
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const leads = await queryRunner.manager.find(BizLead, { where: { id: In(leadIds) } });
+
+      // 1. 状态校验：仅待跟进(1)/跟进中(2)可重新分配（PRD 4.3.1）
+      const STATUS_NAME: Record<number, string> = { 0: '待分配', 1: '待跟进', 2: '跟进中', 3: '已完成', 4: '已战败', 5: '已作废', 6: '回收待分配' };
+      const invalid = leads.filter(l => ![1, 2].includes(l.leadStatus));
+      if (invalid.length > 0) {
+        const names = [...new Set(invalid.map(l => STATUS_NAME[l.leadStatus] || '未知'))];
+        throw { code: 'REASSIGN_STATUS_INVALID', message: `${names.join('、')}状态的线索不可重新分配，请重新勾选后重试！` };
+      }
+
+      // 2. 锁定判断：被销售锁定（正在跟进中）的线索不可重新分配；可分配的直接分配（PRD 4.3.1）
+      const lockMap = await this.getActiveLocks(leads.map(l => l.id), operatorId);
+      const lockedLeads = leads.filter(l => lockMap.has(String(l.id)));
+      const assignable = leads.filter(l => !lockMap.has(String(l.id)));
+
+      const now = new Date();
+      if (assignable.length > 0) {
+        // 原负责人记入曾跟进人，负责人变更，状态保持不变
+        for (const lead of assignable) {
+          const prevList = lead.previousAssignees ? lead.previousAssignees.split(',') : [];
+          if (lead.assignedAccountId && !prevList.includes(String(lead.assignedAccountId)) && String(lead.assignedAccountId) !== String(accountId)) {
+            prevList.push(String(lead.assignedAccountId));
+          }
+          await queryRunner.manager.update(BizLead, lead.id, {
+            assignedAccountId: accountId,
+            assignedAt: now,
+            previousAssignees: prevList.join(',') || null,
+            updatedAt: now,
+          });
+        }
+
+        // 连带订单改派：线索下除已完结(4)/已作废(5)外其他状态订单的跟进人一并变更（PRD 4.3.1）
+        if (moveOrders) {
+          await queryRunner.manager.query(
+            `UPDATE biz_order SET salesperson_id = ?, updater_id = ?, updated_at = NOW()
+             WHERE lead_id IN (${assignable.map(() => '?').join(',')})
+               AND is_draft = 0 AND order_status NOT IN (4, 5)`,
+            [accountId, operatorId || null, ...assignable.map(l => l.id)],
+          );
+        }
+
+        // 私域关系维护：原销售关系失效，新销售建立（与批量分配一致）
+        const customerIds = [...new Set(assignable.map(l => l.customerId).filter(Boolean))] as string[];
+        if (customerIds.length > 0) {
+          await queryRunner.manager.query(
+            `UPDATE biz_private_relation SET status = 0, updated_at = NOW()
+             WHERE customer_id IN (${customerIds.map(() => '?').join(',')}) AND status = 1 AND account_id != ?`,
+            [...customerIds, accountId],
+          );
+          for (const cid of customerIds) {
+            const exist = await queryRunner.manager.findOne(BizPrivateRelation, { where: { customerId: cid, accountId } });
+            if (exist) {
+              exist.status = 1;
+              exist.updatedAt = now;
+              await queryRunner.manager.save(exist);
+            } else {
+              const rel = new BizPrivateRelation();
+              rel.customerId = cid;
+              rel.accountId = accountId;
+              rel.firstBindtime = now;
+              rel.status = 1;
+              await queryRunner.manager.save(rel);
+            }
+          }
+        }
+      }
+
+      await queryRunner.commitTransaction();
+      for (const l of assignable) {
+        this.addLeadLog(l.id, operatorId, '重新分配', `负责人：${l.assignedAccountId || '空'} -> ${accountId}${moveOrders ? '（含未完结订单一并改派）' : ''}`);
+      }
+      return {
+        successCount: assignable.length,
+        failCount: lockedLeads.length,
+        failedCodes: lockedLeads.map(l => l.leadCode),
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  // ============================================================
+  // 战败冷却期定时任务（PRD 4.8，方向已按业务确认修正）：每天 0 点执行
+  // 业务规则：战败线索先冻结（冷却期），满冷却天数后解冻，方可被分配/领取复活
+  //   未满冷却天数（更新时间 + N 天 >= 今天）→ 打/保持「战败冷却期」
+  //   已满冷却天数（更新时间 + N 天 < 今天）→ 清空标识（解冻）
+  // ============================================================
+  async runDefeatCooldownTask() {
+    // 冷却天数取数据字典 defeat_cooldown_days（默认 30 天）
+    let cooldownDays = 30;
+    try {
+      const rows = await this.dataSource.query(
+        `SELECT i.item_value FROM sys_dict_item i
+         JOIN sys_dict_type t ON t.id = i.dict_type_id
+         WHERE t.dict_type_code = 'defeat_cooldown_days' AND i.status = 1
+         ORDER BY i.sort_order LIMIT 1`);
+      if (rows.length && !Number.isNaN(Number(rows[0].item_value))) cooldownDays = Number(rows[0].item_value);
+    } catch { /* 用默认值 */ }
+
+    // 注意：此处不刷新 updated_at——若打标识时刷新更新时间，次日判断基准被重置，标识将周期性打上又清空
+    const setRes = await this.dataSource.query(
+      `UPDATE biz_lead SET assign_control = 1
+       WHERE lead_status = 4 AND assign_control IS NULL
+         AND DATE_ADD(DATE(IFNULL(updated_at, created_at)), INTERVAL ? DAY) >= CURDATE()`,
+      [cooldownDays],
+    );
+    const clearRes = await this.dataSource.query(
+      `UPDATE biz_lead SET assign_control = NULL
+       WHERE lead_status = 4 AND assign_control = 1
+         AND DATE_ADD(DATE(IFNULL(updated_at, created_at)), INTERVAL ? DAY) < CURDATE()`,
+      [cooldownDays],
+    );
+    const result = { cooldownDays, setCooldown: setRes.affectedRows ?? 0, cleared: clearRes.affectedRows ?? 0, ranAt: new Date().toISOString() };
+    console.log('[冷却期定时任务]', JSON.stringify(result));
+    return result;
+  }
+
+  /** 启动时调度：每天 0 点执行冷却期任务（无第三方调度依赖） */
+  scheduleDefeatCooldownTask() {
+    const scheduleNext = () => {
+      const now = new Date();
+      const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 30); // 次日 00:00:30
+      const delay = next.getTime() - now.getTime();
+      setTimeout(async () => {
+        try { await this.runDefeatCooldownTask(); } catch (e: any) { console.error('[冷却期定时任务] 失败:', e.message); }
+        scheduleNext();
+      }, delay);
+    };
+    scheduleNext();
+  }
+
+  // ============================================================
+  // 线索锁定（PRD 4.3.1）：进入线索详情加锁，关闭/会话过期释放；
+  // 锁定中的线索不可被重新分配（T13 重新分配前调用 getActiveLocks 判断）
+  // ============================================================
+
+  /** 锁 TTL：前端每 60s 心跳续期一次；超时未续期（关浏览器/断网/会话过期）自动视为解锁 */
+  private static readonly LOCK_TTL_MS = 5 * 60 * 1000;
+
+  /** 加锁/续期（幂等）：同一线索+账号+会话已有活跃锁则仅刷新过期时间 */
+  async lockLead(leadId: string, accountId: string, sessionId: string) {
+    if (!sessionId) throw new BadRequestException('缺少浏览器会话标识');
+    const lead = await this.leadRepo.findOne({ where: { id: leadId } });
+    if (!lead) throw new BadRequestException('线索不存在');
+
+    const lockRepo = this.dataSource.getRepository(BizLeadLock);
+    const now = new Date();
+    const expireAt = new Date(now.getTime() + LeadService.LOCK_TTL_MS);
+
+    const active = await lockRepo.createQueryBuilder('lock')
+      .where('lock.leadId = :leadId', { leadId })
+      .andWhere('lock.accountId = :accountId', { accountId })
+      .andWhere('lock.sessionId = :sessionId', { sessionId })
+      .andWhere('lock.unlockedAt IS NULL')
+      .andWhere('lock.expireAt > :now', { now })
+      .getOne();
+    if (active) {
+      await lockRepo.update(active.id, { expireAt });
+      return { locked: true, lockId: active.id, renewed: true };
+    }
+
+    const account = await this.dataSource.getRepository(SysAccount).findOne({ where: { id: accountId } });
+    const lock = new BizLeadLock();
+    lock.leadId = lead.id;
+    lock.leadCode = lead.leadCode;
+    lock.accountId = accountId;
+    lock.accountCode = account?.accountCode || account?.username || null;
+    lock.sessionId = sessionId;
+    lock.lockedAt = now;
+    lock.expireAt = expireAt;
+    const saved = await lockRepo.save(lock);
+    return { locked: true, lockId: saved.id, renewed: false };
+  }
+
+  /** 释放锁：仅释放当前账号+会话自己的活跃锁（关闭线索详情时调用） */
+  async unlockLead(leadId: string, accountId: string, sessionId: string) {
+    const lockRepo = this.dataSource.getRepository(BizLeadLock);
+    await lockRepo.createQueryBuilder()
+      .update()
+      .set({ unlockedAt: new Date() })
+      .where('lead_id = :leadId AND account_id = :accountId AND session_id = :sessionId AND unlocked_at IS NULL', { leadId, accountId, sessionId })
+      .execute();
+    return { unlocked: true };
+  }
+
+  /**
+   * 批量查询活跃锁（重新分配前判断，T13 使用）
+   * 活跃 = 未解锁 且 未过期（session 过期即自动视为解除，无需定时清理）
+   * excludeAccountId：本人持有的锁不算“被他人锁定”
+   */
+  async getActiveLocks(leadIds: string[], excludeAccountId?: string): Promise<Map<string, BizLeadLock>> {
+    const result = new Map<string, BizLeadLock>();
+    if (!leadIds.length) return result;
+    const lockRepo = this.dataSource.getRepository(BizLeadLock);
+    const qb = lockRepo.createQueryBuilder('lock')
+      .where('lock.leadId IN (:...leadIds)', { leadIds })
+      .andWhere('lock.unlockedAt IS NULL')
+      .andWhere('lock.expireAt > :now', { now: new Date() });
+    if (excludeAccountId) {
+      qb.andWhere('lock.accountId != :excludeAccountId', { excludeAccountId });
+    }
+    const locks = await qb.getMany();
+    locks.forEach(l => { if (!result.has(String(l.leadId))) result.set(String(l.leadId), l); });
+    return result;
   }
 
   async returnToPublic(leadIds: string[]) {
@@ -1767,34 +2280,32 @@ export class LeadService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      for (const id of leadIds) {
-        const lead = await queryRunner.manager.findOne(BizLead, { where: { id } });
-        if (lead && lead.assignedAccountId && lead.customerId) {
-          const oldAssigneeId = lead.assignedAccountId;
-          const customerId = lead.customerId;
-          
-          // Record the previous assignee
-          const prevAssignees = lead.previousAssignees ? lead.previousAssignees.split(',') : [];
-          if (!prevAssignees.includes(oldAssigneeId)) {
-            prevAssignees.push(oldAssigneeId);
-          }
-          lead.previousAssignees = prevAssignees.join(',');
+      // 批量退回：外网库延迟高，逐条循环会导致大批量(50+)退回超时，改为常数条 SQL
+      const leads = await queryRunner.manager.find(BizLead, { where: { id: In(leadIds) } });
+      const targets = leads.filter(l => l.assignedAccountId && l.customerId);
 
-          // Clear assignee and set status to 0 (待分配)
-          lead.assignedAccountId = null;
-          lead.leadStatus = 0; // 0 for public pool
-          await queryRunner.manager.save(lead);
+      if (targets.length > 0) {
+        // 一条 UPDATE：追加曾跟进人(FIND_IN_SET 去重)、清空负责人、状态回到待分配
+        // 注意 previous_assignees 必须先于 assigned_account_id 赋值（MySQL SET 从左到右求值）
+        await queryRunner.query(
+          `UPDATE biz_lead SET
+             previous_assignees = CASE
+               WHEN previous_assignees IS NULL OR previous_assignees = '' THEN assigned_account_id
+               WHEN FIND_IN_SET(assigned_account_id, previous_assignees) > 0 THEN previous_assignees
+               ELSE CONCAT(previous_assignees, ',', assigned_account_id) END,
+             assigned_account_id = NULL,
+             lead_status = 0
+           WHERE id IN (?)`,
+          [targets.map(l => l.id)]
+        );
 
-          // Invalidate private relation for this customer and the previous sales
-          const oldRel = await queryRunner.manager.findOne(BizPrivateRelation, {
-            where: { customerId: customerId, accountId: oldAssigneeId, status: 1 }
-          });
-          if (oldRel) {
-            oldRel.status = 0;
-            oldRel.updatedAt = new Date();
-            await queryRunner.manager.save(oldRel);
-          }
-        }
+        // 一条 UPDATE：批量失效对应客户与原销售的私域关系
+        const pairs = [...new Map(targets.map(l => [`${l.customerId}-${l.assignedAccountId}`, [l.customerId, l.assignedAccountId]])).values()];
+        await queryRunner.query(
+          `UPDATE biz_private_relation SET status = 0, updated_at = NOW()
+           WHERE status = 1 AND (customer_id, account_id) IN (${pairs.map(() => '(?,?)').join(',')})`,
+          pairs.flat()
+        );
       }
       await queryRunner.commitTransaction();
       return true;

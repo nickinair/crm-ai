@@ -129,7 +129,12 @@ const AccountManagement: React.FC = () => {
       setIsModalOpen(false);
       fetchAccounts();
     } catch (error: any) {
-      // Error is handled by global request interceptor
+      // 外呼账号唯一性冲突：文本框标红提示（PRD 4.6.1）
+      const data = error?.response?.data;
+      if (data?.code === 'CALLOUT_ACCOUNT_EXIST' || data?.message?.code === 'CALLOUT_ACCOUNT_EXIST') {
+        addForm.setFields([{ name: 'calloutAccount', errors: ['该外呼账号已被关联'] }]);
+      }
+      // 其余错误由全局拦截器提示
     }
   };
 
@@ -187,6 +192,8 @@ const AccountManagement: React.FC = () => {
     { title: '账号编码', dataIndex: 'accountCode', key: 'accountCode' },
     { title: '账号(工号)', dataIndex: 'username', key: 'username' },
     { title: '登录密码', key: 'password', render: () => '********' },
+    { title: '关联外呼账号', dataIndex: 'calloutAccount', key: 'calloutAccount', render: (v: string) => v || '-' },
+    { title: '关联外呼账号密码', key: 'calloutPassword', render: (_: any, r: any) => r.calloutPassword ? '********' : '-' },
     { title: '员工真实姓名', dataIndex: 'realName', key: 'realName' },
     { title: '联系手机号', dataIndex: 'phone', key: 'phone' },
     { 
@@ -253,6 +260,9 @@ const AccountManagement: React.FC = () => {
                 <Select.Option value={0}>禁用</Select.Option>
                 <Select.Option value={2}>已离职</Select.Option>
               </Select>
+            </Form.Item>
+            <Form.Item name="calloutAccount" label="关联外呼账号">
+              <Input placeholder="请输入外呼账号" allowClear style={{ width: 160 }} />
             </Form.Item>
             <Form.Item>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -321,6 +331,36 @@ const AccountManagement: React.FC = () => {
                 { pattern: /^[a-zA-Z0-9]{1,10}$/, message: '支持英文字母+数字 (最多10字符)' }
               ]}>
                 <Input placeholder="支持英文字母+数字 (最多10字符)" />
+              </Form.Item>
+            </Col>
+            {/* 关联外呼账号/密码：非必填，但必须同时存在或同时为空（PRD 4.6.1） */}
+            <Col span={12}>
+              <Form.Item name="calloutAccount" label="关联外呼账号" dependencies={['calloutPassword']} rules={[
+                { max: 30, message: '关联外呼账号最多30个字符' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    const pwd = getFieldValue('calloutPassword');
+                    if (!value && pwd) return Promise.reject('关联外呼账号/关联外呼账号密码 必须同时存在！');
+                    return Promise.resolve();
+                  },
+                }),
+              ]}>
+                <Input placeholder="请输入关联外呼账号 (非必填，最多30字符)" maxLength={30} allowClear />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="calloutPassword" label="关联外呼账号密码" dependencies={['calloutAccount']} rules={[
+                { max: 50, message: '关联外呼账号密码最多50个字符' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    const acc = getFieldValue('calloutAccount');
+                    if (!value && acc) return Promise.reject('关联外呼账号/关联外呼账号密码 必须同时存在！');
+                    return Promise.resolve();
+                  },
+                }),
+              ]}>
+                {/* 默认密文，点眼睛图标查看明文（PRD 4.6.1） */}
+                <Input.Password placeholder="请输入关联外呼账号密码 (非必填，最多50字符)" maxLength={50} allowClear />
               </Form.Item>
             </Col>
             {modalType === 'add' && (

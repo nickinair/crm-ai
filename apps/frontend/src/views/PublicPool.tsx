@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Form, Input, Select, Button, message, Modal, Tooltip, ConfigProvider } from 'antd';
+import { Table, Form, message, Modal, Tooltip, ConfigProvider } from 'antd';
 import request from '../utils/request';
 import { hasPerm } from '../utils/perm';
-import { useDict } from '../hooks/useDict';
+import LeadSearchForm from '../components/LeadSearchForm';
 import dayjs from 'dayjs';
 import './Leads.css';
 
@@ -10,20 +10,30 @@ const PublicPool: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
-  const { getDictOptions } = useDict();
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const [salesList, setSalesList] = useState<any[]>([]);
+
+  const fetchSales = async () => {
+    try {
+      const rolesRes: any = await request.get('/roles', { params: { pageSize: 100 } });
+      const rolesList = rolesRes.data?.list || rolesRes.list || (Array.isArray(rolesRes) ? rolesRes : []);
+      const roleId = rolesList.find((r: any) => r.roleCode === 'sales' || r.roleName === '销售')?.id;
+      const res: any = await request.get('/account', { params: { limit: 100, roleId } });
+      setSalesList(res.items || (Array.isArray(res) ? res : (res.data || [])));
+    } catch (err) { console.error(err); }
+  };
 
   const fetchLeads = async (values: any = {}, page = 1, limit = 10) => {
     setLoading(true);
     try {
-      const params: any = {
-        ...values,
-        page,
-        limit,
-        leadStatus: values.leadStatus || '0,4,6', // 默认 待分配、已战败、回收待分配
-        publicPool: '1',     // 标记为公域池查询
-      };
+      const params: any = { ...values, page, limit, publicPool: '1' };
+      // 线索状态：未选时默认公域池三态（待分配/已战败/回收待分配），选了则用所选
+      if (Array.isArray(params.leadStatus) && params.leadStatus.length) {
+        params.leadStatus = params.leadStatus.join(',');
+      } else if (!params.leadStatus) {
+        params.leadStatus = '0,4,6';
+      }
       const res: any = await request.get('/lead', { params });
       setData(res.items || []);
       setTotal(res.total || 0);
@@ -38,15 +48,11 @@ const PublicPool: React.FC = () => {
 
   useEffect(() => {
     fetchLeads();
+    fetchSales();
   }, []);
 
   const onSearch = (values: any) => {
     fetchLeads(values, 1, pagination.pageSize);
-  };
-
-  const onReset = () => {
-    form.resetFields();
-    fetchLeads({}, 1, pagination.pageSize);
   };
 
   const handleTableChange = (pag: any) => {
@@ -54,7 +60,12 @@ const PublicPool: React.FC = () => {
     fetchLeads(currentValues, pag.current, pag.pageSize);
   };
 
+  // 领取防抖：同一时间只允许一个领取请求在途，杜绝连点重复克隆
+  const claimingRef = React.useRef(false);
+  const [claimingId, setClaimingId] = useState<any>(null);
+
   const handleClaim = async (record: any) => {
+    if (claimingRef.current) return;
     const userInfoStr = localStorage.getItem('user');
     if (!userInfoStr) {
       message.error('请先登录');
@@ -76,6 +87,9 @@ const PublicPool: React.FC = () => {
       centered: true,
       className: 'crm-unified-modal',
       async onOk() {
+        if (claimingRef.current) return;
+        claimingRef.current = true;
+        setClaimingId(record.id);
         try {
           const res: any = await request.post('/lead/batch-assign', {
             leadIds: [record.id],
@@ -90,6 +104,9 @@ const PublicPool: React.FC = () => {
           }
         } catch (e: any) {
           message.error(e?.response?.data?.message || '领取失败');
+        } finally {
+          claimingRef.current = false;
+          setClaimingId(null);
         }
       },
     });
@@ -131,28 +148,50 @@ const PublicPool: React.FC = () => {
     );
   };
 
+  // 车辆布尔字段展示：1/'1'/true → 是，其余 → 否（与线索池管理一致）
+  const boolText = (val: any) => (val === true || val === 1 || val === '1' || val === '是') ? '是' : '否';
+
+  // 列与线索池管理页保持一致（仅操作列为公域池的"领取"）
   const columns: any[] = [
     { title: '序号', key: 'index', width: 60, fixed: 'left', render: (_: any, __: any, index: number) => (pagination.current - 1) * pagination.pageSize + index + 1 },
-    { title: '线索编码', dataIndex: 'leadCode', width: 140, fixed: 'left' },
-    { title: '客户姓名', dataIndex: 'customerName', render: (_: any, record: any) => record.customer?.customerName || '-', width: 100 },
-    { title: '客户电话', dataIndex: 'customerPhone', render: (_: any, record: any) => record.customer?.phone || '-', width: 120 },
+    { title: '线索编码', dataIndex: 'leadCode', width: 90, fixed: 'left' },
+    { title: '客户姓名', dataIndex: 'customerName', render: (_: any, record: any) => record.customer?.customerName || '-', width: 100, fixed: 'left' },
+    { title: '客户电话', dataIndex: 'customerPhone', render: (_: any, record: any) => record.customer?.phone || '-', width: 120, fixed: 'left' },
     { title: '渠道来源', dataIndex: 'channelSource', width: 100 },
     { title: '线索来源方式', dataIndex: 'sourceMethod', width: 120 },
     { title: '来源日期', dataIndex: 'sourceDate', width: 120 },
+    { title: '车型', key: 'carModel', width: 140, render: (_: any, record: any) => record.vehicle?.model || '-' },
+    { title: '款式', key: 'carStyle', width: 120, render: (_: any, record: any) => record.vehicle?.style || '-' },
     { title: '车架号', dataIndex: 'vin', width: 180, render: (_: any, record: any) => record.vehicle?.vin || '-' },
+    { title: '发票日期', key: 'purchaseDate', width: 110, render: (_: any, record: any) => record.vehicle?.purchaseDate || '-' },
+    { title: '车龄（月）', key: 'vehicleAge', width: 100, render: (_: any, record: any) => record.vehicle?.purchaseDate ? dayjs().diff(dayjs(record.vehicle.purchaseDate), 'month') : '-' },
+    { title: '里程数', key: 'mileage', width: 110, render: (_: any, record: any) => (record.vehicle?.mileage || record.vehicle?.mileage === 0) ? `${Number(record.vehicle.mileage).toLocaleString()} km` : '-' },
+    { title: '里程≥4万公里', key: 'over40k', width: 110, render: (_: any, record: any) => record.vehicle ? boolText(record.vehicle.isMileageOver40k) : '-' },
+    { title: '里程≥9.5万公里', key: 'over95k', width: 120, render: (_: any, record: any) => record.vehicle ? boolText(record.vehicle.isMileageOver95k) : '-' },
+    { title: '是否已购整车延保', key: 'extWarranty', width: 130, render: (_: any, record: any) => record.vehicle ? boolText(record.vehicle.hasExtendedWarranty) : '-' },
+    { title: '是否已购电池延保', key: 'batWarranty', width: 130, render: (_: any, record: any) => record.vehicle ? boolText(record.vehicle.hasBatteryWarranty) : '-' },
+    { title: '是否已购安心保', key: 'peaceOfMind', width: 120, render: (_: any, record: any) => record.vehicle ? boolText(record.vehicle.hasPeaceOfMind) : '-' },
+    { title: '是否已购轮胎保障', key: 'tireProtection', width: 130, render: (_: any, record: any) => record.vehicle ? boolText(record.vehicle.hasTireProtection) : '-' },
+    { title: '添加微信状态', dataIndex: 'isAddWechat', width: 120, render: (val: string) => getPillTag(val) },
     { title: '购买意向', dataIndex: 'purchaseIntention', width: 100, render: (val: string) => getPillTag(val) },
     { title: '线索状态', dataIndex: 'leadStatus', width: 100, render: (val: number) => getStatusTag(val) },
-    { title: '客户沟通意向', dataIndex: 'communicationTendency', width: 120, render: (val: string) => getPillTag(val) },
+    { title: '客户沟通倾向', dataIndex: 'communicationTendency', width: 120, render: (val: string) => getPillTag(val) },
     { title: '呼叫结果', dataIndex: 'callResult', width: 100, render: (val: string) => getPillTag(val) },
     { title: '意向商品', key: 'intentProduct', width: 150, render: (_: any, record: any) => renderProducts(record.products, 1) },
     { title: '意向赠品', key: 'intentGift', width: 150, render: (_: any, record: any) => renderProducts(record.products, 2) },
-    { title: '跟进人', dataIndex: 'assignee', width: 100, render: (_: any, record: any) => record.assignee?.realName || record.assignee?.username || '-' },
+    { title: '负责人', dataIndex: 'assignee', width: 100, render: (_: any, record: any) => record.assignee?.realName || record.assignee?.username || '-' },
     { title: '创建时间', dataIndex: 'createdAt', width: 180, render: (val: string) => val ? dayjs(val).format('YYYY-MM-DD HH:mm') : '-' },
+    { title: '跟进天数', key: 'followUpDays', width: 100, render: (_: any, record: any) => record.firstFollowAt ? (Math.floor((new Date().setHours(0,0,0,0) - new Date(record.firstFollowAt).setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)) + 1) : '-' },
+    { title: '关联订单号', dataIndex: 'orderId', width: 120, render: (val: any) => val || '-' },
     {
       title: '操作', key: 'action', width: 80, fixed: 'right',
       render: (_: any, record: any) => (
         <div className="action-links">
-          {hasPerm('workbench:grab', 'lead') && <a onClick={() => handleClaim(record)}>领取</a>}
+          {hasPerm('workbench:grab', 'lead') && (
+            claimingId === record.id
+              ? <a style={{ color: '#94A3B8', cursor: 'not-allowed' }}>领取中…</a>
+              : <a onClick={() => handleClaim(record)}>领取</a>
+          )}
         </div>
       ),
     },
@@ -163,34 +202,8 @@ const PublicPool: React.FC = () => {
       <div className="card" style={{ padding: '24px' }}>
         <div style={{ color: '#e2e8f0', fontSize: '16px', fontWeight: 600, marginBottom: '20px' }}>全部可抢线索</div>
 
-        <div style={{ marginBottom: '24px' }}>
-          <Form form={form} layout="inline" onFinish={onSearch} className="search-form" style={{ rowGap: '16px' }}>
-            <Form.Item name="channelSource" label={<span style={{ color: '#c9cdd4' }}>渠道来源</span>}>
-              <Select placeholder="全部" allowClear style={{ width: 130 }} options={getDictOptions('channel_source')} />
-            </Form.Item>
-            <Form.Item name="customerName" label={<span style={{ color: '#c9cdd4' }}>客户姓名</span>}>
-              <Input placeholder="请输入姓名" allowClear />
-            </Form.Item>
-            <Form.Item name="customerPhone" label={<span style={{ color: '#c9cdd4' }}>客户电话</span>}>
-              <Input placeholder="请输入电话" allowClear />
-            </Form.Item>
-            <Form.Item name="sourceMethod" label={<span style={{ color: '#c9cdd4' }}>线索来源方式</span>}>
-              <Select placeholder="全部" allowClear style={{ width: 130 }} options={getDictOptions('lead_source_method')} />
-            </Form.Item>
-            <Form.Item name="leadStatus" label={<span style={{ color: '#c9cdd4' }}>线索状态</span>}>
-              <Select placeholder="全部" allowClear style={{ width: 130 }}>
-                <Select.Option value="0">待分配</Select.Option>
-                <Select.Option value="4">已战败</Select.Option>
-                <Select.Option value="6">回收待分配</Select.Option>
-              </Select>
-            </Form.Item>
-            <Form.Item>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <Button onClick={onReset} className="crm-btn crm-btn-outline">重置</Button>
-                <Button type="primary" htmlType="submit" className="crm-btn crm-btn-primary">筛选</Button>
-              </div>
-            </Form.Item>
-          </Form>
+        <div style={{ marginBottom: '24px' }} className="search-form pool-dark-search">
+          <LeadSearchForm form={form} onSearch={onSearch} salesList={salesList} darkLabels storageScope="public-pool" />
         </div>
 
         <ConfigProvider 

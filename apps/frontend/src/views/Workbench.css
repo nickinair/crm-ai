@@ -264,6 +264,21 @@
             border-color: #3b82f6;
         }
 
+        .filter-btn .filter-count {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 0 7px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.12);
+            font-size: 11px;
+            line-height: 16px;
+            color: inherit;
+        }
+
+        .filter-btn.active .filter-count {
+            background: rgba(255,255,255,0.25);
+        }
+
         .quick-actions {
             display: flex;
             gap: 12px;

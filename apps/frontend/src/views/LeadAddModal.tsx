@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Modal, Form, Input, Select, Row, Col, Button, Table, message, Checkbox, Spin, AutoComplete } from 'antd';
+import { Modal, Form, Input, Select, Row, Col, Button, Table, message, Checkbox, Spin, AutoComplete, Steps } from 'antd';
 import { DeleteOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
@@ -41,6 +41,98 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
   const [isGiftSelectorOpen, setIsGiftSelectorOpen] = useState(false);
 
+  // ===== 三步式新增（PRD 4.3.3 / 4.2.3.3 / 4.2.5.2）：仅新增模式启用，编辑/查看保持单页 =====
+  const isThreeStep = !editId && !isView;
+  const [step, setStep] = useState(0);
+  const [stepLoading, setStepLoading] = useState(false);
+  const [vehicleMode, setVehicleMode] = useState<'select' | 'create'>('select');
+  const [customerVehicles, setCustomerVehicles] = useState<any[]>([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>(undefined);
+
+  /** 车辆下拉展示：品牌 车型 (VIN)，只拼有值字段（PRD 配图 image24） */
+  const vehicleLabel = (v: any) => {
+    const head = [v.brand, v.model].filter(Boolean).join(' ');
+    const text = head + (v.vin ? `${head ? ' ' : ''}(${v.vin})` : '');
+    return text || '未获取到车辆展示信息';
+  };
+
+  const loadCustomerVehicles = async (custId: string) => {
+    try {
+      const vs: any = await request.get(`/customer/${custId}/vehicles`);
+      setCustomerVehicles(Array.isArray(vs) ? vs : []);
+    } catch { setCustomerVehicles([]); }
+  };
+
+  /** 第一步 下一步：新增客户时直接保存客户（PRD 4.3.3），然后加载车辆进入第二步 */
+  const nextFromStep1 = async () => {
+    const baseFields = ['channelSource', 'sourceMethod', 'sourceDate'];
+    try {
+      if (lockedCustomer) {
+        await form.validateFields(baseFields);
+        setStepLoading(true);
+        await loadCustomerVehicles(lockedCustomer.id);
+        setStep(1);
+        return;
+      }
+      if (isNewCustomer) {
+        const values = await form.validateFields(['customerName', 'customerPhone', ...baseFields]);
+        setStepLoading(true);
+        // 新增客户：点击下一步，直接保存客户信息（PRD 4.3.3）
+        const res: any = await request.post('/customer', { customerName: values.customerName || '', phone: values.customerPhone });
+        if (res?.error) { message.error(res.message || '保存客户失败'); return; }
+        setCustomerOptions([res]);
+        form.setFieldsValue({ customerId: res.id });
+        setIsNewCustomer(false);
+        await loadCustomerVehicles(res.id);
+        setStep(1);
+        return;
+      }
+      const values = await form.validateFields(['customerId', ...baseFields]);
+      setStepLoading(true);
+      await loadCustomerVehicles(values.customerId);
+      setStep(1);
+    } catch (e: any) {
+      if (e?.errorFields) return;
+      // 手机号重复等由全局拦截器提示
+    } finally {
+      setStepLoading(false);
+    }
+  };
+
+  /** 第二步 下一步：新增车辆时直接保存车辆并关联客户（PRD 4.3.3） */
+  const nextFromStep2 = async () => {
+    if (vehicleMode === 'select') { setStep(2); return; }
+    const v = form.getFieldsValue(['carBrand', 'carPlate', 'carModel', 'carStyle', 'carVin', 'purchaseDate', 'carMileage',
+      'isMileageOver40k', 'isMileageOver95k', 'hasExtendedWarranty', 'hasBatteryWarranty', 'hasPeaceOfMind', 'hasTireProtection', 'remark']);
+    const hasAny = Object.values(v).some(x => x !== undefined && x !== null && x !== '');
+    if (!hasAny) { setStep(2); return; } // 车辆信息整体非必填，全空则不建车
+    try {
+      await form.validateFields(['carVin']);
+      setStepLoading(true);
+      const custId = lockedCustomer?.id || form.getFieldValue('customerId');
+      const res: any = await request.post('/customer/vehicle', {
+        customerId: custId,
+        brand: v.carBrand || null, plateNo: v.carPlate || null, model: v.carModel || null,
+        style: v.carStyle || null, vin: v.carVin || null, purchaseDate: v.purchaseDate || null,
+        mileage: v.carMileage || null,
+        isMileageOver40k: v.isMileageOver40k ?? null, isMileageOver95k: v.isMileageOver95k ?? null,
+        hasExtendedWarranty: v.hasExtendedWarranty ?? null, hasBatteryWarranty: v.hasBatteryWarranty ?? null,
+        hasPeaceOfMind: v.hasPeaceOfMind ?? null, hasTireProtection: v.hasTireProtection ?? null,
+        remark: v.remark || null,
+      });
+      if (res?.error) { message.error(res.message || '保存车辆失败'); return; }
+      // 保存成功：转为选择模式并选中该车辆
+      await loadCustomerVehicles(custId);
+      setSelectedVehicleId(String(res.id));
+      setVehicleMode('select');
+      setStep(2);
+    } catch (e: any) {
+      if (e?.errorFields) return;
+    } finally {
+      setStepLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (open) {
       form.resetFields();
@@ -49,6 +141,10 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
       setCustomerSearchValue('');
       setCustomerPage(1);
       setCustomerTotal(0);
+      setStep(0);
+      setVehicleMode('select');
+      setCustomerVehicles([]);
+      setSelectedVehicleId(undefined);
       fetchProducts();
       if (editId) {
         fetchLead(editId);
@@ -169,7 +265,9 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
     try {
       const payload = {
         ...values,
-        isNewCustomer,
+        isNewCustomer: isThreeStep ? false : isNewCustomer, // 三步式：客户已在第一步落库
+        // 三步式：车辆已在第二步落库/选定，直接关联（后端跳过重复建车）
+        ...(isThreeStep && selectedVehicleId ? { vehicleId: selectedVehicleId } : {}),
         forceBindVehicle,
         sourceDate: values.sourceDate || undefined,
         purchaseDate: values.purchaseDate || undefined,
@@ -300,9 +398,24 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
       onOk={() => form.submit()}
       confirmLoading={loading}
       className="crm-unified-modal"
-      footer={isView ? null : undefined}
+      footer={isView ? null : isThreeStep ? (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+          <Button onClick={onCancel}>取消</Button>
+          {step > 0 && <Button onClick={() => setStep(step - 1)}>上一步</Button>}
+          {step < 2 && <Button type="primary" loading={stepLoading} onClick={step === 0 ? nextFromStep1 : nextFromStep2}>下一步</Button>}
+          {step === 2 && <Button type="primary" loading={loading} onClick={() => form.submit()}>保存线索</Button>}
+        </div>
+      ) : undefined}
     >
+      {isThreeStep && (
+        <Steps
+          current={step}
+          items={[{ title: '客户信息' }, { title: '车辆信息' }, { title: '商品信息' }]}
+          style={{ marginBottom: '24px' }}
+        />
+      )}
       <Form form={form} layout="vertical" onFinish={onFinish} disabled={isView}>
+        <div style={{ display: (!isThreeStep || step === 0) ? 'block' : 'none' }}>
         <div style={{ fontSize: '15px', fontWeight: 600, color: '#111827', marginBottom: '16px' }}>基础信息</div>
 
         <Row gutter={24}>
@@ -401,7 +514,32 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
           </Row>
         )}
 
-        <div style={{ fontSize: '15px', fontWeight: 600, color: '#111827', marginBottom: '16px', marginTop: '8px' }}>车辆信息</div>
+        </div>
+
+        {/* ===== 车辆信息（三步式第二步：默认选择方式 + 新增切换，PRD 配图 image24/25）===== */}
+        <div style={{ display: (!isThreeStep || step === 1) ? 'block' : 'none' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', marginTop: '8px' }}>
+          <span style={{ fontSize: '15px', fontWeight: 600, color: '#111827' }}>车辆信息</span>
+          {isThreeStep && (
+            vehicleMode === 'select'
+              ? <Button type="link" onClick={() => setVehicleMode('create')}>+ 新增车辆</Button>
+              : <Button type="link" onClick={() => setVehicleMode('select')}>← 选择已有车辆</Button>
+          )}
+        </div>
+        {isThreeStep && vehicleMode === 'select' && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '8px' }}>选择车辆</div>
+            <Select
+              style={{ width: '100%' }}
+              placeholder={customerVehicles.length ? '请选择车辆' : '该客户暂无车辆，可点击右上角新增'}
+              allowClear
+              value={selectedVehicleId}
+              onChange={setSelectedVehicleId}
+              options={customerVehicles.map(v => ({ label: vehicleLabel(v), value: String(v.id) }))}
+            />
+          </div>
+        )}
+        <div style={{ display: (!isThreeStep || vehicleMode === 'create') ? 'block' : 'none' }}>
         <Row gutter={24}>
           <Col span={12}>
             <Form.Item name="carBrand" label="品牌">
@@ -542,9 +680,11 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
             </Form.Item>
           </Col>
         </Row>
+        </div>
+        </div>
 
-
-
+        {/* ===== 商品信息（三步式第三步，PRD 配图 image26）===== */}
+        <div style={{ display: (!isThreeStep || step === 2) ? 'block' : 'none' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '24px 0 16px' }}>
           <span style={{ fontSize: '14px', fontWeight: 500, color: '#1f2937' }}>意向商品信息</span>
           <Button 
@@ -608,6 +748,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
             }} /> }
           ]}
         />
+        </div>
       </Form>
     </Modal>
   );

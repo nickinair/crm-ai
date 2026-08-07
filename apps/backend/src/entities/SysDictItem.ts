@@ -14,6 +14,14 @@ export class SysDictItem {
   })
   dictTypeId: string;
 
+  @Column("varchar", {
+    name: "parent_value",
+    nullable: true,
+    comment: "父级字典项值，用于联动字典（如商品属性按商品类型分组）",
+    length: 64,
+  })
+  parentValue: string | null;
+
   @Column("varchar", { name: "item_code", comment: "字典项编码", length: 64 })
   itemCode: string;
 

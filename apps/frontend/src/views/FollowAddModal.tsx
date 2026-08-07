@@ -106,8 +106,8 @@ const FollowAddModal: React.FC<FollowAddModalProps> = ({ open, onCancel, onSucce
 
           <Form.Item name="leadStatus" label="线索状态" initialValue="跟进中">
             <Select placeholder="请选择">
+              {/* 「已完成」已移除：线索完结由订单完结联动触发（PRD 4.3.3） */}
               <Select.Option value="跟进中">跟进中</Select.Option>
-              <Select.Option value="已完成">已完成</Select.Option>
               <Select.Option value="已战败">已战败</Select.Option>
             </Select>
           </Form.Item>

@@ -69,6 +69,22 @@ export class SysAccount {
   })
   lastLoginAt: Date | null;
 
+  @Column("varchar", {
+    name: "callout_account",
+    nullable: true,
+    comment: "关联外呼账号",
+    length: 30,
+  })
+  calloutAccount: string | null;
+
+  @Column("varchar", {
+    name: "callout_password",
+    nullable: true,
+    comment: "关联外呼账号密码",
+    length: 50,
+  })
+  calloutPassword: string | null;
+
   @Column("datetime", {
     name: "created_at",
     comment: "创建时间",

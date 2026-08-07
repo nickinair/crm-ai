@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Form, Input, Select, Modal, Row, Col, message, Tooltip, Upload, Table, ConfigProvider, Progress } from 'antd';
+import { Button, Form, Select, Modal, Row, Col, message, Tooltip, Upload, Table, ConfigProvider, Progress, Radio } from 'antd';
 import { InboxOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import ExcelJS from 'exceljs';
@@ -8,7 +8,7 @@ import { saveAs } from 'file-saver';
 import request from '../utils/request';
 import { startImportTask, clearImportTask, setImportModalVisible, getImportModalVisible, registerExpandModal, getImportTask } from '../utils/importTask';
 import LeadAddModal from './LeadAddModal';
-import { useDict } from '../hooks/useDict';
+import LeadSearchForm from '../components/LeadSearchForm';
 import './Leads.css';
 
 const LeadsManagement: React.FC = () => {
@@ -18,30 +18,20 @@ const LeadsManagement: React.FC = () => {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
-  const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
 
   // ===== 常用搜索（收起态的4个槽位，按账号持久化）=====
-  const DEFAULT_QUICK_KEYS = ['customerName', 'customerPhone', 'leadStatus', 'assignedAccountId'];
-  const quickStorageKey = () => {
-    try { const u = JSON.parse(localStorage.getItem('user') || '{}'); return `crm-quick-search-${u.id || 'anon'}`; } catch { return 'crm-quick-search-anon'; }
-  };
-  const [quickSearchKeys, setQuickSearchKeys] = useState<string[]>(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(quickStorageKey()) || 'null');
-      if (Array.isArray(saved) && saved.length === 4) return saved;
-    } catch { /* 忽略损坏的本地配置 */ }
-    return DEFAULT_QUICK_KEYS;
-  });
-  const [isQuickEditOpen, setIsQuickEditOpen] = useState(false);
-  const [draftQuickKeys, setDraftQuickKeys] = useState<string[]>(DEFAULT_QUICK_KEYS);
-  const [activeSlot, setActiveSlot] = useState(0);
-  const { getDictOptions } = useDict();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModal, setIsViewModal] = useState(false);
   const [editLeadId, setEditLeadId] = useState<string | undefined>();
   
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  // 重新分配（PRD 4.3.1）
+  const [reassignOpen, setReassignOpen] = useState(false);
+  const [reassignLeads, setReassignLeads] = useState<any[]>([]);
+  const [reassignAccountId, setReassignAccountId] = useState<string | undefined>(undefined);
+  const [reassignMoveOrders, setReassignMoveOrders] = useState(true); // 默认选中「是」
+  const [reassignLoading, setReassignLoading] = useState(false);
   
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [assigneeId, setAssigneeId] = useState<string | undefined>();
@@ -63,6 +53,15 @@ const LeadsManagement: React.FC = () => {
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<any>(null);
   const [sortInfo, setSortInfo] = useState<{ field?: string; order?: string }>({});
+
+  // 列表筛选状态持久化：进详情再返回时恢复筛选值+页码+排序
+  const LEADS_STATE_KEY = 'crm-leads-list-state';
+  const savedListState = (() => {
+    try { return JSON.parse(sessionStorage.getItem(LEADS_STATE_KEY) || 'null'); } catch { return null; }
+  })();
+  const persistListState = (values: any, page: number, limit: number, sort: any) => {
+    try { sessionStorage.setItem(LEADS_STATE_KEY, JSON.stringify({ values, page, limit, sort })); } catch { /* 忽略 */ }
+  };
 
   useEffect(() => {
     registerExpandModal(() => {
@@ -112,7 +111,8 @@ const LeadsManagement: React.FC = () => {
   }, [isImportModalOpen, importProgress?.progressId, importing]);
 
 
-  const fetchLeads = async (values: any = {}, page = 1, limit = 10) => {
+  const fetchLeads = async (values: any = {}, page = 1, limit = 10, sortOverride?: any) => {
+    const sort = sortOverride !== undefined ? sortOverride : sortInfo;
     setLoading(true);
     try {
       const params: any = { ...values, page, limit };
@@ -120,15 +120,16 @@ const LeadsManagement: React.FC = () => {
         params.leadStatus = params.leadStatus.join(',');
       }
       // Add sort params
-      if (sortInfo.field) {
-        params.sortField = sortInfo.field;
-        params.sortOrder = sortInfo.order || 'descend';
+      if (sort.field) {
+        params.sortField = sort.field;
+        params.sortOrder = sort.order || 'descend';
       }
       const res = await request.get('/lead', { params });
       const items = (res as any).items || (Array.isArray(res) ? res : ((res as any).data || []));
       setData(items);
       setTotal((res as any).total || items.length);
       setPagination({ current: page, pageSize: limit });
+      persistListState(values, page, limit, sort);
     } catch (error) {
       console.error(error);
     } finally {
@@ -143,8 +144,14 @@ const LeadsManagement: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchLeads();
     fetchSales();
+    // 有保存的筛选状态则恢复（从详情返回场景），否则默认加载
+    if (savedListState && savedListState.values) {
+      setSortInfo(savedListState.sort || {});
+      fetchLeads(savedListState.values, savedListState.page || 1, savedListState.limit || 10, savedListState.sort || {});
+    } else {
+      fetchLeads();
+    }
   }, []);
 
   const fetchSales = async () => {
@@ -187,6 +194,7 @@ const LeadsManagement: React.FC = () => {
       setData(items);
       setTotal(res.total || items.length);
       setPagination({ current: pag.current, pageSize: pag.pageSize });
+      persistListState(currentValues, pag.current, pag.pageSize, newSort);
     }).catch(console.error).finally(() => setLoading(false));
   };
 
@@ -345,43 +353,81 @@ const LeadsManagement: React.FC = () => {
     { title: '是否已购轮胎保障', key: 'tireProtection', width: 130, render: (_: any, record: any) => record.vehicle ? boolText(record.vehicle.hasTireProtection) : '-' },
     { title: '添加微信状态', dataIndex: 'isAddWechat', width: 120, render: (val: string) => getPillTag(val) },
     { title: '购买意向', dataIndex: 'purchaseIntention', width: 100, render: (val: string) => getPillTag(val) },
+    { title: '分配管控标识', dataIndex: 'assignControl', width: 110, render: (val: number | null) =>
+        val === 1 ? <span className="crm-tag crm-tag-warning">战败冷却期</span>
+        : val === 2 ? <span className="crm-tag crm-tag-info">战败已复活</span>
+        : '-' },
     { title: '线索状态', dataIndex: 'leadStatus', width: 100, render: (val: number) => getStatusTag(val) },
     { title: '客户沟通倾向', dataIndex: 'communicationTendency', width: 120, render: (val: string) => getPillTag(val) },
     { title: '呼叫结果', dataIndex: 'callResult', width: 100, render: (val: string) => getPillTag(val) },
     { title: '意向商品', key: 'intentProduct', width: 150, render: (_: any, record: any) => renderProducts(record.products, 1) },
     { title: '意向赠品', key: 'intentGift', width: 150, render: (_: any, record: any) => renderProducts(record.products, 2) },
     { title: '负责人', dataIndex: 'assignee', width: 100, render: (_: any, record: any) => record.assignee?.realName || record.assignee?.username || '-' },
+    { title: '创建人', dataIndex: 'creator', width: 100, render: (_: any, record: any) => record.creator?.realName || record.creator?.username || '-' },
+    { title: '线索创建类型', dataIndex: 'createType', width: 110, render: (val: number) =>
+        val === 2 ? <span className="crm-tag crm-tag-info">战败线索复活</span> : <span className="crm-tag crm-tag-default">普通新建</span> },
     { title: '创建时间', dataIndex: 'createdAt', width: 180, render: (val: string) => val ? new Date(val).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-') : '-' },
     { title: '跟进天数', key: 'followUpDays', width: 100, render: (_: any, record: any) => record.firstFollowAt ? (Math.floor((new Date().setHours(0,0,0,0) - new Date(record.firstFollowAt).setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)) + 1) : '-' },
-    { title: '关联订单号', dataIndex: 'orderId', width: 120, fixed: 'right', render: (val: any) => val || '-' },
+    { title: '订单情况', dataIndex: 'orderSituation', width: 120, render: (val: number) => {
+        const map: Record<number, { text: string; cls: string }> = {
+          0: { text: '未下单', cls: 'crm-tag-default' },
+          1: { text: '存在未完结订单', cls: 'crm-tag-warning' },
+          2: { text: '全部订单已作废', cls: 'crm-tag-danger' },
+          3: { text: '全部订单已完结', cls: 'crm-tag-success' },
+        };
+        const m = map[val] || map[0];
+        return <span className={`crm-tag ${m.cls}`}>{m.text}</span>;
+    } },
+    { title: '关联订单编号', key: 'orders', width: 150, render: (_: any, record: any) => {
+        const orders = record.orders || [];
+        if (!orders.length) return '-';
+        // 多个换行展示，所有状态的订单均展示，点击跳转订单详情（PRD 4.3.1）
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            {orders.map((o: any) => (
+              <a key={o.id} onClick={() => navigate(`/order/detail/${o.id}`)}>{o.orderCode}</a>
+            ))}
+          </div>
+        );
+    } },
     { title: '操作', key: 'action', width: 150, fixed: 'right', render: (_: any, record: any) => {
+        // 操作矩阵（PRD 4.3.1）：待分配/回收待分配→编辑、分配、作废；待跟进/跟进中→详情、重新分配；
+        // 已完成/已作废→详情；已战败无管控标识→详情、重新分配（分配入口保留）；有管控标识→仅详情
+        const st = record.leadStatus;
+        const controlled = record.assignControl != null;
+        const canEditVoid = [0, 6].includes(st);
+        const canAssign = [0, 6].includes(st) || (st === 4 && !controlled);
         return (
           <div className="action-links">
-            {[0, 6].includes(record.leadStatus) && (
+            {canEditVoid && (
               <a onClick={() => {
                 setEditLeadId(record.id);
                 setIsViewModal(false);
                 setIsModalOpen(true);
               }}>编辑</a>
             )}
-            
-            {[1, 2, 3, 4, 5].includes(record.leadStatus) && (
-              <a onClick={() => {
-                setEditLeadId(record.id);
-                setIsViewModal(true);
-                setIsModalOpen(true);
-              }}>详情</a>
-            )}
 
-            {[0, 4, 6].includes(record.leadStatus) && (
+            {/* 详情：跳转到线索跟进页（与销售点“跟进”进入的页面一致），不再用弹窗 */}
+            <a onClick={() => {
+              const custId = record.customerId || record.customer?.id;
+              if (!custId) { message.warning('该线索暂无关联客户，无法查看详情'); return; }
+              navigate(`/customer/360/${custId}?leadId=${record.id}&from=leads`);
+            }}>详情</a>
+
+            {canAssign && (
               <a onClick={() => {
                 setAssignLeadIds([record.id]);
                 setAssigneeId(undefined);
                 setIsAssignModalOpen(true);
-              }}>分配</a>
+              }}>{st === 4 ? '重新分配' : '分配'}</a>
             )}
 
-            {[0, 6].includes(record.leadStatus) && (
+            {/* 待跟进/跟进中：重新分配（换负责人，PRD 4.3.1 操作矩阵） */}
+            {[1, 2].includes(st) && (
+              <a onClick={() => openReassign([record])}>重新分配</a>
+            )}
+
+            {canEditVoid && (
               <a className="delete-link" onClick={() => handleVoid(record.id)}>作废</a>
             )}
           </div>
@@ -546,6 +592,59 @@ const LeadsManagement: React.FC = () => {
     ]
   };
 
+  /** 重新分配入口：行内单条 / 批量勾选（PRD 4.3.1） */
+  const STATUS_NAME: Record<number, string> = { 0: '待分配', 1: '待跟进', 2: '跟进中', 3: '已完成', 4: '已战败', 5: '已作废', 6: '回收待分配' };
+  const openReassign = (records: any[]) => {
+    if (!records.length) { message.warning('请选择要重新分配的线索'); return; }
+    // 仅待跟进/跟进中可重新分配；含其他状态直接提示（PRD 4.3.1）
+    const invalid = records.filter(r => ![1, 2].includes(r.leadStatus));
+    if (invalid.length) {
+      const names = [...new Set(invalid.map(r => STATUS_NAME[r.leadStatus] || '未知'))];
+      message.error(`${names.join('、')}状态的线索不可重新分配，请重新勾选后重试！`);
+      return;
+    }
+    setReassignLeads(records);
+    setReassignAccountId(undefined);
+    setReassignMoveOrders(true);
+    setReassignOpen(true);
+  };
+
+  const submitReassign = async () => {
+    if (!reassignAccountId) { message.warning('请选择分配的销售'); return; }
+    setReassignLoading(true);
+    try {
+      const res: any = await request.post('/lead/reassign', {
+        leadIds: reassignLeads.map(r => String(r.id)),
+        accountId: reassignAccountId,
+        moveOrders: reassignMoveOrders,
+      }, { timeout: 120000 });
+      if (res?.error) { message.error(res.message || '重新分配失败'); return; }
+      setReassignOpen(false);
+      setSelectedRowKeys([]);
+      if (res.failCount > 0) {
+        // 部分失败：可分配的已直接分配，失败明细弹框提示（PRD 4.3.1）
+        Modal.info({
+          title: '重新分配结果',
+          centered: true,
+          className: 'crm-unified-modal',
+          content: (
+            <div>
+              <div>成功重新分配 {res.successCount}条，失败{res.failCount}条；</div>
+              <div style={{ marginTop: 8 }}>以下线索销售正在跟进中，请等待销售跟进结束再操作：{(res.failedCodes || []).join('，')}</div>
+            </div>
+          ),
+        });
+      } else {
+        message.success(`成功重新分配 ${res.successCount}条`);
+      }
+      refreshLeads();
+    } catch (e: any) {
+      if (!e?.response) message.error(e?.message || '重新分配失败');
+    } finally {
+      setReassignLoading(false);
+    }
+  };
+
   const handleBatchAssign = () => {
     if (selectedRowKeys.length === 0) {
       message.warning('请先勾选需要分配的线索数据');
@@ -604,211 +703,7 @@ const LeadsManagement: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
       <div className="table-card">
         <div className="filter-section">
-          {(() => {
-            const groupTitle = (text: string) => (
-              <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, margin: '6px 0 2px' }}>
-                <span style={{ color: '#1F2937', fontSize: 15, fontWeight: 600, flexShrink: 0 }}>{text}</span>
-                <span style={{ flex: 1, height: 1, background: '#EBEEF3' }} />
-              </div>
-            );
-            const yesNoOptions = [{ value: '1', label: '是' }, { value: '0', label: '否' }];
-
-            // 全部搜索字段注册表：key / 标签 / 分组 / 渲染器（发票日期、创建时间为复合区间字段）
-            const searchFieldDefs: Array<{ key: string; label: string; group: string; render: () => React.ReactNode }> = [
-              { key: 'customerName', label: '客户姓名', group: '基础信息', render: () => (
-                <Form.Item name="customerName" label="客户姓名"><Input placeholder="请输入姓名" style={{ width: 140 }} allowClear /></Form.Item>) },
-              { key: 'customerPhone', label: '客户电话', group: '基础信息', render: () => (
-                <Form.Item name="customerPhone" label="客户电话"><Input placeholder="请输入电话" style={{ width: 140 }} allowClear /></Form.Item>) },
-              { key: 'channelSource', label: '渠道来源', group: '基础信息', render: () => (
-                <Form.Item name="channelSource" label="渠道来源"><Select placeholder="请选择" style={{ width: 140 }} allowClear options={getDictOptions('channel_source')} /></Form.Item>) },
-              { key: 'sourceMethod', label: '线索来源方式', group: '基础信息', render: () => (
-                <Form.Item name="sourceMethod" label="线索来源方式"><Select placeholder="请选择" style={{ width: 140 }} allowClear options={getDictOptions('lead_source_method')} /></Form.Item>) },
-              { key: 'leadCode', label: '线索编码', group: '基础信息', render: () => (
-                <Form.Item name="leadCode" label="线索编码"><Input placeholder="请输入线索编码" style={{ width: 150 }} allowClear /></Form.Item>) },
-              { key: 'leadStatus', label: '线索状态', group: '基础信息', render: () => (
-                <Form.Item name="leadStatus" label="线索状态">
-                  <Select placeholder="请选择" style={{ width: 150 }} mode="multiple" allowClear maxTagCount="responsive">
-                    <Select.Option value={0}>待分配</Select.Option>
-                    <Select.Option value={1}>待跟进</Select.Option>
-                    <Select.Option value={2}>跟进中</Select.Option>
-                    <Select.Option value={3}>已完成</Select.Option>
-                    <Select.Option value={4}>已战败</Select.Option>
-                    <Select.Option value={5}>已作废</Select.Option>
-                    <Select.Option value={6}>回收待分配</Select.Option>
-                  </Select>
-                </Form.Item>) },
-              { key: 'assignedAccountId', label: '负责人', group: '基础信息', render: () => (
-                <Form.Item name="assignedAccountId" label="负责人">
-                  <Select placeholder="请选择" style={{ width: 140 }} allowClear showSearch optionFilterProp="label"
-                    options={salesList.map((s: any) => ({ value: s.id, label: s.realName || s.username }))} />
-                </Form.Item>) },
-              { key: 'createdAt', label: '创建时间', group: '基础信息', render: () => (<>
-                <Form.Item name="createdAtStart" label="创建时间"><Input type="date" style={{ width: 150 }} /></Form.Item>
-                <Form.Item name="createdAtEnd" label="至" style={{ marginLeft: -8 }}><Input type="date" style={{ width: 150 }} /></Form.Item>
-              </>) },
-
-              { key: 'carModel', label: '车型', group: '车辆信息', render: () => (
-                <Form.Item name="carModel" label="车型"><Input placeholder="请输入车型" style={{ width: 140 }} allowClear /></Form.Item>) },
-              { key: 'carStyle', label: '款式', group: '车辆信息', render: () => (
-                <Form.Item name="carStyle" label="款式"><Input placeholder="请输入款式" style={{ width: 140 }} allowClear /></Form.Item>) },
-              { key: 'invoiceDate', label: '发票日期', group: '车辆信息', render: () => (<>
-                <Form.Item name="invoiceDateStart" label="发票日期"><Input type="date" style={{ width: 150 }} /></Form.Item>
-                <Form.Item name="invoiceDateEnd" label="至" style={{ marginLeft: -8 }}><Input type="date" style={{ width: 150 }} /></Form.Item>
-              </>) },
-              { key: 'vin', label: '车架号', group: '车辆信息', render: () => (
-                <Form.Item name="vin" label="车架号"><Input placeholder="请输入车架号" style={{ width: 170 }} allowClear /></Form.Item>) },
-              { key: 'vehicleAgeMin', label: '车龄（月）', group: '车辆信息', render: () => (
-                <Form.Item name="vehicleAgeMin" label="车龄（月）"><Input type="number" min={0} placeholder="≥ 月数" style={{ width: 110 }} /></Form.Item>) },
-              { key: 'mileageMin', label: '里程数', group: '车辆信息', render: () => (
-                <Form.Item name="mileageMin" label="里程数"><Input type="number" min={0} placeholder="≥ 公里" style={{ width: 120 }} /></Form.Item>) },
-              { key: 'isMileageOver40k', label: '里程≥4万公里', group: '车辆信息', render: () => (
-                <Form.Item name="isMileageOver40k" label="里程≥4万公里"><Select placeholder="请选择" style={{ width: 100 }} allowClear options={yesNoOptions} /></Form.Item>) },
-              { key: 'isMileageOver95k', label: '里程≥9.5万公里', group: '车辆信息', render: () => (
-                <Form.Item name="isMileageOver95k" label="里程≥9.5万公里"><Select placeholder="请选择" style={{ width: 100 }} allowClear options={yesNoOptions} /></Form.Item>) },
-              { key: 'hasExtendedWarranty', label: '是否已购整车延保', group: '车辆信息', render: () => (
-                <Form.Item name="hasExtendedWarranty" label="是否已购整车延保"><Select placeholder="请选择" style={{ width: 100 }} allowClear options={yesNoOptions} /></Form.Item>) },
-              { key: 'hasBatteryWarranty', label: '是否已购电池延保', group: '车辆信息', render: () => (
-                <Form.Item name="hasBatteryWarranty" label="是否已购电池延保"><Select placeholder="请选择" style={{ width: 100 }} allowClear options={yesNoOptions} /></Form.Item>) },
-              { key: 'hasPeaceOfMind', label: '是否已购安心保', group: '车辆信息', render: () => (
-                <Form.Item name="hasPeaceOfMind" label="是否已购安心保"><Select placeholder="请选择" style={{ width: 100 }} allowClear options={yesNoOptions} /></Form.Item>) },
-              { key: 'hasTireProtection', label: '是否已购轮胎保障', group: '车辆信息', render: () => (
-                <Form.Item name="hasTireProtection" label="是否已购轮胎保障"><Select placeholder="请选择" style={{ width: 100 }} allowClear options={yesNoOptions} /></Form.Item>) },
-
-              { key: 'isAddWechat', label: '添加微信状态', group: '跟进情况', render: () => (
-                <Form.Item name="isAddWechat" label="添加微信状态"><Select placeholder="请选择" style={{ width: 130 }} allowClear options={getDictOptions('wechat_add_status')} /></Form.Item>) },
-              { key: 'purchaseIntention', label: '购买意向', group: '跟进情况', render: () => (
-                <Form.Item name="purchaseIntention" label="购买意向"><Select placeholder="请选择" style={{ width: 130 }} allowClear options={getDictOptions('purchase_intention')} /></Form.Item>) },
-              { key: 'communicationTendency', label: '客户沟通倾向', group: '跟进情况', render: () => (
-                <Form.Item name="communicationTendency" label="客户沟通倾向"><Select placeholder="请选择" style={{ width: 140 }} allowClear options={getDictOptions('communication_tendency')} /></Form.Item>) },
-              { key: 'callResult', label: '呼叫结果', group: '跟进情况', render: () => (
-                <Form.Item name="callResult" label="呼叫结果"><Select placeholder="请选择" style={{ width: 140 }} allowClear options={getDictOptions('call_result')} /></Form.Item>) },
-              { key: 'intentProduct', label: '意向商品', group: '跟进情况', render: () => (
-                <Form.Item name="intentProduct" label="意向商品"><Input placeholder="请输入商品名称" style={{ width: 150 }} allowClear /></Form.Item>) },
-              { key: 'intentGift', label: '意向赠品', group: '跟进情况', render: () => (
-                <Form.Item name="intentGift" label="意向赠品"><Input placeholder="请输入赠品名称" style={{ width: 150 }} allowClear /></Form.Item>) },
-              { key: 'followDaysMin', label: '跟进天数', group: '跟进情况', render: () => (
-                <Form.Item name="followDaysMin" label="跟进天数"><Input type="number" min={0} placeholder="精确天数" style={{ width: 110 }} /></Form.Item>) },
-            ];
-            const fieldMap: Record<string, typeof searchFieldDefs[number]> = Object.fromEntries(searchFieldDefs.map(f => [f.key, f]));
-            const groups = ['基础信息', '车辆信息', '跟进情况'];
-
-            const openQuickEdit = () => {
-              setDraftQuickKeys([...quickSearchKeys]);
-              setActiveSlot(0);
-              setIsQuickEditOpen(true);
-            };
-            const saveQuickSearch = () => {
-              setQuickSearchKeys(draftQuickKeys);
-              try { localStorage.setItem(quickStorageKey(), JSON.stringify(draftQuickKeys)); } catch { /* 忽略 */ }
-              setIsQuickEditOpen(false);
-              message.success('常用搜索已更新');
-            };
-
-            return (<>
-              <Form form={form} layout="inline" onFinish={onSearch} style={{ rowGap: 16 }}>
-                {!isAdvancedSearch
-                  ? quickSearchKeys.map(k => fieldMap[k] ? <React.Fragment key={k}>{fieldMap[k].render()}</React.Fragment> : null)
-                  : groups.map(g => (
-                      <React.Fragment key={g}>
-                        {groupTitle(g)}
-                        {searchFieldDefs.filter(f => f.group === g).map(f => <React.Fragment key={f.key}>{f.render()}</React.Fragment>)}
-                      </React.Fragment>
-                    ))}
-
-                <Form.Item>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <Button htmlType="button" onClick={() => { form.resetFields(); onSearch({}); }} className="crm-btn crm-btn-outline" style={{ height: '36px' }}>
-                      重置
-                    </Button>
-                    <Button htmlType="submit" className="crm-btn crm-btn-primary" style={{ height: '36px' }}>
-                      查询
-                    </Button>
-                    <a
-                      style={{ fontSize: 13, marginLeft: 4, color: '#3b82f6', cursor: 'pointer' }}
-                      onClick={() => setIsAdvancedSearch(!isAdvancedSearch)}
-                    >
-                      {isAdvancedSearch ? '收起' : '高级搜索'}
-                    </a>
-                    <a
-                      style={{ fontSize: 13, marginLeft: 4, color: '#3b82f6', cursor: 'pointer' }}
-                      onClick={openQuickEdit}
-                    >
-                      编辑常用搜索
-                    </a>
-                  </div>
-                </Form.Item>
-              </Form>
-
-              <Modal
-                title="编辑常用搜索"
-                open={isQuickEditOpen}
-                onCancel={() => setIsQuickEditOpen(false)}
-                centered
-                width={780}
-                className="crm-unified-modal"
-                footer={[
-                  <Button key="reset" onClick={() => { setDraftQuickKeys([...DEFAULT_QUICK_KEYS]); setActiveSlot(0); }} style={{ float: 'left' }}>恢复默认</Button>,
-                  <Button key="cancel" onClick={() => setIsQuickEditOpen(false)}>取消</Button>,
-                  <Button key="save" type="primary" onClick={saveQuickSearch}>保存</Button>,
-                ]}
-              >
-                <div style={{ color: '#64748B', fontSize: 13, marginBottom: 12 }}>
-                  先点击选中一个位置，再从下方字段中选择要放入的搜索项；每个字段只能使用一次。
-                </div>
-                <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-                  {draftQuickKeys.map((k, i) => (
-                    <div
-                      key={i}
-                      onClick={() => setActiveSlot(i)}
-                      style={{
-                        flex: 1, padding: '10px 12px', borderRadius: 8, textAlign: 'center', cursor: 'pointer',
-                        border: activeSlot === i ? '2px solid #6366F1' : '1px solid #D1D5DB',
-                        background: activeSlot === i ? '#EEF2FF' : '#F8FAFC',
-                        color: '#1F2937', fontWeight: 500,
-                      }}
-                    >
-                      <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 2 }}>位置 {i + 1}</div>
-                      {fieldMap[k]?.label || '-'}
-                    </div>
-                  ))}
-                </div>
-                {groups.map(g => (
-                  <div key={g} style={{ marginBottom: 14 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '6px 0 10px' }}>
-                      <span style={{ color: '#1F2937', fontSize: 14, fontWeight: 600 }}>{g}</span>
-                      <span style={{ flex: 1, height: 1, background: '#EBEEF3' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {searchFieldDefs.filter(f => f.group === g).map(f => {
-                        const usedIdx = draftQuickKeys.indexOf(f.key);
-                        const inActive = usedIdx === activeSlot;
-                        const usedElsewhere = usedIdx !== -1 && !inActive;
-                        return (
-                          <div
-                            key={f.key}
-                            onClick={() => {
-                              if (usedElsewhere || inActive) return;
-                              setDraftQuickKeys(prev => { const next = [...prev]; next[activeSlot] = f.key; return next; });
-                              setActiveSlot(s => Math.min(s + 1, 3));
-                            }}
-                            style={{
-                              padding: '6px 14px', borderRadius: 16, fontSize: 13,
-                              cursor: usedElsewhere ? 'not-allowed' : 'pointer',
-                              border: inActive ? '1px solid #6366F1' : '1px solid #E2E8F0',
-                              background: inActive ? '#EEF2FF' : usedElsewhere ? '#F1F5F9' : '#fff',
-                              color: inActive ? '#4F46E5' : usedElsewhere ? '#B0B7C3' : '#334155',
-                            }}
-                          >
-                            {f.label}{usedIdx !== -1 ? ` · 位置${usedIdx + 1}` : ''}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </Modal>
-            </>);
-          })()}
+          <LeadSearchForm form={form} onSearch={onSearch} salesList={salesList} storageScope="leads" initialValues={savedListState?.values} />
         </div>
 
         <div className="table-header-actions">
@@ -818,6 +713,7 @@ const LeadsManagement: React.FC = () => {
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <Button style={{ height: '36px' }} onClick={handleBatchAssign}>批量分配</Button>
+            <Button style={{ height: '36px' }} onClick={() => openReassign((data as any[]).filter((l: any) => selectedRowKeys.includes(l.id)))}>重新分配</Button>
             <Button style={{ height: '36px' }} onClick={() => { 
               setIsImportModalOpen(true); 
               const task = getImportTask();
@@ -855,6 +751,36 @@ const LeadsManagement: React.FC = () => {
         />
         </ConfigProvider>
       </div>
+
+      {/* ===== 重新分配确认（PRD 配图 image35）===== */}
+      <Modal
+        centered
+        title="重新分配确认"
+        open={reassignOpen}
+        onCancel={() => setReassignOpen(false)}
+        onOk={submitReassign}
+        confirmLoading={reassignLoading}
+        okText="确认"
+        cancelText="取消"
+        width={440}
+        className="crm-unified-modal"
+      >
+        <div style={{ marginBottom: '12px', color: '#1f2937' }}>是否连带线索未完结订单一并重新分配？</div>
+        <Radio.Group value={reassignMoveOrders} onChange={e => setReassignMoveOrders(e.target.value)} style={{ marginBottom: '20px' }}>
+          <Radio value={true}>是</Radio>
+          <Radio value={false}>否</Radio>
+        </Radio.Group>
+        <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '6px' }}>请选择分配的销售</div>
+        <Select
+          style={{ width: '100%' }}
+          placeholder="请选择销售"
+          showSearch
+          optionFilterProp="label"
+          value={reassignAccountId}
+          onChange={setReassignAccountId}
+          options={salesList.map((sa: any) => ({ value: sa.id, label: sa.realName || sa.username }))}
+        />
+      </Modal>
 
       <LeadAddModal 
         open={isModalOpen} 

@@ -10,6 +10,7 @@ import {
   TeamOutlined,
   ShopOutlined,
   ProfileOutlined,
+  SettingOutlined,
   BankOutlined,
   LockOutlined,
   SearchOutlined,
@@ -59,7 +60,8 @@ const AppLayout: React.FC = () => {
     { key: '/leads', icon: <TeamOutlined />, label: '线索池管理', permCode: 'lead' },
     { key: '/customer', icon: <UserOutlined />, label: '客户管理', permCode: 'customer' },
     { key: '/product', icon: <ShopOutlined />, label: '商品管理', permCode: 'product' },
-    { key: '/order', icon: <ProfileOutlined />, label: '订单管理（敬请期待）', disabled: true, permCode: 'order' },
+    { key: '/order', icon: <ProfileOutlined />, label: '订单管理', permCode: 'order' },
+    { key: '/config', icon: <SettingOutlined />, label: '配置管理', permCode: 'config' },
     { 
       key: 'org-group', 
       icon: <BankOutlined />, 
@@ -112,6 +114,7 @@ const AppLayout: React.FC = () => {
     '/customer': '客户管理',
     '/product': '商品管理',
     '/order': '订单管理',
+    '/config': '配置管理',
     '/org': '组织层级管理',
     '/account': '账号管理',
     '/role': '角色管理',
@@ -134,6 +137,8 @@ const AppLayout: React.FC = () => {
       displayTitle = '线索跟进';
     } else if (location.pathname.startsWith('/customer/detail')) {
       displayTitle = '客户360视图';
+    } else if (location.pathname.startsWith('/order/detail')) {
+      displayTitle = '订单详情';
     }
   }
 
@@ -150,15 +155,30 @@ const AppLayout: React.FC = () => {
     if (location.pathname.startsWith('/customer/360')) {
       const parts = location.pathname.split('/');
       const id = parts[parts.length - 1];
+      // 从线索池管理点“详情”进入：首页 → 线索池管理 → 线索详情
+      if (searchParams.get('from') === 'leads') {
+        items.push({ label: '线索池管理', path: '/leads' });
+        items.push({ label: '线索详情', path: `/customer/360/${id}${location.search}` });
+        return items;
+      }
       items.push({ label: '工作台', path: '/workbench' });
       items.push({ label: '线索跟进', path: `/customer/360/${id}${location.search}` });
+      return items;
+    }
+
+    // 订单详情：首页 → 订单管理 → 订单详情（PRD 配图 image5 面包屑）
+    if (location.pathname.startsWith('/order/detail')) {
+      const parts = location.pathname.split('/');
+      const oid = parts[parts.length - 1];
+      items.push({ label: '订单管理', path: '/order' });
+      items.push({ label: '订单详情', path: `/order/detail/${oid}` });
       return items;
     }
 
     if (location.pathname.startsWith('/customer/detail')) {
       const parts = location.pathname.split('/');
       const id = parts[parts.length - 1];
-      
+
       if (searchParams.get('from') === 'customer') {
         items.push({ label: '客户管理', path: '/customer' });
       } else if (searchParams.get('from') === 'workbench_customer') {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, message, Tooltip, Select, Input, Modal } from 'antd';
+import { Tabs, message, Tooltip, Select, Input, Modal, Table } from 'antd';
 import { 
   EditOutlined,
   CheckCircleOutlined,
@@ -13,13 +13,16 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
-import { maskPhone, maskIdCard } from '../utils/mask';
+import { useLeadLock } from '../hooks/useLeadLock';
+import { maskIdCard } from '../utils/mask';
 import EditProductsModal from './Customer360EditProductsModal';
 import EditCustomerModal from './Customer360EditCustomerModal';
 import EditVehicleModal from './EditVehicleModal';
 import LeadAddModal from './LeadAddModal';
 import FollowAddModal from './FollowAddModal';
-import OrderAddModal from './OrderAddModal';
+import OrderCreateModal from '../components/OrderCreateModal';
+import { getOrderStatusTag } from './Order';
+import './Workbench.css';
 import './Customer360.css';
 import dayjs from 'dayjs';
 
@@ -37,6 +40,8 @@ const Customer360: React.FC = () => {
   const [activeTab, setActiveTab] = useState('1');
   const [searchParams] = useSearchParams();
   const leadId = searchParams.get('leadId');
+  // 进入线索详情加锁，离开释放（PRD 4.3.1 线索锁定）
+  useLeadLock(leadId);
   const navigate = useNavigate();
 
   const [leadInfo, setLeadInfo] = useState<any>({});
@@ -58,6 +63,24 @@ const Customer360: React.FC = () => {
   const [isFollowModalVisible, setIsFollowModalVisible] = useState(false);
   const [isOrderModalVisible, setIsOrderModalVisible] = useState(false);
   const [customerOrders, setCustomerOrders] = useState<any[]>([]);
+  // 操作日志：倒序分页，每页10条，滚动加载（PRD 4.3.3）
+  const [leadLogs, setLeadLogs] = useState<any[]>([]);
+  const [logPage, setLogPage] = useState(1);
+  const [logTotal, setLogTotal] = useState(0);
+  const [logLoading, setLogLoading] = useState(false);
+
+  const fetchLeadLogs = async (page: number, reset = false) => {
+    if (!leadId) return;
+    setLogLoading(true);
+    try {
+      const res: any = await request.get(`/lead/${leadId}/logs`, { params: { page, limit: 10 } });
+      setLeadLogs(prev => reset ? (res.items || []) : [...prev, ...(res.items || [])]);
+      setLogTotal(res.total || 0);
+      setLogPage(page);
+    } catch { /* 全局拦截器提示 */ } finally {
+      setLogLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (leadId) {
@@ -79,16 +102,18 @@ const Customer360: React.FC = () => {
           const customerDetail = await request.get(`/customer/360/${res.customer.id}`) as any;
           if (customerDetail && !customerDetail.error) {
             setCustomerInfo(customerDetail);
-            setFollowRecords((customerDetail.follows || []).filter((f: any) => String(f.leadCode) === String(res.leadCode) || !f.leadCode));
           } else {
             setCustomerInfo(res.customer);
-            setFollowRecords((res.follows || []).filter((f: any) => String(f.leadCode) === String(res.leadCode) || !f.leadCode));
           }
           fetchCustomerNotes(res.customer.id);
           fetchCustomerOrders(res.customer.id);
-        } else {
-          setFollowRecords(res.follows || []);
         }
+        // 跟进记录：战败复活线索合并所有父级线索记录，按时间倒序（PRD 4.3.3）
+        try {
+          const follows: any = await request.get(`/lead/${leadId}/follows`);
+          setFollowRecords(Array.isArray(follows) ? follows : []);
+        } catch { setFollowRecords([]); }
+        fetchLeadLogs(1, true);
         if (res.vehicle) {
           setVehicleInfo(res.vehicle);
         }
@@ -266,8 +291,22 @@ const Customer360: React.FC = () => {
             <span className="c360-value">{leadInfo.communicationTendency || '-'}</span>
           </div>
           <div className="c360-field">
+            <span className="c360-label">线索创建类型</span>
+            <span className="c360-value">{leadInfo.createType === 2 ? '战败线索复活' : '普通新建'}</span>
+          </div>
+          <div className="c360-field">
             <span className="c360-label">线索状态</span>
             <span className="c360-value highlight-primary">{leadStatusMap[leadInfo.leadStatus] || '-'}</span>
+          </div>
+          <div className="c360-field">
+            <span className="c360-label">订单情况</span>
+            <span className="c360-value">{['未下单', '存在未完结订单', '全部订单已作废', '全部订单已完结'][leadInfo.orderSituation] || '未下单'}</span>
+          </div>
+          <div className="c360-field">
+            <span className="c360-label">分配管控标识</span>
+            <span className="c360-value" style={{ color: leadInfo.assignControl === 1 ? '#F59E0B' : leadInfo.assignControl === 2 ? '#60A5FA' : undefined }}>
+              {leadInfo.assignControl === 1 ? '战败冷却期' : leadInfo.assignControl === 2 ? '战败已复活' : '无管控'}
+            </span>
           </div>
           <div className="c360-field">
             <span className="c360-label">上次跟进时间</span>
@@ -302,7 +341,7 @@ const Customer360: React.FC = () => {
             </div>
             <div className="c360-field">
               <span className="c360-label">客户电话</span>
-              <span className="c360-value font-bold">{maskPhone(customerInfo.phone)}</span>
+              <span className="c360-value font-bold">{customerInfo.phone || '-'}</span>
             </div>
             <div className="c360-field">
               <span className="c360-label">身份证号</span>
@@ -327,6 +366,10 @@ const Customer360: React.FC = () => {
                   popupMatchSelectWidth={false}
                   onChange={handleWechatStatusChange}
                   suffixIcon={<EditOutlined style={{ fontSize: '14px', color: '#94A3B8' }}/>}
+                  labelRender={(p: any) => {
+                    const v = String(p.value ?? '');
+                    return <span style={{ color: wechatColor(v), display: 'inline-flex', alignItems: 'center', gap: 4 }}>{wechatIcon(v)}{v || '未添加'}</span>;
+                  }}
                 >
                   {getDictOptions('wechat_add_status').map(o => (
                     <Select.Option key={o.value} value={o.value}>
@@ -449,7 +492,9 @@ const Customer360: React.FC = () => {
               {followRecords.length > 0 ? followRecords.map(record => (
                 <div key={record.id} className="c360-record-item">
                   <div className="c360-record-header">
-                    {record.accountName ? `${record.accountName} (${record.accountUsername})` : '销售'} <span className="divider">|</span> 线索: {record.leadCode || leadInfo.leadCode} <span className="divider">|</span> {dayjs(record.followTime || record.follow_time).format('YYYY-MM-DD HH:mm')}
+                    {record.accountName ? `${record.accountName} (${record.accountUsername})` : (String(record.accountId) === '0' ? '系统' : '销售')} <span className="divider">|</span> {record.isHistory ? '父线索' : '线索'}: {record.leadCode || leadInfo.leadCode}
+                    {record.isHistory && <span className="c360-status-tag" style={{ background: 'rgba(249,115,22,0.15)', color: '#FB923C', marginLeft: 8 }}>历史记录</span>}
+                    <span className="divider">|</span> {dayjs(record.followTime || record.follow_time).format('YYYY-MM-DD HH:mm')}
                   </div>
                 <div className="c360-record-tags">
                   {(record.callResult || record.call_result) && <span className={`c360-status-tag ${(record.callResult || record.call_result) === '成功接通' ? 'tag-solid-green' : (record.callResult || record.call_result) === '客户主动挂断' ? 'tag-solid-orange' : 'tag-solid-red'}`}>呼叫结果: {record.callResult || record.call_result}</span>}
@@ -489,28 +534,67 @@ const Customer360: React.FC = () => {
         
         <Tabs.TabPane tab="历史订单" key="3">
           <div style={{ padding: '20px' }}>
-            {customerOrders.length > 0 ? customerOrders.map(order => (
-              <div key={order.id} className="c360-record-item" style={{ borderLeft: '3px solid #10b981', borderRadius: '4px', background: '#1e2235', marginBottom: '12px' }}>
-                <div className="c360-record-header" style={{ marginBottom: 10, color: '#a0a5b5', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>订单号: {order.orderCode}</span>
-                  <span style={{ color: order.orderStatus === 2 ? '#10b981' : order.orderStatus === 3 ? '#ef4444' : '#f59e0b' }}>
-                    {order.orderStatus === 0 ? '待确认' : order.orderStatus === 1 ? '已确认' : order.orderStatus === 2 ? '已完成' : '已取消'}
-                  </span>
+            <Table
+              className="workbench-table"
+              dataSource={customerOrders}
+              rowKey="id"
+              size="small"
+              scroll={{ x: 'max-content' }}
+              pagination={{ pageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'], showTotal: (t: number) => `共 ${t} 条数据` }}
+              locale={{ emptyText: '暂无订单信息' }}
+              columns={[
+                { title: '订单编号', dataIndex: 'orderCode', width: 150 },
+                { title: '客户姓名', key: 'cname', width: 90, render: (_: any, r: any) => r.customer?.customerName || r.snapCustomerName || '-' },
+                { title: '客户电话', key: 'cphone', width: 120, render: (_: any, r: any) => r.customer?.phone || r.snapCustomerPhone || '-' },
+                { title: '车品牌', dataIndex: 'snapVehicleBrand', width: 90, render: (v: any) => v || '-' },
+                { title: '车型', dataIndex: 'snapVehicleModel', width: 110, render: (v: any) => v || '-' },
+                { title: '车架号', dataIndex: 'snapVehicleVin', width: 170, render: (v: any) => v || '-' },
+                { title: '下单平台', dataIndex: 'orderPlatform', width: 100, render: (v: any) => v || '-' },
+                { title: '平台订单编号', dataIndex: 'platformOrderNo', width: 140, render: (v: any) => v || '-' },
+                { title: '三方订单编号', dataIndex: 'thirdOrderNo', width: 140, render: (v: any) => v || '-' },
+                { title: '订单状态', dataIndex: 'orderStatus', width: 115, render: (v: number) => getOrderStatusTag(v) },
+                { title: '实付金额', dataIndex: 'totalAmount', width: 100, render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
+                { title: '跟进人', key: 'sales', width: 90, render: (_: any, r: any) => r.salesperson?.realName || r.salesperson?.username || '-' },
+                // 关联线索可跳转线索详情（PRD 配图 image38）
+                { title: '关联线索', key: 'lead', width: 130, render: (_: any, r: any) => r.lead && r.snapLeadCode
+                    ? <a style={{ color: '#818CF8' }} onClick={() => navigate(`/customer/360/${r.customerId}?leadId=${r.lead.id}&from=leads`)}>{r.snapLeadCode}</a>
+                    : (r.snapLeadCode || '-') },
+                { title: '创建时间', dataIndex: 'createdAt', width: 150, render: (v: string) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-' },
+                { title: '操作', key: 'op', width: 70, fixed: 'right', render: (_: any, r: any) => (
+                    <a onClick={() => navigate(`/order/detail/${r.id}`)}>详情</a>
+                ) },
+              ] as any}
+            />
+          </div>
+        </Tabs.TabPane>
+
+        <Tabs.TabPane tab="操作日志" key="4">
+          {/* 操作日志：倒序，每页10条，滚动下滑加载更多（PRD 4.3.3） */}
+          <div
+            style={{ padding: '20px', maxHeight: '480px', overflowY: 'auto' }}
+            onScroll={(e: any) => {
+              const t = e.target;
+              if (t.scrollTop + t.clientHeight >= t.scrollHeight - 30 && !logLoading && leadLogs.length < logTotal) {
+                fetchLeadLogs(logPage + 1);
+              }
+            }}
+          >
+            {leadLogs.length === 0 && !logLoading && renderEmpty('暂无操作日志')}
+            {leadLogs.map((log: any) => (
+              <div key={log.id} style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6366F1', marginTop: '6px', flexShrink: 0 }} />
+                <div>
+                  <div style={{ color: '#E8ECF3', fontSize: '13px', fontWeight: 600 }}>{log.action}</div>
+                  <div style={{ color: '#94A3B8', fontSize: '12px', marginTop: '2px' }}>操作人：{log.operator}</div>
+                  {log.content && <div style={{ color: '#94A3B8', fontSize: '12px' }}>操作内容：{log.content}</div>}
+                  <div style={{ color: '#64748B', fontSize: '12px', marginTop: '2px' }}>{dayjs(log.createdAt).format('YYYY-MM-DD HH:mm')}</div>
                 </div>
-                <div className="c360-record-content" style={{ color: '#d1d5db', fontSize: '13px', lineHeight: '1.6' }}>
-                  <div>金额: <span style={{ color: '#f59e0b', fontWeight: 600 }}>¥{Number(order.totalAmount).toFixed(2)}</span></div>
-                  {order.paymentMethod && <div>支付方式: {order.paymentMethod}</div>}
-                  {order.orderPlatform && <div>下单平台: {order.orderPlatform}</div>}
-                  {order.items && order.items.length > 0 && (
-                    <div style={{ marginTop: '8px' }}>
-                      商品: {order.items.map((item: any) => `${item.productName}${item.productModel ? ` (${item.productModel})` : ''} x${item.quantity}`).join(', ')}
-                    </div>
-                  )}
-                  {order.remark && <div style={{ marginTop: '4px', color: '#8c939d' }}>备注: {order.remark}</div>}
-                </div>
-                <div style={{ color: '#6b7280', fontSize: '12px', marginTop: '8px' }}>{dayjs(order.createdAt).format('YYYY-MM-DD HH:mm')}</div>
               </div>
-            )) : renderEmpty('暂无订单信息')}
+            ))}
+            {logLoading && <div style={{ color: '#64748B', fontSize: '12px', textAlign: 'center', padding: '8px' }}>加载中…</div>}
+            {!logLoading && leadLogs.length >= logTotal && leadLogs.length > 0 && (
+              <div style={{ color: '#475569', fontSize: '12px', textAlign: 'center', padding: '8px' }}>已加载全部</div>
+            )}
           </div>
         </Tabs.TabPane>
       </Tabs>
@@ -613,17 +697,21 @@ const Customer360: React.FC = () => {
         leadCode={leadInfo?.leadCode}
         lastFollowRecord={followRecords.length > 0 ? followRecords[0] : undefined}
       />
-      <OrderAddModal
+      {/* 三步式创建订单（线索详情入口，PRD 4.2.4.2）：第一步展示当前线索编码不可修改 */}
+      <OrderCreateModal
         open={isOrderModalVisible}
-        onCancel={() => setIsOrderModalVisible(false)}
+        onClose={() => setIsOrderModalVisible(false)}
         onSuccess={() => {
-          setIsOrderModalVisible(false);
           fetchLeadData();
           if (customerInfo?.id) fetchCustomerOrders(customerInfo.id);
         }}
-        leadId={leadId!}
-        customerId={customerInfo?.id}
-        channelSource={leadInfo?.channelSource}
+        fixedLead={leadId && leadInfo?.leadCode && customerInfo?.id ? {
+          id: leadId,
+          leadCode: leadInfo.leadCode,
+          customerId: customerInfo.id,
+          customerName: customerInfo.customerName,
+          phone: customerInfo.phone,
+        } : null}
       />
     </div>
   );

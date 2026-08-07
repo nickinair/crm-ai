@@ -6,6 +6,9 @@ import { hasPerm } from '../utils/perm';
 import dayjs from 'dayjs';
 import ExcelJS from 'exceljs';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
+import OrderCreateModal from '../components/OrderCreateModal';
+import LeadAddModal from './LeadAddModal';
+import { getOrderStatusTag, isOrderFinal } from './Order';
 import './Workbench.css';
 import './Leads.css';
 
@@ -18,9 +21,33 @@ const Workbench: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<number[]>([1, 2]); // 默认待跟进、跟进中
+  const [phoneInput, setPhoneInput] = useState('');
+  const [phoneSearch, setPhoneSearch] = useState(''); // 点查询后生效的手机号筛选
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [isReturnModalVisible, setIsReturnModalVisible] = useState(false);
   const [stats, setStats] = useState({ todayPendingFollowUp: 0, publicPoolCount: 0 });
+  const [isOrderCreateOpen, setIsOrderCreateOpen] = useState(false); // 快捷工具栏-创建订单（PRD 4.2.3）
+  const [isLeadAddOpen, setIsLeadAddOpen] = useState(false); // 快捷工具栏-新增线索（PRD 4.2.3）
+
+  // ===== 我的跟单订单 tab（PRD 4.2.3.1）=====
+  const [activeTab, setActiveTab] = useState<'leads' | 'orders'>('leads');
+  const [orders, setOrders] = useState<any[]>([]);
+  const [orderTotal, setOrderTotal] = useState(0);
+  const [orderPage, setOrderPage] = useState(1);
+  const [orderPageSize, setOrderPageSize] = useState(10);
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderStatusFilter, setOrderStatusFilter] = useState<number[]>([]); // 默认全部；切换其他状态可多选
+  const [orderPhoneInput, setOrderPhoneInput] = useState('');
+  const [orderPhoneSearch, setOrderPhoneSearch] = useState('');
+  const [orderSort, setOrderSort] = useState<{ field?: string; order?: string }>({});
+  const [orderCounts, setOrderCounts] = useState<{ total: number; byStatus: Record<number, number> }>({ total: 0, byStatus: {} });
+  // 行内操作弹框
+  const [voidTarget, setVoidTarget] = useState<any>(null);
+  const [voidReason, setVoidReason] = useState('');
+  const [thirdTarget, setThirdTarget] = useState<any>(null);
+  const [thirdNo, setThirdNo] = useState('');
+  const [orderOpLoading, setOrderOpLoading] = useState(false);
+  const [poolCounts, setPoolCounts] = useState<{ total: number; byStatus: Record<number, number> }>({ total: 0, byStatus: {} });
 
   const fetchStats = async () => {
     try {
@@ -33,6 +60,7 @@ const Workbench: React.FC = () => {
           todayPendingFollowUp: res.todayPendingFollowUp,
           publicPoolCount: res.publicPoolCount,
         });
+        setPoolCounts({ total: res.poolTotal || 0, byStatus: res.poolStatusCounts || {} });
       }
     } catch (e) {
       console.error('Failed to fetch stats', e);
@@ -49,10 +77,17 @@ const Workbench: React.FC = () => {
       const params: any = {
         page,
         limit: pageSize,
-        assignedAccountId: userInfo.id
+        assignedAccountId: userInfo.id,
+        sortField: 'workbench' // 按 待跟进→跟进中→已战败→已完成 分组，组内最新跟进时间升序
       };
       if (statusFilter.length > 0) {
         params.leadStatus = statusFilter.join(',');
+      } else {
+        // 全部 = 私池四种状态，排除作废/战败已被领取等
+        params.leadStatus = '1,2,4,3';
+      }
+      if (phoneSearch) {
+        params.customerPhone = phoneSearch;
       }
 
       const res: any = await request.get('/lead', { params });
@@ -84,7 +119,163 @@ const Workbench: React.FC = () => {
   useEffect(() => {
     fetchLeads();
     fetchRecentCustomers();
-  }, [page, pageSize, statusFilter]);
+  }, [page, pageSize, statusFilter, phoneSearch]);
+
+  const applyPhoneSearch = () => {
+    setPhoneSearch(phoneInput.trim());
+    setPage(1);
+  };
+
+  // ===== 我的跟单订单：数据与操作（PRD 4.2.3.1）=====
+  const userInfoRef = (() => {
+    try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; }
+  })();
+
+  const fetchOrderCounts = async () => {
+    try {
+      const res: any = await request.get('/order/status-count');
+      setOrderCounts({ total: res.total || 0, byStatus: res.byStatus || {} });
+    } catch { /* 忽略 */ }
+  };
+
+  const fetchOrders = async () => {
+    setOrderLoading(true);
+    try {
+      const params: any = {
+        page: orderPage,
+        limit: orderPageSize,
+        salespersonId: userInfoRef.id, // 仅展示跟进人=当前登录人的订单
+      };
+      if (orderStatusFilter.length > 0) params.orderStatus = orderStatusFilter.join(',');
+      if (orderPhoneSearch) params.customerPhone = orderPhoneSearch;
+      if (orderSort.field) { params.sortField = orderSort.field; params.sortOrder = orderSort.order; }
+      const res: any = await request.get('/order', { params });
+      setOrders(res.items || []);
+      setOrderTotal(res.total || 0);
+    } catch (e) {
+      console.error(e);
+      message.error('获取订单失败');
+    } finally {
+      setOrderLoading(false);
+    }
+    fetchOrderCounts();
+  };
+
+  useEffect(() => {
+    if (activeTab === 'orders') fetchOrders();
+  }, [activeTab, orderPage, orderPageSize, orderStatusFilter, orderPhoneSearch, orderSort]);
+
+  const toggleOrderStatus = (status: number) => {
+    setOrderStatusFilter(prev => prev.includes(status) ? prev.filter(x => x !== status) : [...prev, status]);
+    setOrderPage(1);
+  };
+
+  const refreshOrders = () => { fetchOrders(); };
+
+  /** 已发送电子签 / 已签署电子签（PRD 4.2.3.1 弹框文案） */
+  const handleOrderSign = (record: any, action: 'sendSign' | 'signed') => {
+    Modal.confirm({
+      title: '提示',
+      content: action === 'sendSign' ? '确定已将电子签已发送给客户？' : '确定用户已完成电子签签署？',
+      okText: '确定', cancelText: '取消', centered: true, className: 'crm-unified-modal',
+      onOk: async () => {
+        await request.post(`/order/${record.id}/status`, { action });
+        message.success('订单状态修改成功！');
+        refreshOrders();
+      },
+    });
+  };
+
+  /** 已完成发货：按 complete-check 决定弹框文案（PRD 配图 image12） */
+  const handleOrderDelivered = async (record: any) => {
+    try {
+      const check: any = await request.get(`/order/${record.id}/complete-check`);
+      const content = check?.willCloseLead
+        ? (
+          <div>
+            <div>1. 请确认三方平台订单已完结；</div>
+            <div>2. 完结订单将一并完结线索；</div>
+            <div style={{ marginTop: 8 }}>确定要完结订单吗？</div>
+          </div>
+        )
+        : '提交后，订单将不可跟进，确定三方平台订单已完结？';
+      Modal.confirm({
+        title: '提示', content,
+        okText: '确定', cancelText: '取消', centered: true, className: 'crm-unified-modal',
+        onOk: async () => {
+          await request.post(`/order/${record.id}/status`, { action: 'delivered' });
+          message.success('订单已完结！');
+          refreshOrders();
+          fetchLeads(); // 可能一并完结线索，刷新私池数据
+        },
+      });
+    } catch (e: any) {
+      if (!e?.response) message.error(e?.message || '操作失败');
+    }
+  };
+
+  const submitOrderThirdNo = async () => {
+    if (!thirdNo.trim()) { message.warning('请填写三方订单编号'); return; }
+    setOrderOpLoading(true);
+    try {
+      await request.put(`/order/${thirdTarget.id}/third-order-no`, { thirdOrderNo: thirdNo.trim() });
+      message.success('三方订单编号提交成功！');
+      setThirdTarget(null);
+      setThirdNo('');
+      refreshOrders();
+    } catch (e: any) {
+      if (!e?.response) message.error(e?.message || '提交失败');
+    } finally {
+      setOrderOpLoading(false);
+    }
+  };
+
+  const submitOrderVoid = async () => {
+    if (!voidReason.trim()) { message.warning('请填写作废原因'); return; }
+    setOrderOpLoading(true);
+    try {
+      await request.post(`/order/${voidTarget.id}/void`, { voidReason: voidReason.trim() });
+      message.success('订单已作废！');
+      setVoidTarget(null);
+      setVoidReason('');
+      refreshOrders();
+    } catch (e: any) {
+      if (!e?.response) message.error(e?.message || '作废失败');
+    } finally {
+      setOrderOpLoading(false);
+    }
+  };
+
+  // 我的跟单订单列（PRD 配图 image8）
+  const orderColumns: any[] = [
+    { title: '序号', key: 'idx', width: 56, render: (_: any, __: any, i: number) => (orderPage - 1) * orderPageSize + i + 1 },
+    { title: '订单编码', dataIndex: 'orderCode', width: 150 },
+    { title: '客户姓名', key: 'cname', width: 90, render: (_: any, r: any) => r.customer?.customerName || r.snapCustomerName || '-' },
+    { title: '客户电话', key: 'cphone', width: 120, render: (_: any, r: any) => r.customer?.phone || r.snapCustomerPhone || '-' },
+    { title: '下单平台', dataIndex: 'orderPlatform', width: 100, render: (v: any) => v || '-' },
+    { title: '平台订单编号', dataIndex: 'platformOrderNo', width: 140, render: (v: any) => v || '-' },
+    { title: '三方订单编号', dataIndex: 'thirdOrderNo', width: 140, render: (v: any) => v || '-' },
+    { title: '订单状态', dataIndex: 'orderStatus', width: 115, render: (v: number) => getOrderStatusTag(v) },
+    { title: '实付金额', dataIndex: 'totalAmount', width: 100, render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
+    { title: '跟进人', key: 'sales', width: 90, render: (_: any, r: any) => r.salesperson?.realName || r.salesperson?.username || '-' },
+    { title: '创建时间', dataIndex: 'createdAt', width: 150, sorter: true, render: (v: string) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-' },
+    { title: '创建人', key: 'creator', width: 90, render: (_: any, r: any) => r.creator?.realName || r.creator?.username || '系统' },
+    { title: '更新时间', dataIndex: 'updatedAt', width: 150, sorter: true, render: (v: string) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-' },
+    { title: '更新人', key: 'updater', width: 90, render: (_: any, r: any) => r.updater?.realName || r.updater?.username || '系统' },
+    {
+      title: '操作', key: 'op', width: 210, fixed: 'right',
+      render: (_: any, r: any) => (
+        <div className="action-links" style={{ flexWrap: 'wrap' }}>
+          {r.orderStatus === 0 && <a onClick={() => handleOrderSign(r, 'sendSign')}>已发送电子签</a>}
+          {r.orderStatus === 1 && <a onClick={() => handleOrderSign(r, 'signed')}>已签署电子签</a>}
+          {r.orderStatus === 2 && <a onClick={() => { setThirdTarget(r); setThirdNo(''); }}>录入三方订单编号</a>}
+          {r.orderStatus === 3 && <a onClick={() => handleOrderDelivered(r)}>已完成发货</a>}
+          <a onClick={() => navigate(`/order/detail/${r.id}`)}>详情</a>
+          {!isOrderFinal(r.orderStatus) && <a className="delete-link" onClick={() => { setVoidTarget(r); setVoidReason(''); }}>作废</a>}
+        </div>
+      ),
+    },
+  ];
 
   const toggleStatusFilter = (status: number) => {
     setStatusFilter(prev => {
@@ -106,7 +297,7 @@ const Workbench: React.FC = () => {
 
   const handleReturnConfirm = async () => {
     try {
-      await request.post('/lead/return-public', { leadIds: selectedRowKeys });
+      await request.post('/lead/return-public', { leadIds: selectedRowKeys }, { timeout: 120000 });
       message.success('退回成功');
       setSelectedRowKeys([]);
       setIsReturnModalVisible(false);
@@ -355,28 +546,77 @@ const Workbench: React.FC = () => {
                 </div>
                 公域池抢单
               </div>}
+              <div className="quick-tool-btn" onClick={() => setIsLeadAddOpen(true)}>
+                <div className="quick-tool-icon">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </div>
+                新增线索
+              </div>
+              <div className="quick-tool-btn" onClick={() => setIsOrderCreateOpen(true)}>
+                <div className="quick-tool-icon">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                </div>
+                创建订单
+              </div>
             </div>
           </div>
 
             <div className="card" style={{ padding: '24px', marginBottom: '24px', overflow: 'hidden' }}>
-              <div className="card-header" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center' }}>
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: '4px' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-              我的线索私池
-            </div>
+              {/* tab 头：我的线索私池 / 我的跟单订单（PRD 配图 image7/8） */}
+              <div style={{ display: 'flex', gap: '28px', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                {([['leads', '我的线索私池'], ['orders', '我的跟单订单']] as const).map(([key, label]) => (
+                  <div
+                    key={key}
+                    onClick={() => setActiveTab(key)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
+                      padding: '4px 2px 12px', fontSize: '15px', fontWeight: 600,
+                      color: activeTab === key ? '#818CF8' : 'var(--text-secondary)',
+                      borderBottom: activeTab === key ? '2px solid #6366F1' : '2px solid transparent',
+                      marginBottom: '-1px', transition: 'color 0.2s',
+                    }}
+                  >
+                    {key === 'leads'
+                      ? <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                      : <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>}
+                    {label}
+                  </div>
+                ))}
+              </div>
+            {activeTab === 'leads' && (<>
             <div className="lead-header-controls">
               <div className="filters">
-                <button className={`filter-btn ${statusFilter.length === 0 ? 'active' : ''}`} onClick={() => { setStatusFilter([]); setPage(1); }}>全部</button>
-                <button className={`filter-btn ${statusFilter.includes(1) ? 'active' : ''}`} onClick={() => toggleStatusFilter(1)}>待跟进</button>
-                <button className={`filter-btn ${statusFilter.includes(2) ? 'active' : ''}`} onClick={() => toggleStatusFilter(2)}>跟进中</button>
-                <button className={`filter-btn ${statusFilter.includes(4) ? 'active' : ''}`} onClick={() => toggleStatusFilter(4)}>已战败</button>
-                <button className={`filter-btn ${statusFilter.includes(3) ? 'active' : ''}`} onClick={() => toggleStatusFilter(3)}>已完成</button>
+                <button className={`filter-btn ${statusFilter.length === 0 ? 'active' : ''}`} onClick={() => { setStatusFilter([]); setPage(1); }}>全部<span className="filter-count">{poolCounts.total}</span></button>
+                <button className={`filter-btn ${statusFilter.includes(1) ? 'active' : ''}`} onClick={() => toggleStatusFilter(1)}>待跟进<span className="filter-count">{poolCounts.byStatus[1] || 0}</span></button>
+                <button className={`filter-btn ${statusFilter.includes(2) ? 'active' : ''}`} onClick={() => toggleStatusFilter(2)}>跟进中<span className="filter-count">{poolCounts.byStatus[2] || 0}</span></button>
+                <button className={`filter-btn ${statusFilter.includes(4) ? 'active' : ''}`} onClick={() => toggleStatusFilter(4)}>已战败<span className="filter-count">{poolCounts.byStatus[4] || 0}</span></button>
+                <button className={`filter-btn ${statusFilter.includes(3) ? 'active' : ''}`} onClick={() => toggleStatusFilter(3)}>已完成<span className="filter-count">{poolCounts.byStatus[3] || 0}</span></button>
               </div>
               <div className="quick-actions">
                 {hasPerm('workbench:export') && <button className="call-btn btn-primary" onClick={handleBatchExport}>批量导出</button>}
                 {hasPerm('workbench:return_public') && <button className="call-btn btn-primary" onClick={submitReturnToPublic}>退回公域池</button>}
               </div>
             </div>
-            
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 16px' }}>
+              <div style={{ position: 'relative' }}>
+                <svg width="14" height="14" fill="none" stroke="#8892b0" viewBox="0 0 24 24" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input
+                  value={phoneInput}
+                  onChange={e => setPhoneInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') applyPhoneSearch(); }}
+                  placeholder="搜索客户手机号"
+                  style={{
+                    width: 240, padding: '7px 12px 7px 34px', borderRadius: 8,
+                    background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#e2e8f0', fontSize: 13, outline: 'none'
+                  }}
+                />
+              </div>
+              <button className="call-btn btn-primary" onClick={applyPhoneSearch}>查 询</button>
+            </div>
+
             <ConfigProvider 
               getPopupContainer={(trigger) => trigger?.parentElement || document.body}
               theme={{
@@ -421,6 +661,72 @@ const Workbench: React.FC = () => {
               scroll={{ x: 1830 }}
             />
             </ConfigProvider>
+            </>)}
+
+            {activeTab === 'orders' && (<>
+            {/* 状态筛选 pills：默认全部，可多选（PRD 4.2.3.1） */}
+            <div className="lead-header-controls">
+              <div className="filters">
+                <button className={`filter-btn ${orderStatusFilter.length === 0 ? 'active' : ''}`} onClick={() => { setOrderStatusFilter([]); setOrderPage(1); }}>全部<span className="filter-count">{orderCounts.total}</span></button>
+                {[[0, '待发送电子签'], [1, '待签署电子签'], [2, '待三方下单'], [3, '待发货'], [4, '已完结'], [5, '已作废']].map(([val, label]) => (
+                  <button key={val} className={`filter-btn ${orderStatusFilter.includes(val as number) ? 'active' : ''}`} onClick={() => toggleOrderStatus(val as number)}>
+                    {label}<span className="filter-count">{orderCounts.byStatus[val as number] || 0}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 16px' }}>
+              <div style={{ position: 'relative' }}>
+                <svg width="14" height="14" fill="none" stroke="#8892b0" viewBox="0 0 24 24" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input
+                  value={orderPhoneInput}
+                  onChange={e => setOrderPhoneInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { setOrderPhoneSearch(orderPhoneInput.trim()); setOrderPage(1); } }}
+                  placeholder="搜索客户手机号"
+                  style={{
+                    width: 240, padding: '7px 12px 7px 34px', borderRadius: 8,
+                    background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#e2e8f0', fontSize: 13, outline: 'none'
+                  }}
+                />
+              </div>
+              <button className="call-btn btn-primary" onClick={() => { setOrderPhoneSearch(orderPhoneInput.trim()); setOrderPage(1); }}>查 询</button>
+            </div>
+            <ConfigProvider
+              getPopupContainer={(trigger) => trigger?.parentElement || document.body}
+              theme={{
+                components: {
+                  Pagination: { colorBgContainer: '#1e293b', colorText: '#e2e8f0', colorBorder: 'rgba(255, 255, 255, 0.3)' },
+                }
+              }}
+            >
+            <Table
+              className="workbench-table custom-table"
+              columns={orderColumns}
+              dataSource={orders}
+              rowKey="id"
+              loading={orderLoading}
+              locale={orderLoading ? { emptyText: ' ' } : undefined}
+              onChange={(pag: any, _f: any, sorter: any) => {
+                setOrderPage(pag.current); setOrderPageSize(pag.pageSize);
+                // 创建时间/更新时间排序（PRD 4.2.3.1）
+                if (sorter && sorter.field && sorter.order) setOrderSort({ field: sorter.field, order: sorter.order });
+                else setOrderSort({});
+              }}
+              pagination={{
+                current: orderPage,
+                pageSize: orderPageSize,
+                total: orderTotal,
+                showSizeChanger: true,
+                showTotal: (t) => `共 ${t} 条`,
+                pageSizeOptions: ['10', '20', '50', '100', '200'],
+              }}
+              scroll={{ x: 1800 }}
+            />
+            </ConfigProvider>
+            </>)}
           </div>
 
           <div className="card">
@@ -474,6 +780,76 @@ const Workbench: React.FC = () => {
           <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '20px' }} />
           <span style={{ fontSize: '15px' }}>确定要退回公域池吗？</span>
         </div>
+      </Modal>
+      <OrderCreateModal
+        open={isOrderCreateOpen}
+        onClose={() => setIsOrderCreateOpen(false)}
+        onSuccess={() => { fetchLeads(); if (activeTab === 'orders') fetchOrders(); }}
+      />
+
+      {/* 快捷工具栏-新增线索：保存后自动分配给当前销售（PRD 4.2.3.3） */}
+      <LeadAddModal
+        open={isLeadAddOpen}
+        onCancel={() => setIsLeadAddOpen(false)}
+        onSuccess={() => { setIsLeadAddOpen(false); fetchLeads(); }}
+        defaultAssigneeId={userInfoRef.id}
+      />
+
+      {/* 录入三方订单编号（PRD 4.2.3.1：其他字段回显不可编辑） */}
+      <Modal
+        centered title="录入三方订单编号" open={!!thirdTarget}
+        onCancel={() => { setThirdTarget(null); setThirdNo(''); }}
+        onOk={submitOrderThirdNo} confirmLoading={orderOpLoading}
+        okText="确定" cancelText="取消" width={600} className="crm-unified-modal"
+      >
+        {thirdTarget && (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div>
+                <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>订单编号</div>
+                <input disabled value={thirdTarget.orderCode} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px' }} />
+              </div>
+              <div>
+                <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>下单平台</div>
+                <input disabled value={thirdTarget.orderPlatform || ''} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px' }} />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>平台订单编号</div>
+                <input disabled value={thirdTarget.platformOrderNo || ''} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px' }} />
+              </div>
+            </div>
+            <div>
+              <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}><span style={{ color: '#ef4444' }}>*</span> 三方订单编号</div>
+              <input
+                value={thirdNo}
+                onChange={e => setThirdNo(e.target.value)}
+                maxLength={30}
+                placeholder="请输入三方订单编号"
+                style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', padding: '0 12px', outline: 'none' }}
+              />
+            </div>
+          </>
+        )}
+      </Modal>
+
+      {/* 作废订单（PRD 4.2.3.1：填写作废原因） */}
+      <Modal
+        centered title="作废订单" open={!!voidTarget}
+        onCancel={() => { setVoidTarget(null); setVoidReason(''); }}
+        onOk={submitOrderVoid} confirmLoading={orderOpLoading}
+        okText="确定" cancelText="取消" width={600} className="crm-unified-modal"
+      >
+        <div style={{ marginBottom: '12px', color: '#4b5563' }}>
+          订单 <span style={{ fontWeight: 600 }}>{voidTarget?.orderCode}</span> 作废后不可恢复，请填写作废原因：
+        </div>
+        <textarea
+          value={voidReason}
+          onChange={e => setVoidReason(e.target.value)}
+          maxLength={255}
+          rows={3}
+          placeholder="请输入作废原因"
+          style={{ width: '100%', borderRadius: 6, border: '1px solid #d1d5db', padding: '8px 12px', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+        />
       </Modal>
     </div>
   );

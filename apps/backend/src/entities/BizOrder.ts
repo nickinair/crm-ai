@@ -80,6 +80,73 @@ export class BizOrder {
   @Column("text", { name: "remark", nullable: true })
   remark: string | null;
 
+  @Column("varchar", {
+    name: "platform_order_no",
+    nullable: true,
+    comment: "平台订单编号",
+    length: 30,
+  })
+  platformOrderNo: string | null;
+
+  @Column("varchar", {
+    name: "third_order_no",
+    nullable: true,
+    comment: "三方订单编号",
+    length: 30,
+  })
+  thirdOrderNo: string | null;
+
+  @Column("varchar", {
+    name: "marketing_activity",
+    nullable: true,
+    comment: "营销活动名称",
+    length: 64,
+  })
+  marketingActivity: string | null;
+
+  @Column("varchar", {
+    name: "void_reason",
+    nullable: true,
+    comment: "作废原因",
+    length: 255,
+  })
+  voidReason: string | null;
+
+  @Column("bigint", {
+    name: "vehicle_id",
+    nullable: true,
+    comment: "关联车辆ID",
+    unsigned: true,
+  })
+  vehicleId: string | null;
+
+  @Column("varchar", { name: "snap_customer_name", nullable: true, comment: "快照-客户姓名", length: 64 })
+  snapCustomerName: string | null;
+
+  @Column("varchar", { name: "snap_customer_phone", nullable: true, comment: "快照-客户手机号", length: 20 })
+  snapCustomerPhone: string | null;
+
+  @Column("varchar", { name: "snap_vehicle_brand", nullable: true, comment: "快照-车辆品牌", length: 64 })
+  snapVehicleBrand: string | null;
+
+  @Column("varchar", { name: "snap_vehicle_model", nullable: true, comment: "快照-车辆车型", length: 64 })
+  snapVehicleModel: string | null;
+
+  @Column("varchar", { name: "snap_vehicle_vin", nullable: true, comment: "快照-车架号", length: 32 })
+  snapVehicleVin: string | null;
+
+  @Column("varchar", { name: "snap_lead_code", nullable: true, comment: "快照-关联线索编码", length: 32 })
+  snapLeadCode: string | null;
+
+  @Column("bigint", { name: "creator_id", nullable: true, comment: "创建人账号ID", unsigned: true })
+  creatorId: string | null;
+
+  @Column("bigint", { name: "updater_id", nullable: true, comment: "更新人账号ID", unsigned: true })
+  updaterId: string | null;
+
+  @Column("tinyint", { name: "is_draft", comment: "1=草稿(未提交)，0=正式订单", default: () => "'0'" })
+  isDraft: number;
+
   @Column("datetime", {
     name: "created_at",
     default: () => "CURRENT_TIMESTAMP",

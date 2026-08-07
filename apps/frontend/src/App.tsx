@@ -12,6 +12,8 @@ import Org from './views/Org';
 import Account from './views/Account';
 import Product from './views/Product';
 import Order from './views/Order';
+import OrderDetail from './views/OrderDetail';
+import Config from './views/Config';
 import Role from './views/Role';
 import PublicPool from './views/PublicPool';
 import PermissionRoute from './components/PermissionRoute';
@@ -61,6 +63,12 @@ function App() {
           } />
           <Route path="order" element={
             <PermissionRoute permCode="order"><Order /></PermissionRoute>
+          } />
+          <Route path="order/detail/:id" element={
+            <PermissionRoute permCode="order"><OrderDetail /></PermissionRoute>
+          } />
+          <Route path="config" element={
+            <PermissionRoute permCode="config"><Config /></PermissionRoute>
           } />
           <Route path="role" element={
             <PermissionRoute permCode="permission"><Role /></PermissionRoute>

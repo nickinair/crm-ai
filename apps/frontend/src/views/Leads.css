@@ -312,3 +312,106 @@
 .workbench-table .ant-table-placeholder > .ant-table-cell {
   height: 300px;
 }
+
+/* ===== 公域池抢单：深色搜索区（输入框深底白字）===== */
+.pool-dark-search .ant-input,
+.pool-dark-search .ant-input-affix-wrapper,
+.pool-dark-search .ant-input-number,
+.pool-dark-search input[type="date"] {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: #E8ECF3 !important;
+}
+/* Select 外框：直接覆盖 .ant-select-selector（CSS 变量方式在 antd v6 下不生效），
+   底色/边框与输入框保持一致 */
+.pool-dark-search .ant-select {
+  --ant-select-background-color: rgba(255, 255, 255, 0.06);
+  --ant-select-border-color: rgba(255, 255, 255, 0.18);
+  --ant-select-color: #E8ECF3;
+}
+.pool-dark-search .ant-select .ant-select-selector {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: #E8ECF3 !important;
+}
+.pool-dark-search .ant-select:hover .ant-select-selector,
+.pool-dark-search .ant-select-focused .ant-select-selector {
+  border-color: #6366F1 !important;
+}
+.pool-dark-search .ant-select .ant-select-selection-search-input {
+  color: #E8ECF3 !important;
+}
+.pool-dark-search .ant-input::placeholder,
+.pool-dark-search .ant-input-number-input::placeholder,
+.pool-dark-search input::placeholder {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+/* 下拉选中值 / 占位 / 箭头 */
+.pool-dark-search .ant-select-selection-item {
+  color: #E8ECF3 !important;
+}
+.pool-dark-search .ant-select-selection-placeholder {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+/* 下拉箭头：antd v6 为 .ant-select-suffix（旧版 .ant-select-arrow 两者都留）。提亮颜色。 */
+.pool-dark-search .ant-select-suffix,
+.pool-dark-search .ant-select-arrow,
+.pool-dark-search .ant-select-arrow .anticon,
+.pool-dark-search .ant-select-suffix .anticon {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+.pool-dark-search .ant-select-suffix svg,
+.pool-dark-search .ant-select-arrow svg {
+  fill: rgba(255, 255, 255, 0.9) !important;
+}
+.pool-dark-search .ant-select-clear,
+.pool-dark-search .ant-input-clear-icon {
+  color: rgba(255, 255, 255, 0.55) !important;
+  background: transparent !important;
+}
+/* 多选标签（线索状态） */
+.pool-dark-search .ant-select-multiple .ant-select-selection-item {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #E8ECF3 !important;
+}
+/* 原生日期控件：让"年/月/日"文字和日历图标在深底可见 */
+.pool-dark-search input[type="date"] {
+  color-scheme: dark;
+}
+/* 悬停/聚焦高亮 */
+.pool-dark-search .ant-input:hover,
+.pool-dark-search .ant-input:focus,
+.pool-dark-search input[type="date"]:hover {
+  border-color: #6366F1 !important;
+}
+.pool-dark-search .ant-select:hover,
+.pool-dark-search .ant-select-focused {
+  --ant-select-border-color: #6366F1;
+}
+
+/* 修复输入框内层色差：带清除按钮的输入外层已有底色，内层 input 透明即可 */
+.pool-dark-search .ant-input-affix-wrapper .ant-input,
+.pool-dark-search .ant-input-affix-wrapper > input.ant-input {
+  background-color: transparent !important;
+}
+
+/* 公域池搜索：下拉选项面板深色（渲染进 pool-dark-search 内） */
+.pool-dark-search .ant-select-dropdown {
+  background-color: #1E293B !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45) !important;
+}
+.pool-dark-search .ant-select-item {
+  color: #E8ECF3 !important;
+}
+.pool-dark-search .ant-select-item-option-active {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+.pool-dark-search .ant-select-item-option-selected {
+  background-color: rgba(99, 102, 241, 0.28) !important;
+  color: #fff !important;
+}
+.pool-dark-search .ant-select-item-empty {
+  color: rgba(255, 255, 255, 0.4) !important;
+}

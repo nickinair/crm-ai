@@ -51,11 +51,15 @@ export class JwtAuthGuard implements CanActivate {
       // Get user's roles and permissions
       const userId = payload.sub;
       const permissions = await this.getUserPermissions(userId);
-      
+      const roleCodes = await this.getUserRoleCodes(userId);
+
       // Attach user info + permissions to request for downstream use
+      // roleCodes / isSuperAdmin 供需要按角色放行的业务使用（如订单仅跟进人可操作，超管除外）
       (request as any).user = {
         ...payload,
         permissions,
+        roleCodes,
+        isSuperAdmin: roleCodes.includes('super_admin') || roleCodes.includes('super__admin'),
       };
     } catch {
       throw new UnauthorizedException('登录凭证无效或已过期，请重新登录');
@@ -125,6 +129,14 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     return permCodes;
+  }
+
+  /** 取用户的角色编码列表（供按角色放行的业务判断使用） */
+  private async getUserRoleCodes(userId: string): Promise<string[]> {
+    const accountRoles = await this.accountRoleRepo.find({ where: { accountId: userId } });
+    if (accountRoles.length === 0) return [];
+    const roles = await this.roleRepo.find({ where: { id: In(accountRoles.map(ar => ar.roleId)) } });
+    return roles.map(r => r.roleCode);
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {
