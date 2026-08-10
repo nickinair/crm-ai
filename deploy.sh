@@ -55,7 +55,8 @@ deploy_backend() {
 
 deploy_frontend() {
   echo "▶ [前端] 构建..."
-  ( cd "$ROOT/apps/frontend" && npm run build >/dev/null )
+  # 注入环境标识：测试环境构建的前端会在界面上显示「测试环境」标签
+  ( cd "$ROOT/apps/frontend" && VITE_APP_ENV="$ENV_NAME" npm run build >/dev/null )
   local js
   js="$(ls "$ROOT/apps/frontend/dist/assets/" | grep -E '^index-.*\.js$' | head -1)"
   echo "▶ [前端] 上传 dist 到 $REMOTE_FRONTEND_DIR ..."

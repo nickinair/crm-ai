@@ -20,6 +20,7 @@ import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Input } from 'antd';
 import request from '../utils/request';
 import ImportTaskFloat from '../components/ImportTaskFloat';
+import { IS_TEST_ENV, ENV_LABEL, ENV_LABEL_SHORT } from '../utils/env';
 import './Layout.css';
 
 const { Header, Content, Sider } = Layout;
@@ -229,6 +230,7 @@ const AppLayout: React.FC = () => {
         <div className="sphere sphere-2"></div>
         <div className="sphere sphere-3"></div>
       </div>
+      {IS_TEST_ENV && <div className="env-topbar" />}
       <div className="app-wrapper">
         <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)} className="app-sider" width={260} trigger={null}>
           <div className="logo-vertical" style={{ height: '72px', padding: '0 24px', display: 'flex', alignItems: 'center' }}>
@@ -244,6 +246,8 @@ const AppLayout: React.FC = () => {
               </svg>
             </div>
             {!collapsed && <span className="logo-text" style={{ margin: 0 }}>涌客CRM销售系统</span>}
+            {IS_TEST_ENV && !collapsed && <span className="env-badge" style={{ marginLeft: 8 }}>{ENV_LABEL}</span>}
+            {IS_TEST_ENV && collapsed && <span className="env-badge env-badge-mini" style={{ marginLeft: 4 }}>{ENV_LABEL_SHORT}</span>}
           </div>
           <div style={{ height: '56px', padding: '0 16px', display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
             <Input 
@@ -292,6 +296,8 @@ const AppLayout: React.FC = () => {
                   </span>
                 ))}
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {IS_TEST_ENV && <span className="env-badge">当前为{ENV_LABEL}，数据与生产环境隔离</span>}
               <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click', 'hover']}>
                 <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 16px 6px 6px', borderRadius: '30px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
                   <Avatar size={34} style={{ background: 'linear-gradient(135deg, #A855F7, #3B82F6)', color: '#fff', fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -300,6 +306,7 @@ const AppLayout: React.FC = () => {
                   <span style={{ fontSize: '15px', fontWeight: 500, color: '#f8fafc', letterSpacing: '1px' }}>{user.realName || user.username || '超级管理员'}</span>
                 </div>
               </Dropdown>
+              </div>
             </div>
             <div style={{ height: '56px', padding: '0 40px', display: 'flex', alignItems: 'center' }}>
               <h2 className="page-title-display" style={{ margin: 0 }}>{displayTitle}</h2>

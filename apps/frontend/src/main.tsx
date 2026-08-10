@@ -15,6 +15,12 @@ import zhCN from 'antd/locale/zh_CN'
 import App from './App'
 import LightningLoading from './components/LightningLoading'
 import './index.css'
+import { IS_TEST_ENV } from './utils/env'
+
+// 测试环境在浏览器标签页标题上加前缀，便于多标签页时快速区分
+if (IS_TEST_ENV) {
+  document.title = `[测试] ${document.title}`
+}
 
 Spin.setDefaultIndicator(<LightningLoading />)
 

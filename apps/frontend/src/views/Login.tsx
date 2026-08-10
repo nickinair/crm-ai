@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Form, Input, Button, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { IS_TEST_ENV, ENV_LABEL } from '../utils/env';
 import './Login.css';
 
 import request from '../utils/request';
@@ -54,6 +55,11 @@ const Login: React.FC = () => {
         </div>
         <div className="login-header">
           <h2>涌客CRM销售系统</h2>
+          {IS_TEST_ENV && (
+            <div style={{ textAlign: 'center', marginTop: 8 }}>
+              <span className="env-badge">{ENV_LABEL}</span>
+            </div>
+          )}
           <p>欢迎回来，请登录您的账号</p>
         </div>
         
