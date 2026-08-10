@@ -21,6 +21,9 @@ const Workbench: React.FC = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [isReturnModalVisible, setIsReturnModalVisible] = useState(false);
   const [stats, setStats] = useState({ todayPendingFollowUp: 0, publicPoolCount: 0 });
+  const [phoneInput, setPhoneInput] = useState('');
+  const [phoneSearch, setPhoneSearch] = useState(''); // 点查询后生效的手机号筛选
+  const [poolCounts, setPoolCounts] = useState<{ total: number; byStatus: Record<number, number> }>({ total: 0, byStatus: {} });
 
   const fetchStats = async () => {
     try {
@@ -33,6 +36,7 @@ const Workbench: React.FC = () => {
           todayPendingFollowUp: res.todayPendingFollowUp,
           publicPoolCount: res.publicPoolCount,
         });
+        setPoolCounts({ total: res.poolTotal || 0, byStatus: res.poolStatusCounts || {} });
       }
     } catch (e) {
       console.error('Failed to fetch stats', e);
@@ -49,10 +53,17 @@ const Workbench: React.FC = () => {
       const params: any = {
         page,
         limit: pageSize,
-        assignedAccountId: userInfo.id
+        assignedAccountId: userInfo.id,
+        sortField: 'workbench' // 按 待跟进→跟进中→已战败→已完成 分组，组内最新跟进时间升序
       };
       if (statusFilter.length > 0) {
         params.leadStatus = statusFilter.join(',');
+      } else {
+        // 全部 = 私池四种状态，排除作废/待分配
+        params.leadStatus = '1,2,4,3';
+      }
+      if (phoneSearch) {
+        params.customerPhone = phoneSearch;
       }
 
       const res: any = await request.get('/lead', { params });
@@ -84,7 +95,12 @@ const Workbench: React.FC = () => {
   useEffect(() => {
     fetchLeads();
     fetchRecentCustomers();
-  }, [page, pageSize, statusFilter]);
+  }, [page, pageSize, statusFilter, phoneSearch]);
+
+  const applyPhoneSearch = () => {
+    setPhoneSearch(phoneInput.trim());
+    setPage(1);
+  };
 
   const toggleStatusFilter = (status: number) => {
     setStatusFilter(prev => {
@@ -365,16 +381,35 @@ const Workbench: React.FC = () => {
             </div>
             <div className="lead-header-controls">
               <div className="filters">
-                <button className={`filter-btn ${statusFilter.length === 0 ? 'active' : ''}`} onClick={() => { setStatusFilter([]); setPage(1); }}>全部</button>
-                <button className={`filter-btn ${statusFilter.includes(1) ? 'active' : ''}`} onClick={() => toggleStatusFilter(1)}>待跟进</button>
-                <button className={`filter-btn ${statusFilter.includes(2) ? 'active' : ''}`} onClick={() => toggleStatusFilter(2)}>跟进中</button>
-                <button className={`filter-btn ${statusFilter.includes(4) ? 'active' : ''}`} onClick={() => toggleStatusFilter(4)}>已战败</button>
-                <button className={`filter-btn ${statusFilter.includes(3) ? 'active' : ''}`} onClick={() => toggleStatusFilter(3)}>已完成</button>
+                <button className={`filter-btn ${statusFilter.length === 0 ? 'active' : ''}`} onClick={() => { setStatusFilter([]); setPage(1); }}>全部<span className="filter-count">{poolCounts.total}</span></button>
+                <button className={`filter-btn ${statusFilter.includes(1) ? 'active' : ''}`} onClick={() => toggleStatusFilter(1)}>待跟进<span className="filter-count">{poolCounts.byStatus[1] || 0}</span></button>
+                <button className={`filter-btn ${statusFilter.includes(2) ? 'active' : ''}`} onClick={() => toggleStatusFilter(2)}>跟进中<span className="filter-count">{poolCounts.byStatus[2] || 0}</span></button>
+                <button className={`filter-btn ${statusFilter.includes(4) ? 'active' : ''}`} onClick={() => toggleStatusFilter(4)}>已战败<span className="filter-count">{poolCounts.byStatus[4] || 0}</span></button>
+                <button className={`filter-btn ${statusFilter.includes(3) ? 'active' : ''}`} onClick={() => toggleStatusFilter(3)}>已完成<span className="filter-count">{poolCounts.byStatus[3] || 0}</span></button>
               </div>
               <div className="quick-actions">
                 {hasPerm('workbench:export') && <button className="call-btn btn-primary" onClick={handleBatchExport}>批量导出</button>}
                 {hasPerm('workbench:return_public') && <button className="call-btn btn-primary" onClick={submitReturnToPublic}>退回公域池</button>}
               </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 16px' }}>
+              <div style={{ position: 'relative' }}>
+                <svg width="14" height="14" fill="none" stroke="#8892b0" viewBox="0 0 24 24" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input
+                  value={phoneInput}
+                  onChange={e => setPhoneInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') applyPhoneSearch(); }}
+                  placeholder="搜索客户手机号"
+                  style={{
+                    width: 240, padding: '7px 12px 7px 34px', borderRadius: 8,
+                    background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#e2e8f0', fontSize: 13, outline: 'none'
+                  }}
+                />
+              </div>
+              <button className="call-btn btn-primary" onClick={applyPhoneSearch}>查 询</button>
             </div>
             
             <ConfigProvider 

@@ -234,7 +234,14 @@ export class LeadService {
     };
     const orderField = allowedSortFields[sortField] || 'lead.createdAt';
     const orderDirection: 'ASC' | 'DESC' = sortOrder === 'ascend' ? 'ASC' : 'DESC';
-    if (sortField === 'sourceDate') {
+    if (sortField === 'workbench') {
+      // 工作台私池：按 待跟进(1)→跟进中(2)→已战败(4)→已完成(3) 分组，
+      // 组内按最新跟进时间升序（越早越靠前，从未跟进的排最前）。
+      // 表达式需先 addSelect 成别名再排序，否则 TypeORM 分页解析 ORDER BY 会报错
+      qb.addSelect('CASE lead.lead_status WHEN 1 THEN 0 WHEN 2 THEN 1 WHEN 4 THEN 2 WHEN 3 THEN 3 ELSE 9 END', 'status_group')
+        .orderBy('status_group', 'ASC')
+        .addOrderBy('lead.last_follow_at', 'ASC');
+    } else if (sortField === 'sourceDate') {
       // Use raw column name directly to avoid TypeORM quoting issues
       qb.orderBy('lead.source_date', orderDirection);
     } else {
@@ -310,9 +317,23 @@ export class LeadService {
       .where('lead.leadStatus IN (:...statuses)', { statuses: [0, 4, 6] })
       .getCount();
 
+    // 3. 私池各状态数量（工作台筛选按钮上的统计）
+    const statusRows = await this.leadRepo.createQueryBuilder('lead')
+      .select('lead.leadStatus', 'status')
+      .addSelect('COUNT(*)', 'cnt')
+      .where('lead.assignedAccountId = :accountId', { accountId })
+      .andWhere('lead.leadStatus IN (:...poolStatuses)', { poolStatuses: [1, 2, 4, 3] })
+      .groupBy('lead.leadStatus')
+      .getRawMany();
+    const poolStatusCounts: Record<number, number> = { 1: 0, 2: 0, 4: 0, 3: 0 };
+    statusRows.forEach((r: any) => { poolStatusCounts[Number(r.status)] = Number(r.cnt); });
+    const poolTotal = Object.values(poolStatusCounts).reduce((a, b) => a + b, 0);
+
     return {
       todayPendingFollowUp,
-      publicPoolCount
+      publicPoolCount,
+      poolStatusCounts,
+      poolTotal
     };
   }
 
