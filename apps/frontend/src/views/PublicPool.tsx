@@ -16,11 +16,14 @@ const PublicPool: React.FC = () => {
 
   const fetchSales = async () => {
     try {
-      const rolesRes: any = await request.get('/roles', { params: { pageSize: 100 } });
-      const rolesList = rolesRes.data?.list || rolesRes.list || (Array.isArray(rolesRes) ? rolesRes : []);
-      const roleId = rolesList.find((r: any) => r.roleCode === 'sales' || r.roleName === '销售')?.id;
-      const res: any = await request.get('/account', { params: { limit: 100, roleId } });
-      setSalesList(res.items || (Array.isArray(res) ? res : (res.data || [])));
+      // 用专用接口取销售列表：已内置「仅状态正常」过滤且不分页（与线索池管理一致）
+      const res: any = await request.get('/account/sales-list');
+      const items = Array.isArray(res) ? res : (res.items || res.data || []);
+      setSalesList(items.map((s: any) => ({
+        id: s.id,
+        realName: s.name || s.realName,
+        username: s.username,
+      })));
     } catch (err) { console.error(err); }
   };
 
