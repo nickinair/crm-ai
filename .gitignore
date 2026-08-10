@@ -38,3 +38,5 @@ apps/backend/*.ts
 
 # 部署本地配置（含服务器密码，严禁入库）
 deploy.config.sh
+deploy.config.*.sh
+!deploy.config.example.sh

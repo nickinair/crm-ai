@@ -11,6 +11,13 @@ import { SysRole } from '../entities/SysRole';
 import { SysRolePermission } from '../entities/SysRolePermission';
 import { SysPermission } from '../entities/SysPermission';
 
+/**
+ * 「显式授权制」权限：不随超级管理员身份自动获得，必须通过角色单独授予。
+ * 目前仅 config（配置管理/数据字典维护）——避免所有超管都能改动全系统字典配置。
+ * 授予方式：把「配置管理员」(config_admin) 角色分配给对应账号，无需改代码。
+ */
+const OPT_IN_PERMISSIONS = ['config'];
+
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
@@ -90,7 +97,15 @@ export class JwtAuthGuard implements CanActivate {
     );
     if (hasSystemRole) {
       const allPerms = await this.permissionRepo.find({ where: { status: 1 } });
-      return allPerms.map(p => p.permCode);
+      // 「显式授权制」权限不随超管身份自动获得，必须通过角色单独授予（见 OPT_IN_PERMISSIONS）
+      const autoCodes = allPerms
+        .map(p => p.permCode)
+        .filter(code => !OPT_IN_PERMISSIONS.includes(code));
+      const explicitCodes = await this.getExplicitOptInPerms(roleIds);
+      for (const code of explicitCodes) {
+        if (!autoCodes.includes(code)) autoCodes.push(code);
+      }
+      return autoCodes;
     }
 
     // 4. Check if user has sales role → limited permissions
@@ -125,6 +140,17 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     return permCodes;
+  }
+
+  /** 取该用户角色中显式授予的「显式授权制」权限（超管也需经此获得，如 config） */
+  private async getExplicitOptInPerms(roleIds: string[]): Promise<string[]> {
+    if (!roleIds.length || !OPT_IN_PERMISSIONS.length) return [];
+    const rolePerms = await this.rolePermissionRepo.find({ where: { roleId: In(roleIds) } });
+    if (!rolePerms.length) return [];
+    const perms = await this.permissionRepo.find({
+      where: { id: In(rolePerms.map(rp => rp.permissionId)), status: 1 },
+    });
+    return perms.map(p => p.permCode).filter(code => OPT_IN_PERMISSIONS.includes(code));
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {

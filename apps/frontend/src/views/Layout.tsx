@@ -10,6 +10,7 @@ import {
   TeamOutlined,
   ShopOutlined,
   ProfileOutlined,
+  SettingOutlined,
   BankOutlined,
   LockOutlined,
   SearchOutlined,
@@ -19,6 +20,7 @@ import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Input } from 'antd';
 import request from '../utils/request';
 import ImportTaskFloat from '../components/ImportTaskFloat';
+import { isOptInPerm } from '../utils/optInPerms';
 import './Layout.css';
 
 const { Header, Content, Sider } = Layout;
@@ -60,6 +62,7 @@ const AppLayout: React.FC = () => {
     { key: '/customer', icon: <UserOutlined />, label: '客户管理', permCode: 'customer' },
     { key: '/product', icon: <ShopOutlined />, label: '商品管理', permCode: 'product' },
     { key: '/order', icon: <ProfileOutlined />, label: '订单管理（敬请期待）', disabled: true, permCode: 'order' },
+    { key: '/config', icon: <SettingOutlined />, label: '配置管理', permCode: 'config' },
     { 
       key: 'org-group', 
       icon: <BankOutlined />, 
@@ -86,6 +89,8 @@ const AppLayout: React.FC = () => {
 
   const menuItems = allMenuItems
     .filter(item => {
+      // 显式授权制权限（如配置管理）超管也不自动放行，必须显式持有
+      if (isOptInPerm(item.permCode)) return userPermissions.includes(item.permCode);
       if (roleCode === 'super_admin' || roleCode === 'super__admin' || roleCode === 'admin') return true;
       return userPermissions.includes(item.permCode);
     })
@@ -112,6 +117,7 @@ const AppLayout: React.FC = () => {
     '/customer': '客户管理',
     '/product': '商品管理',
     '/order': '订单管理',
+    '/config': '配置管理',
     '/org': '组织层级管理',
     '/account': '账号管理',
     '/role': '角色管理',

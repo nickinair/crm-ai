@@ -149,17 +149,16 @@ const LeadsManagement: React.FC = () => {
 
   const fetchSales = async () => {
     try {
-      // 获取角色列表，找到销售角色
-      const rolesRes: any = await request.get('/roles', { params: { pageSize: 100 } });
-      const rolesList = rolesRes.data?.list || rolesRes.list || (Array.isArray(rolesRes) ? rolesRes : []);
-      const salesRole = rolesList.find((r: any) => r.roleCode === 'sales' || r.roleName === '销售');
-      
-      const roleId = salesRole?.id;
-
-      // 获取销售人员列表
-      const res: any = await request.get('/account', { params: { limit: 100, roleId } });
-      const items = res.items || (Array.isArray(res) ? res : (res.data || []));
-      setSalesList(items);
+      // 用专用接口取销售列表：已内置「仅状态正常」过滤且不分页，
+      // 避免此前走 /account 分页接口导致的「只出 10 个」和「禁用/离职仍展示」两个问题
+      const res: any = await request.get('/account/sales-list');
+      const items = Array.isArray(res) ? res : (res.items || res.data || []);
+      // 统一成下拉需要的结构：{ id, realName, username }
+      setSalesList(items.map((s: any) => ({
+        id: s.id,
+        realName: s.name || s.realName,
+        username: s.username,
+      })));
     } catch (err) {
       console.error(err);
     }
