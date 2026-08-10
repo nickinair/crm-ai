@@ -773,10 +773,12 @@ body {
 
 /* 侧边栏用的小号标签：置于标题上方，尽量不占宽度以免标题折行 */
 .env-badge-sm {
-    padding: 0 5px;
-    border-radius: 4px;
-    font-size: 10px;
-    line-height: 14px;
+    padding: 0 4px;
+    border-radius: 3px;
+    border-color: rgba(245, 158, 11, 0.35);
+    font-size: 9px;
+    font-weight: 500;
+    line-height: 13px;
     letter-spacing: 0;
 }
 
