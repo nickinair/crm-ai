@@ -771,9 +771,12 @@ body {
     white-space: nowrap;
 }
 
-.env-badge-mini {
-    padding: 1px 5px;
+/* 侧边栏用的小号标签：置于标题上方，尽量不占宽度以免标题折行 */
+.env-badge-sm {
+    padding: 0 5px;
+    border-radius: 4px;
     font-size: 10px;
+    line-height: 14px;
     letter-spacing: 0;
 }
 

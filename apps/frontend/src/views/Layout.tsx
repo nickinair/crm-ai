@@ -245,9 +245,13 @@ const AppLayout: React.FC = () => {
                 <path fill="url(#lightningGradient)" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
               </svg>
             </div>
-            {!collapsed && <span className="logo-text" style={{ margin: 0 }}>涌客CRM销售系统</span>}
-            {IS_TEST_ENV && !collapsed && <span className="env-badge" style={{ marginLeft: 8 }}>{ENV_LABEL}</span>}
-            {IS_TEST_ENV && collapsed && <span className="env-badge env-badge-mini" style={{ marginLeft: 4 }}>{ENV_LABEL_SHORT}</span>}
+            {!collapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, minWidth: 0 }}>
+                {IS_TEST_ENV && <span className="env-badge env-badge-sm">{ENV_LABEL}</span>}
+                <span className="logo-text" style={{ margin: 0, whiteSpace: 'nowrap' }}>涌客CRM销售系统</span>
+              </div>
+            )}
+            {IS_TEST_ENV && collapsed && <span className="env-badge env-badge-sm" style={{ marginLeft: 2 }}>{ENV_LABEL_SHORT}</span>}
           </div>
           <div style={{ height: '56px', padding: '0 16px', display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
             <Input 
