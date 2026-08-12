@@ -172,9 +172,9 @@ export class LeadController {
   }
 
   @Post(':id/void')
-  async voidLead(@Param('id') id: string, @Request() req: any) {
+  async voidLead(@Param('id') id: string, @Request() req: any, @Body() body?: { voidReason?: string; voidDetail?: string }) {
     try {
-      return await this.leadService.voidLead(id, String(req.user?.sub || ''));
+      return await this.leadService.voidLead(id, String(req.user?.sub || ''), body?.voidReason, body?.voidDetail);
     } catch (e: any) {
       return { error: true, message: e.message, stack: e.stack };
     }

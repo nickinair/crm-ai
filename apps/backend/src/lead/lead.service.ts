@@ -255,7 +255,7 @@ export class LeadService implements OnModuleInit {
     const orderField = allowedSortFields[sortField] || 'lead.createdAt';
     const orderDirection: 'ASC' | 'DESC' = sortOrder === 'ascend' ? 'ASC' : 'DESC';
     if (sortField === 'workbench') {
-      // 工作台私池：按 待跟进(1)→跟进中(2)→已战败(4)→已完成(3) 分组，
+      // 工作台私池：按 待跟进(1)→跟进中(2)→已战败(4)→已成交(3) 分组，
       // 组内按最新跟进时间升序（越早越靠前，从未跟进的排最前）。
       // 表达式需先 addSelect 成别名再排序，否则 TypeORM 分页解析 ORDER BY 会报错；
       // 其他状态（作废/战败已被领取等）排最后
@@ -332,7 +332,7 @@ export class LeadService implements OnModuleInit {
   /**
    * 核心经营指标：
    * - 今日新增线索：创建时间=当天 且 线索创建类型=普通新建
-   * - 线索转化率：已完成线索数 / 总线索数（均只统计普通新建）
+   * - 线索转化率：已成交线索数 / 总线索数（均只统计普通新建）
    * - 接通率：呼叫结果=已接听 的跟进记录数 / 存在呼叫结果的跟进记录总数
    * - 本月成交额：状态=已完结 且 更新时间在当月 的订单实付金额之和
    */
@@ -369,8 +369,8 @@ export class LeadService implements OnModuleInit {
   }
 
   /**
-   * 销售线索分布（PRD 4.4）：销售名称、待跟进、跟进中、已完成、已战败、合计、线索转化率
-   * 转化率 =（已完成 / 合计）*100%
+   * 销售线索分布（PRD 4.4）：销售名称、待跟进、跟进中、已成交、已战败、合计、线索转化率
+   * 转化率 =（已成交 / 合计）*100%
    */
   async getSalesLeadDistribution() {
     const rows = await this.dataSource.query(
@@ -2043,14 +2043,24 @@ export class LeadService implements OnModuleInit {
     }
   }
 
-  async voidLead(id: string, operatorId?: string) {
+  async voidLead(id: string, operatorId?: string, voidReason?: string, voidDetail?: string) {
     const lead = await this.leadRepo.findOne({ where: { id } });
     if (!lead) {
       throw new Error('线索未找到');
     }
+    // 操作矩阵（PRD 4.3.1）：仅 待分配(0)/待跟进(1)/跟进中(2)/回收待分配(6) 可作废
+    if (![0, 1, 2, 6].includes(lead.leadStatus)) {
+      const STATUS_NAME: Record<number, string> = { 3: '已成交', 4: '已战败', 5: '已作废' };
+      throw new Error(`${STATUS_NAME[lead.leadStatus] || '当前'}状态的线索不可作废`);
+    }
+    // 作废原因（PRD 4.3.3）：下拉必选；选「其他」时必须填写具体原因
+    if (voidReason === '其他' && !voidDetail) {
+      throw new Error('请填写具体作废原因');
+    }
     lead.leadStatus = 5;
     await this.leadRepo.save(lead);
-    await this.addLeadLog(id, operatorId, '作废', '线索状态：变更为 已作废');
+    const reasonText = voidReason ? `；作废原因：${voidReason}${voidDetail ? `（${voidDetail}）` : ''}` : '';
+    await this.addLeadLog(id, operatorId, '作废', `线索状态：变更为 已作废${reasonText}`);
     return true;
   }
 
@@ -2069,7 +2079,7 @@ export class LeadService implements OnModuleInit {
       const leads = await queryRunner.manager.find(BizLead, { where: { id: In(leadIds) } });
 
       // 1. 状态校验：仅待跟进(1)/跟进中(2)可重新分配（PRD 4.3.1）
-      const STATUS_NAME: Record<number, string> = { 0: '待分配', 1: '待跟进', 2: '跟进中', 3: '已完成', 4: '已战败', 5: '已作废', 6: '回收待分配' };
+      const STATUS_NAME: Record<number, string> = { 0: '待分配', 1: '待跟进', 2: '跟进中', 3: '已成交', 4: '已战败', 5: '已作废', 6: '回收待分配' };
       const invalid = leads.filter(l => ![1, 2].includes(l.leadStatus));
       if (invalid.length > 0) {
         const names = [...new Set(invalid.map(l => STATUS_NAME[l.leadStatus] || '未知'))];

@@ -64,7 +64,7 @@ const LeadSearchForm: React.FC<Props> = ({ form, onSearch, salesList = [], darkL
           <Select.Option value={0}>待分配</Select.Option>
           <Select.Option value={1}>待跟进</Select.Option>
           <Select.Option value={2}>跟进中</Select.Option>
-          <Select.Option value={3}>已完成</Select.Option>
+          <Select.Option value={3}>已成交</Select.Option>
           <Select.Option value={4}>已战败</Select.Option>
           <Select.Option value={5}>已作废</Select.Option>
           <Select.Option value={6}>回收待分配</Select.Option>

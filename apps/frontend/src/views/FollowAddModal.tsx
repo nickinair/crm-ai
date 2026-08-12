@@ -28,7 +28,7 @@ const FollowAddModal: React.FC<FollowAddModalProps> = ({ open, onCancel, onSucce
   // Pre-fill form with last follow record values when modal opens
   useEffect(() => {
     if (open && lastFollowRecord) {
-      const statusNames: Record<number, string> = { 0: '待分配', 1: '待跟进', 2: '跟进中', 3: '已完成', 4: '已战败' };
+      const statusNames: Record<number, string> = { 0: '待分配', 1: '待跟进', 2: '跟进中', 3: '已成交', 4: '已战败' };
       form.setFieldsValue({
         callResult: lastFollowRecord.callResult || undefined,
         communicationTendency: lastFollowRecord.communicationTendency || undefined,
@@ -57,7 +57,7 @@ const FollowAddModal: React.FC<FollowAddModalProps> = ({ open, onCancel, onSucce
         communicationTendency: values.communicationTendency,
         purchaseIntention: values.purchaseIntention,
         nextPlanTime: values.nextPlanTime ? dayjs(values.nextPlanTime).format('YYYY-MM-DD HH:mm:ss') : undefined,
-        leadStatus: values.leadStatus === '已完成' ? 3 : values.leadStatus === '已战败' ? 4 : 2,
+        leadStatus: values.leadStatus === '已成交' || values.leadStatus === '已完成' ? 3 : values.leadStatus === '已战败' ? 4 : 2,
       });
 
       message.success('添加跟进记录成功');
@@ -106,7 +106,7 @@ const FollowAddModal: React.FC<FollowAddModalProps> = ({ open, onCancel, onSucce
 
           <Form.Item name="leadStatus" label="线索状态" initialValue="跟进中">
             <Select placeholder="请选择">
-              {/* 「已完成」已移除：线索完结由订单完结联动触发（PRD 4.3.3） */}
+              {/* 「已成交」已移除：线索完结由订单完结联动触发（PRD 4.3.3） */}
               <Select.Option value="跟进中">跟进中</Select.Option>
               <Select.Option value="已战败">已战败</Select.Option>
             </Select>

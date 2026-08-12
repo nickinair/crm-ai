@@ -23,7 +23,7 @@ const leadStatusMap: Record<number, { label: string; color: string }> = {
   0: { label: '待分配', color: '#94A3B8' },
   1: { label: '待跟进', color: '#FBBF24' },
   2: { label: '跟进中', color: '#38BDF8' },
-  3: { label: '已完成', color: '#10B981' },
+  3: { label: '已成交', color: '#10B981' },
   4: { label: '已战败', color: '#F87171' },
   5: { label: '已作废', color: '#94A3B8' },
   6: { label: '回收待分配', color: '#94A3B8' },
@@ -163,7 +163,7 @@ const CustomerDetail: React.FC = () => {
     return 'cd-wechat-not-added';
   };
 
-  // 从已完成/已战败线索跳转进来时（URL 带 leadId），页面隐藏操作按钮
+  // 从已成交/已战败线索跳转进来时（URL 带 leadId），页面隐藏操作按钮
   const ctxLead = ctxLeadId ? data?.leads?.find((l: any) => String(l.id) === String(ctxLeadId)) : null;
   const isCtxLeadClosed = !!ctxLead && [3, 4].includes(Number(ctxLead.lead_status));
 
@@ -439,7 +439,7 @@ const CustomerDetail: React.FC = () => {
                     {f.communicationTendency && <span className={`cd-follow-tag ${getFollowTagColor('communicationTendency')}`}>沟通倾向: {f.communicationTendency}</span>}
                     {f.purchaseIntention && <span className={`cd-follow-tag ${getFollowTagColor('purchaseIntention')}`}>购买意向: {f.purchaseIntention}</span>}
                     {f.nextFollowAt && <span className={`cd-follow-tag ${getFollowTagColor('nextFollowAt')}`}>下次回访: {dayjs(f.nextFollowAt).format('YYYY-MM-DD HH:mm')}</span>}
-                    {f.leadStatus !== undefined && f.leadStatus !== null && <span className={`cd-follow-tag ${getFollowTagColor('leadStatus')}`}>线索状态: {f.leadStatus === 0 ? '待分配' : f.leadStatus === 1 ? '待跟进' : f.leadStatus === 2 ? '跟进中' : f.leadStatus === 3 ? '已完成' : '已战败'}</span>}
+                    {f.leadStatus !== undefined && f.leadStatus !== null && <span className={`cd-follow-tag ${getFollowTagColor('leadStatus')}`}>线索状态: {f.leadStatus === 0 ? '待分配' : f.leadStatus === 1 ? '待跟进' : f.leadStatus === 2 ? '跟进中' : f.leadStatus === 3 ? '已成交' : '已战败'}</span>}
                   </div>
                   <div className="cd-follow-content">{f.followContent || '-'}</div>
                 </div>

@@ -8,6 +8,7 @@ import { saveAs } from 'file-saver';
 import request from '../utils/request';
 import { startImportTask, clearImportTask, setImportModalVisible, getImportModalVisible, registerExpandModal, getImportTask } from '../utils/importTask';
 import LeadAddModal from './LeadAddModal';
+import LeadVoidModal from '../components/LeadVoidModal';
 import LeadSearchForm from '../components/LeadSearchForm';
 import './Leads.css';
 
@@ -23,6 +24,7 @@ const LeadsManagement: React.FC = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModal, setIsViewModal] = useState(false);
+  const [voidLeadId, setVoidLeadId] = useState<string | null>(null); // 作废弹框（PRD 4.3.3）
   const [editLeadId, setEditLeadId] = useState<string | undefined>();
   
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -205,7 +207,7 @@ const LeadsManagement: React.FC = () => {
       0: { text: '待分配', className: 'crm-tag-warning' },
       1: { text: '待跟进', className: 'crm-tag-warning' },
       2: { text: '跟进中', className: 'crm-tag-info' },
-      3: { text: '已完成', className: 'crm-tag-success' },
+      3: { text: '已成交', className: 'crm-tag-success' },
       4: { text: '已战败', className: 'crm-tag-danger' },
       5: { text: '已作废', className: 'crm-tag-default' },
       6: { text: '回收待分配', className: 'crm-tag-warning' }
@@ -389,8 +391,8 @@ const LeadsManagement: React.FC = () => {
         );
     } },
     { title: '操作', key: 'action', width: 150, fixed: 'right', render: (_: any, record: any) => {
-        // 操作矩阵（PRD 4.3.1）：待分配/回收待分配→编辑、分配、作废；待跟进/跟进中→详情、重新分配；
-        // 已完成/已作废→详情；已战败无管控标识→详情、重新分配（分配入口保留）；有管控标识→仅详情
+        // 操作矩阵（PRD 4.3.1）：待分配/回收待分配→编辑、分配、作废；待跟进/跟进中→详情、重新分配、作废；
+        // 已成交/已作废→详情；已战败无管控标识→详情、重新分配（分配入口保留）；有管控标识→仅详情
         const st = record.leadStatus;
         const controlled = record.assignControl != null;
         const canEditVoid = [0, 6].includes(st);
@@ -425,8 +427,8 @@ const LeadsManagement: React.FC = () => {
               <a onClick={() => openReassign([record])}>重新分配</a>
             )}
 
-            {canEditVoid && (
-              <a className="delete-link" onClick={() => handleVoid(record.id)}>作废</a>
+            {(canEditVoid || [1, 2].includes(st)) && (
+              <a className="delete-link" onClick={() => setVoidLeadId(record.id)}>作废</a>
             )}
           </div>
         );
@@ -591,7 +593,7 @@ const LeadsManagement: React.FC = () => {
   };
 
   /** 重新分配入口：行内单条 / 批量勾选（PRD 4.3.1） */
-  const STATUS_NAME: Record<number, string> = { 0: '待分配', 1: '待跟进', 2: '跟进中', 3: '已完成', 4: '已战败', 5: '已作废', 6: '回收待分配' };
+  const STATUS_NAME: Record<number, string> = { 0: '待分配', 1: '待跟进', 2: '跟进中', 3: '已成交', 4: '已战败', 5: '已作废', 6: '回收待分配' };
   const openReassign = (records: any[]) => {
     if (!records.length) { message.warning('请选择要重新分配的线索'); return; }
     // 仅待跟进/跟进中可重新分配；含其他状态直接提示（PRD 4.3.1）
@@ -679,24 +681,6 @@ const LeadsManagement: React.FC = () => {
     }
   };
 
-  const handleVoid = (id: string) => {
-    Modal.confirm({
-      title: '提示',
-      content: '作废后不可恢复，确定要作废吗？',
-      okText: '确定',
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          await request.post(`/lead/${id}/void`);
-          message.success('已作废');
-          refreshLeads();
-        } catch (err: any) {
-          message.error(err.message || err.response?.data?.message || '操作失败');
-        }
-      }
-    });
-  };
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
       <div className="table-card">
@@ -779,6 +763,13 @@ const LeadsManagement: React.FC = () => {
           options={salesList.map((sa: any) => ({ value: sa.id, label: sa.realName || sa.username }))}
         />
       </Modal>
+
+      <LeadVoidModal
+        open={!!voidLeadId}
+        leadId={voidLeadId}
+        onCancel={() => setVoidLeadId(null)}
+        onSuccess={() => { setVoidLeadId(null); refreshLeads(); }}
+      />
 
       <LeadAddModal 
         open={isModalOpen} 

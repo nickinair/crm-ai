@@ -19,13 +19,13 @@ export class FollowService {
     // Create follow record
     data.followTime = new Date();
     // Map string status to numeric code
-    const statusMap: Record<string, number> = { '跟进中': 2, '已完成': 3, '已战败': 4 };
+    const statusMap: Record<string, number> = { '跟进中': 2, '已完成': 3, '已成交': 3, '已战败': 4 };
     const numericStatus = typeof data.leadStatus === 'string' ? (statusMap[data.leadStatus] ?? 2) : (data.leadStatus || 2);
 
     const oldLead = await this.leadRepo.findOne({ where: { id: data.leadId } });
     let finalContent = data.followContent;
     if (oldLead && oldLead.leadStatus !== numericStatus) {
-      const statusNames: Record<number, string> = { 0: '待分配', 1: '待跟进', 2: '跟进中', 3: '已完成', 4: '已战败' };
+      const statusNames: Record<number, string> = { 0: '待分配', 1: '待跟进', 2: '跟进中', 3: '已成交', 4: '已战败' };
       const oldStatusName = statusNames[oldLead.leadStatus] || '未知';
       const newStatusName = statusNames[numericStatus] || '未知';
       const changeText = `【状态变更为：${newStatusName}】`;

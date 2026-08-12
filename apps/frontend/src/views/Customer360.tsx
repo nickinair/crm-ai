@@ -23,10 +23,12 @@ import FollowAddModal from './FollowAddModal';
 import OrderCreateModal from '../components/OrderCreateModal';
 import { getOrderStatusTag } from './Order';
 import './Workbench.css';
+import LeadVoidModal from '../components/LeadVoidModal';
 import './Customer360.css';
 import dayjs from 'dayjs';
 
 const Customer360: React.FC = () => {
+  const [voidLeadOpen, setVoidLeadOpen] = useState(false); // 作废弹框（PRD 4.3.5）
   const { getDictOptions } = useDict();
   // 微信状态颜色：已通过/已添加=绿，添加待通过=黄，拒绝添加=红，其余=灰
   const wechatColor = (v: string) => (v === '已通过' || v === '已添加') ? '#52c41a'
@@ -242,9 +244,9 @@ const Customer360: React.FC = () => {
     }
   };
 
-  const leadStatusMap = ['待分配', '待跟进', '跟进中', '已完成', '已战败', '已作废', '回收待分配'];
-  // 已完成(3)/已战败(4)的线索为终态，页面只读，隐藏所有操作入口
-  const isLeadClosed = [3, 4].includes(Number(leadInfo?.leadStatus));
+  const leadStatusMap = ['待分配', '待跟进', '跟进中', '已成交', '已战败', '已作废', '回收待分配'];
+  // 已成交(3)/已战败(4)/已作废(5)的线索为终态，页面只读，隐藏所有操作入口
+  const isLeadClosed = [3, 4, 5].includes(Number(leadInfo?.leadStatus));
 
   return (
     <div className="customer360-container">
@@ -255,6 +257,8 @@ const Customer360: React.FC = () => {
           <div className="c360-lead-actions">
             <button className="crm-btn crm-btn-outline" onClick={handleAddLead}>新增线索</button>
             {!isLeadClosed && <>
+              {/* 待跟进/跟进中：作废按钮在退回公域池前（PRD 4.3.5） */}
+              {[1, 2].includes(leadInfo.leadStatus) && <button className="crm-btn crm-btn-outline" onClick={() => setVoidLeadOpen(true)}>作废</button>}
               <button className="crm-btn crm-btn-outline" onClick={handleReturnPublic}>退回公域池</button>
               <button className="crm-btn crm-btn-outline" onClick={handleAddOrder}>新增订单</button>
               <button className="crm-btn crm-btn-primary" onClick={handleAddFollow}>添加跟进记录</button>
@@ -501,7 +505,7 @@ const Customer360: React.FC = () => {
                   {record.communicationTendency && <span className="c360-status-tag tag-solid-green">沟通倾向: {record.communicationTendency}</span>}
                   {record.purchaseIntention && <span className="c360-status-tag tag-solid-yellow">购买意向: {record.purchaseIntention}</span>}
                   {record.nextFollowAt && <span className="c360-status-tag tag-solid-purple">下次跟进: {dayjs(record.nextFollowAt).format('YYYY-MM-DD HH:mm')}</span>}
-                  {record.leadStatus !== undefined && record.leadStatus !== null && <span className="c360-status-tag tag-solid-blue">线索状态: {record.leadStatus === 0 ? '待分配' : record.leadStatus === 1 ? '待跟进' : record.leadStatus === 2 ? '跟进中' : record.leadStatus === 3 ? '已完成' : '已战败'}</span>}
+                  {record.leadStatus !== undefined && record.leadStatus !== null && <span className="c360-status-tag tag-solid-blue">线索状态: {record.leadStatus === 0 ? '待分配' : record.leadStatus === 1 ? '待跟进' : record.leadStatus === 2 ? '跟进中' : record.leadStatus === 3 ? '已成交' : '已战败'}</span>}
                 </div>
                 <div className="c360-record-content">
                   {record.followContent || record.follow_content}
@@ -683,6 +687,13 @@ const Customer360: React.FC = () => {
           <span style={{ fontSize: '15px' }}>确定要退回公域池吗？</span>
         </div>
       </Modal>
+
+      <LeadVoidModal
+        open={voidLeadOpen}
+        leadId={leadId!}
+        onCancel={() => setVoidLeadOpen(false)}
+        onSuccess={() => { setVoidLeadOpen(false); fetchLeadData(); }}
+      />
 
       <FollowAddModal
         open={isFollowModalVisible}

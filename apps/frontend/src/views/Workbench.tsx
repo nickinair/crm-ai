@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Modal, message, Table, ConfigProvider } from 'antd';
+import { Modal, message, Table, ConfigProvider, Select } from 'antd';
 import request from '../utils/request';
 import { hasPerm } from '../utils/perm';
 import dayjs from 'dayjs';
 import ExcelJS from 'exceljs';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import OrderCreateModal from '../components/OrderCreateModal';
+import LeadVoidModal from '../components/LeadVoidModal';
 import LeadAddModal from './LeadAddModal';
 import { getOrderStatusTag, isOrderFinal } from './Order';
 import './Workbench.css';
@@ -26,6 +27,8 @@ const Workbench: React.FC = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [isReturnModalVisible, setIsReturnModalVisible] = useState(false);
   const [stats, setStats] = useState({ todayPendingFollowUp: 0, publicPoolCount: 0 });
+  const [orderSituationFilter, setOrderSituationFilter] = useState<number | undefined>(undefined); // 订单情况筛选，单选（PRD 4.2.4.1）
+  const [voidLeadId, setVoidLeadId] = useState<string | null>(null); // 作废弹框（PRD 4.2.4.1）
   const [isOrderCreateOpen, setIsOrderCreateOpen] = useState(false); // 快捷工具栏-创建订单（PRD 4.2.3）
   const [isLeadAddOpen, setIsLeadAddOpen] = useState(false); // 快捷工具栏-新增线索（PRD 4.2.3）
 
@@ -78,7 +81,7 @@ const Workbench: React.FC = () => {
         page,
         limit: pageSize,
         assignedAccountId: userInfo.id,
-        sortField: 'workbench' // 按 待跟进→跟进中→已战败→已完成 分组，组内最新跟进时间升序
+        sortField: 'workbench' // 按 待跟进→跟进中→已战败→已成交 分组，组内最新跟进时间升序
       };
       if (statusFilter.length > 0) {
         params.leadStatus = statusFilter.join(',');
@@ -88,6 +91,9 @@ const Workbench: React.FC = () => {
       }
       if (phoneSearch) {
         params.customerPhone = phoneSearch;
+      }
+      if (orderSituationFilter !== undefined) {
+        params.orderSituation = orderSituationFilter;
       }
 
       const res: any = await request.get('/lead', { params });
@@ -119,7 +125,7 @@ const Workbench: React.FC = () => {
   useEffect(() => {
     fetchLeads();
     fetchRecentCustomers();
-  }, [page, pageSize, statusFilter, phoneSearch]);
+  }, [page, pageSize, statusFilter, phoneSearch, orderSituationFilter]);
 
   const applyPhoneSearch = () => {
     setPhoneSearch(phoneInput.trim());
@@ -314,7 +320,7 @@ const Workbench: React.FC = () => {
     }
 
     const statusMap: Record<number, string> = {
-      0: '待分配', 1: '待跟进', 2: '跟进中', 3: '已完成', 4: '已战败', 5: '作废', 6: '回收待分配'
+      0: '待分配', 1: '待跟进', 2: '跟进中', 3: '已成交', 4: '已战败', 5: '作废', 6: '回收待分配'
     };
 
     const selectedLeads = leads.filter(l => selectedRowKeys.includes(l.id));
@@ -400,20 +406,12 @@ const Workbench: React.FC = () => {
       0: getPillTag('待分配', 'status-gray'),
       1: getPillTag('待跟进', 'status-warning'),
       2: getPillTag('跟进中', 'status-primary'),
-      3: getPillTag('已完成', 'status-success'),
+      3: getPillTag('已成交', 'status-success'),
       4: getPillTag('已战败', 'status-gray'),
       5: getPillTag('作废', 'status-danger'),
       6: getPillTag('回收待分配', 'status-gray'),
     };
     return map[status] || getPillTag('未知', 'status-gray');
-  };
-
-  const renderProducts = (products: any[], role: number) => {
-    if (!products || products.length === 0) return <span style={{ color: '#94A3B8' }}>-</span>;
-    const filtered = products.filter((p: any) => p.productRole === role).map((p: any) => p.product);
-    if (!filtered.length) return <span style={{ color: '#94A3B8' }}>-</span>;
-    const names = filtered.map((p: any) => p?.productName || '').filter(Boolean);
-    return names.join(', ') || '-';
   };
 
   const getPurchaseIntentionTag = (val: string) => {
@@ -456,13 +454,25 @@ const Workbench: React.FC = () => {
     return getPillTag(val, colorMap[val] || 'status-gray');
   };
 
+  // 车辆布尔字段展示：1/'1'/true/'是' → 是，其余 → 否
+  const boolText = (val: any) => (val === true || val === 1 || val === '1' || val === '是') ? '是' : '否';
+
+  // 订单情况（PRD 4.2.4.1，枚举同线索池管理）
+  const ORDER_SITUATION: Record<number, { text: string; cls: string }> = {
+    0: { text: '未下单', cls: 'crm-tag-default' },
+    1: { text: '存在未完结订单', cls: 'crm-tag-warning' },
+    2: { text: '全部订单已作废', cls: 'crm-tag-danger' },
+    3: { text: '全部订单已完结', cls: 'crm-tag-success' },
+  };
+
+  // 列表字段（PRD 4.2.4.1）：序号、线索编码、客户姓名、客户电话、来源时间、购买意向、线索状态、
+  // 添加微信状态、客户沟通倾向、呼叫结果、是否购买整车延保、是否购买电池延保、订单情况、
+  // 最新跟进时间、下次计划跟进时间、操作；首尾列固定
   const columns = [
-    { title: '序号', dataIndex: 'id', width: 60, render: (_: any, __: any, index: number) => (page - 1) * pageSize + index + 1 },
-    { title: '线索编码', dataIndex: 'leadCode', width: 110 },
-    { title: '客户姓名', dataIndex: ['customer', 'customerName'], width: 90 },
-    { title: '客户电话', dataIndex: ['customer', 'phone'], width: 120 },
-    { title: '渠道来源', dataIndex: 'channelSource', width: 100 },
-    { title: '线索来源方式', dataIndex: 'sourceMethod', width: 110 },
+    { title: '序号', dataIndex: 'id', width: 60, fixed: 'left' as const, render: (_: any, __: any, index: number) => (page - 1) * pageSize + index + 1 },
+    { title: '线索编码', dataIndex: 'leadCode', width: 110, fixed: 'left' as const },
+    { title: '客户姓名', dataIndex: ['customer', 'customerName'], width: 90, fixed: 'left' as const },
+    { title: '客户电话', dataIndex: ['customer', 'phone'], width: 120, fixed: 'left' as const },
     { title: '来源时间', dataIndex: 'sourceDate', width: 110, render: (val: any) => val || '-' },
     { title: '购买意向', dataIndex: 'purchaseIntention', width: 90, render: (val: any) => getPurchaseIntentionTag(val) },
     { title: '线索状态', dataIndex: 'leadStatus', width: 90, render: (val: any) => getLeadStatusElement(val) },
@@ -476,11 +486,14 @@ const Workbench: React.FC = () => {
     } },
     { title: '客户沟通倾向', dataIndex: 'communicationTendency', width: 110, render: (val: any) => getCommunicationTag(val) },
     { title: '呼叫结果', dataIndex: 'callResult', width: 100, render: (val: any) => getCallResultTag(val) },
-    { title: '意向商品', key: 'intentProduct', width: 100, render: (_: any, record: any) => renderProducts(record.products, 1) },
-    { title: '意向赠品', key: 'intentGift', width: 100, render: (_: any, record: any) => renderProducts(record.products, 2) },
-    { title: '备注', dataIndex: 'remark', width: 150, render: (_: any, record: any) => record.vehicle?.remark || <span style={{ color: '#94A3B8' }}>-</span> },
-    { title: '最新跟进时间', dataIndex: 'lastFollowAt', width: 120, render: (val: any) => val ? dayjs(val).format('YYYY-MM-DD') : '无记录' },
-    { title: '下次计划跟进时间', dataIndex: 'nextFollowAt', width: 140, render: (val: any) => val ? dayjs(val).format('YYYY-MM-DD') : <span style={{ color: '#94A3B8' }}>-</span> },
+    { title: '是否购买整车延保', key: 'extWarranty', width: 130, render: (_: any, record: any) => record.vehicle ? boolText(record.vehicle.hasExtendedWarranty) : '-' },
+    { title: '是否购买电池延保', key: 'batteryWarranty', width: 130, render: (_: any, record: any) => record.vehicle ? boolText(record.vehicle.hasBatteryWarranty) : '-' },
+    { title: '订单情况', dataIndex: 'orderSituation', width: 130, render: (val: number) => {
+      const m = ORDER_SITUATION[val] || ORDER_SITUATION[0];
+      return <span className={`crm-tag ${m.cls}`}>{m.text}</span>;
+    } },
+    { title: '最新跟进时间', dataIndex: 'lastFollowAt', width: 120, fixed: 'right' as const, render: (val: any) => val ? dayjs(val).format('YYYY-MM-DD') : '无记录' },
+    { title: '下次计划跟进时间', dataIndex: 'nextFollowAt', width: 140, fixed: 'right' as const, render: (val: any) => val ? dayjs(val).format('YYYY-MM-DD') : <span style={{ color: '#94A3B8' }}>-</span> },
     { 
       title: '操作', 
       key: 'action', 
@@ -498,6 +511,8 @@ const Workbench: React.FC = () => {
                   setSelectedRowKeys([record.id]);
                   setIsReturnModalVisible(true);
                 }}>退回公域池</a>}
+                {/* 待跟进/跟进中 可作废（PRD 4.2.4.1），交互同线索池管理 */}
+                {[1, 2].includes(record.leadStatus) && <a className="delete-link" onClick={() => setVoidLeadId(record.id)}>作废</a>}
               </>
             )}
           </div>
@@ -590,7 +605,7 @@ const Workbench: React.FC = () => {
                 <button className={`filter-btn ${statusFilter.includes(1) ? 'active' : ''}`} onClick={() => toggleStatusFilter(1)}>待跟进<span className="filter-count">{poolCounts.byStatus[1] || 0}</span></button>
                 <button className={`filter-btn ${statusFilter.includes(2) ? 'active' : ''}`} onClick={() => toggleStatusFilter(2)}>跟进中<span className="filter-count">{poolCounts.byStatus[2] || 0}</span></button>
                 <button className={`filter-btn ${statusFilter.includes(4) ? 'active' : ''}`} onClick={() => toggleStatusFilter(4)}>已战败<span className="filter-count">{poolCounts.byStatus[4] || 0}</span></button>
-                <button className={`filter-btn ${statusFilter.includes(3) ? 'active' : ''}`} onClick={() => toggleStatusFilter(3)}>已完成<span className="filter-count">{poolCounts.byStatus[3] || 0}</span></button>
+                <button className={`filter-btn ${statusFilter.includes(3) ? 'active' : ''}`} onClick={() => toggleStatusFilter(3)}>已成交<span className="filter-count">{poolCounts.byStatus[3] || 0}</span></button>
               </div>
               <div className="quick-actions">
                 {hasPerm('workbench:export') && <button className="call-btn btn-primary" onClick={handleBatchExport}>批量导出</button>}
@@ -615,6 +630,19 @@ const Workbench: React.FC = () => {
                 />
               </div>
               <button className="call-btn btn-primary" onClick={applyPhoneSearch}>查 询</button>
+              <Select
+                placeholder="订单情况"
+                allowClear
+                value={orderSituationFilter}
+                onChange={(v) => { setOrderSituationFilter(v); setPage(1); }}
+                style={{ width: 160 }}
+                options={[
+                  { value: 0, label: '未下单' },
+                  { value: 1, label: '存在未完结订单' },
+                  { value: 2, label: '全部订单已作废' },
+                  { value: 3, label: '全部订单已完结' },
+                ]}
+              />
             </div>
 
             <ConfigProvider 
@@ -658,7 +686,7 @@ const Workbench: React.FC = () => {
                 pageSizeOptions: ['10', '20', '50', '100', '200'],
                 onChange: (p: number, s: number) => { setPage(p); setPageSize(s); },
               }}
-              scroll={{ x: 1830 }}
+              scroll={{ x: 1810 }}
             />
             </ConfigProvider>
             </>)}
@@ -788,6 +816,13 @@ const Workbench: React.FC = () => {
       />
 
       {/* 快捷工具栏-新增线索：保存后自动分配给当前销售（PRD 4.2.3.3） */}
+      <LeadVoidModal
+        open={!!voidLeadId}
+        leadId={voidLeadId}
+        onCancel={() => setVoidLeadId(null)}
+        onSuccess={() => { setVoidLeadId(null); fetchLeads(); }}
+      />
+
       <LeadAddModal
         open={isLeadAddOpen}
         onCancel={() => setIsLeadAddOpen(false)}

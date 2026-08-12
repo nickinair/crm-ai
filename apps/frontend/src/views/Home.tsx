@@ -60,7 +60,7 @@ const Home: React.FC = () => {
     { title: '销售名称', dataIndex: 'salesName', width: 160, render: (v: string) => v || '-' },
     { title: '待跟进', dataIndex: 'pending', width: 110 },
     { title: '跟进中', dataIndex: 'following', width: 110 },
-    { title: '已完成', dataIndex: 'done', width: 110 },
+    { title: '已成交', dataIndex: 'done', width: 110 },
     { title: '已战败', dataIndex: 'defeated', width: 110 },
     { title: '合计', dataIndex: 'total', width: 110, render: (v: number) => <span style={{ fontWeight: 600 }}>{v}</span> },
     { title: '线索转化率', dataIndex: 'conversionRate', width: 130, render: (v: number) => rateTag(v) },

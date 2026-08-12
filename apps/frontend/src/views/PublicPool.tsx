@@ -120,7 +120,7 @@ const PublicPool: React.FC = () => {
       0: { text: '待分配', className: 'crm-tag-warning' },
       1: { text: '待跟进', className: 'crm-tag-warning' },
       2: { text: '跟进中', className: 'crm-tag-info' },
-      3: { text: '已完成', className: 'crm-tag-success' },
+      3: { text: '已成交', className: 'crm-tag-success' },
       4: { text: '已战败', className: 'crm-tag-danger' },
       5: { text: '已作废', className: 'crm-tag-default' },
       6: { text: '回收待分配', className: 'crm-tag-warning' },
