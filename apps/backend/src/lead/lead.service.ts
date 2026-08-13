@@ -2298,7 +2298,8 @@ export class LeadService implements OnModuleInit {
       const targets = leads.filter(l => l.assignedAccountId && l.customerId);
 
       if (targets.length > 0) {
-        // 一条 UPDATE：追加曾跟进人(FIND_IN_SET 去重)、清空负责人、状态回到待分配
+        // 一条 UPDATE：追加曾跟进人(FIND_IN_SET 去重)、清空负责人、状态置为回收待分配(6)
+        // ——退回线索需与新进待分配(0)区分，便于按「回收待分配」筛选批量重新分配（2026-08-13 修复：原误置为 0）
         // 注意 previous_assignees 必须先于 assigned_account_id 赋值（MySQL SET 从左到右求值）
         await queryRunner.query(
           `UPDATE biz_lead SET
@@ -2307,7 +2308,7 @@ export class LeadService implements OnModuleInit {
                WHEN FIND_IN_SET(assigned_account_id, previous_assignees) > 0 THEN previous_assignees
                ELSE CONCAT(previous_assignees, ',', assigned_account_id) END,
              assigned_account_id = NULL,
-             lead_status = 0
+             lead_status = 6
            WHERE id IN (?)`,
           [targets.map(l => l.id)]
         );
