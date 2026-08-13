@@ -1805,9 +1805,10 @@ export class LeadService {
           }
           lead.previousAssignees = prevAssignees.join(',');
 
-          // Clear assignee and set status to 0 (待分配)
+          // 清空负责人，状态置为 6（回收待分配）——退回的线索需与新进的待分配(0)区分开，
+          // 便于按「回收待分配」筛选出退回线索批量重新分配（2026-08-13 修复：原误置为 0）
           lead.assignedAccountId = null;
-          lead.leadStatus = 0; // 0 for public pool
+          lead.leadStatus = 6;
           await queryRunner.manager.save(lead);
 
           // Invalidate private relation for this customer and the previous sales
