@@ -2096,7 +2096,7 @@ export class LeadService implements OnModuleInit {
 
       const now = new Date();
       if (assignable.length > 0) {
-        // 原负责人记入曾跟进人，负责人变更，状态保持不变
+        // 原负责人记入曾跟进人，负责人变更，状态流转回待跟进（状态机 2026-08-13：重新分配 → 待跟进）
         for (const lead of assignable) {
           const prevList = lead.previousAssignees ? lead.previousAssignees.split(',') : [];
           if (lead.assignedAccountId && !prevList.includes(String(lead.assignedAccountId)) && String(lead.assignedAccountId) !== String(accountId)) {
@@ -2105,6 +2105,7 @@ export class LeadService implements OnModuleInit {
           await queryRunner.manager.update(BizLead, lead.id, {
             assignedAccountId: accountId,
             assignedAt: now,
+            leadStatus: 1,
             previousAssignees: prevList.join(',') || null,
             updatedAt: now,
           });
@@ -2148,7 +2149,7 @@ export class LeadService implements OnModuleInit {
 
       await queryRunner.commitTransaction();
       for (const l of assignable) {
-        this.addLeadLog(l.id, operatorId, '重新分配', `负责人：${l.assignedAccountId || '空'} -> ${accountId}${moveOrders ? '（含未完结订单一并改派）' : ''}`);
+        this.addLeadLog(l.id, operatorId, '重新分配', `负责人：${l.assignedAccountId || '空'} -> ${accountId}${l.leadStatus !== 1 ? '；线索状态：变更为 待跟进' : ''}${moveOrders ? '（含未完结订单一并改派）' : ''}`);
       }
       return {
         successCount: assignable.length,
