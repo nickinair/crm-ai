@@ -460,13 +460,15 @@ export class LeadService implements OnModuleInit {
       throw { code: 'ASSIGN_CONTROL_BLOCKED', message: `${lead.leadCode}处于${controlName}，不可分配/领取！`, leadCodes: [lead.leadCode] };
     }
 
-    // Check if this salesperson was previously assigned and returned
-    const prevAssignees = lead.previousAssignees ? lead.previousAssignees.split(',') : [];
-    if (prevAssignees.includes(accountId)) {
-      const account = await this.dataSource.getRepository(SysAccount).findOne({ where: { id: accountId } });
-      const salesName = account?.realName || account?.username || '未知销售';
-      throw { code: 'ASSIGN_PREV_CONFLICT', message: `${lead.leadCode}曾被${salesName}销售跟进过，不可再次分配给该销售！`, leadCodes: [lead.leadCode], salesName };
-    }
+    // 【2026-08-13 临时下线】曾跟进人冲突校验：业务要求退回公域池的线索可重新分配给原跟进人
+    // （临期线索专项：销售退回大批线索后需领回继续跟进）。恢复校验时取消注释即可，
+    // previousAssignees 的记录逻辑保持不变，历史数据不受影响。
+    // const prevAssignees = lead.previousAssignees ? lead.previousAssignees.split(',') : [];
+    // if (prevAssignees.includes(accountId)) {
+    //   const account = await this.dataSource.getRepository(SysAccount).findOne({ where: { id: accountId } });
+    //   const salesName = account?.realName || account?.username || '未知销售';
+    //   throw { code: 'ASSIGN_PREV_CONFLICT', message: `${lead.leadCode}曾被${salesName}销售跟进过，不可再次分配给该销售！`, leadCodes: [lead.leadCode], salesName };
+    // }
 
     if (lead.leadStatus === 4) {
       const queryRunner = this.dataSource.createQueryRunner();
@@ -1914,19 +1916,20 @@ export class LeadService implements OnModuleInit {
         throw { code: 'ASSIGN_CONTROL_BLOCKED', message: `${codes.join('，')}处于分配管控中（战败冷却期/战败已复活），不可分配/领取！`, leadCodes: codes };
       }
 
-      // 1. 曾跟进人冲突校验：仅限制销售在公域池自领（requester=被分配人）；
-      //    管理员从线索池管理分配给他人时不受限，战败线索照常克隆为待跟进
-      const isSelfClaim = requesterId != null && String(requesterId) === String(accountId);
-      if (isSelfClaim) {
-        const conflictLeadCodes = leads
-          .filter(l => (l.previousAssignees ? l.previousAssignees.split(',') : []).includes(String(accountId)))
-          .map(l => l.leadCode);
-        if (conflictLeadCodes.length > 0) {
-          const account = await queryRunner.manager.findOne(SysAccount, { where: { id: accountId } });
-          const salesName = account?.realName || account?.username || '未知销售';
-          throw { code: 'ASSIGN_PREV_CONFLICT', message: `${conflictLeadCodes.join('，')}曾被${salesName}销售跟进过，不可再次分配给该销售！`, leadCodes: conflictLeadCodes, salesName };
-        }
-      }
+      // 1.【2026-08-13 临时下线】曾跟进人冲突校验（原仅限制公域池自领）：
+      //    业务要求退回公域池的线索可重新分配/领取给原跟进人（临期线索专项）。
+      //    恢复校验时取消注释即可，previousAssignees 的记录逻辑保持不变。
+      // const isSelfClaim = requesterId != null && String(requesterId) === String(accountId);
+      // if (isSelfClaim) {
+      //   const conflictLeadCodes = leads
+      //     .filter(l => (l.previousAssignees ? l.previousAssignees.split(',') : []).includes(String(accountId)))
+      //     .map(l => l.leadCode);
+      //   if (conflictLeadCodes.length > 0) {
+      //     const account = await queryRunner.manager.findOne(SysAccount, { where: { id: accountId } });
+      //     const salesName = account?.realName || account?.username || '未知销售';
+      //     throw { code: 'ASSIGN_PREV_CONFLICT', message: `${conflictLeadCodes.join('，')}曾被${salesName}销售跟进过，不可再次分配给该销售！`, leadCodes: conflictLeadCodes, salesName };
+      //   }
+      // }
 
       // 2. 状态校验
       for (const lead of leads) {
