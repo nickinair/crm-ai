@@ -364,7 +364,8 @@ const LeadsManagement: React.FC = () => {
               }}>编辑</a>
             )}
             
-            {[1, 2, 3, 4, 5].includes(record.leadStatus) && (
+            {/* 回收待分配(6)也可看详情：退回的线索可能已有跟进记录，管理者需要查看（2026-08-13） */}
+            {[1, 2, 3, 4, 5, 6].includes(record.leadStatus) && (
               <a onClick={() => {
                 setEditLeadId(record.id);
                 setIsViewModal(true);
