@@ -2182,6 +2182,15 @@ export class LeadService implements OnModuleInit {
       if (rows.length && !Number.isNaN(Number(rows[0].item_value))) cooldownDays = Number(rows[0].item_value);
     } catch { /* 用默认值 */ }
 
+    // 冷却天数 = 0：语义为「无冷却」，清空全部冻结标识、不再打新标识（战败线索立即可分配）
+    if (cooldownDays <= 0) {
+      const clearAll = await this.dataSource.query(
+        `UPDATE biz_lead SET assign_control = NULL WHERE lead_status = 4 AND assign_control = 1`);
+      const result0 = { cooldownDays, setCooldown: 0, cleared: clearAll.affectedRows ?? 0, ranAt: new Date().toISOString() };
+      console.log('[冷却期定时任务]', JSON.stringify(result0));
+      return result0;
+    }
+
     // 注意：此处不刷新 updated_at——若打标识时刷新更新时间，次日判断基准被重置，标识将周期性打上又清空
     const setRes = await this.dataSource.query(
       `UPDATE biz_lead SET assign_control = 1

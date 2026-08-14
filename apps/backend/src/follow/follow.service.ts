@@ -52,9 +52,13 @@ export class FollowService {
       leadStatus: numericStatus,
       lastFollowAt: new Date(),
     };
-    // 线索转为已战败时立即进入「战败冷却期」（冻结30天后由定时任务解冻，PRD 4.8）
+    // 线索转为已战败时立即进入「战败冷却期」（冻结 N 天后由定时任务解冻，PRD 4.8）
+    // 冷却天数配置为 0 时语义为「无冷却」：不冻结，战败后立即可被分配/领取
     if (numericStatus === 4 && oldLead?.leadStatus !== 4) {
-      leadUpdate.assignControl = 1;
+      const cooldownDays = await this.getDefeatCooldownDays();
+      if (cooldownDays > 0) {
+        leadUpdate.assignControl = 1;
+      }
       leadUpdate.updatedAt = new Date(); // 冷却计时起点 = 战败时刻
     }
     if (!oldLead?.firstFollowAt) {
@@ -68,5 +72,18 @@ export class FollowService {
     await this.leadRepo.update(data.leadId, leadUpdate);
 
     return saved;
+  }
+
+  /** 战败冷却天数：读数据字典 defeat_cooldown_days，异常/未配置回退 30 */
+  private async getDefeatCooldownDays(): Promise<number> {
+    try {
+      const rows = await this.followRepo.manager.query(
+        `SELECT i.item_value FROM sys_dict_item i
+         JOIN sys_dict_type t ON t.id = i.dict_type_id
+         WHERE t.dict_type_code = 'defeat_cooldown_days' AND i.status = 1
+         ORDER BY i.sort_order LIMIT 1`);
+      if (rows.length && !Number.isNaN(Number(rows[0].item_value))) return Number(rows[0].item_value);
+    } catch { /* 回退默认值 */ }
+    return 30;
   }
 }
