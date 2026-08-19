@@ -20,7 +20,7 @@ export class CustomerController {
     }
   }
 
-  @RequirePermissions('customer:create')
+  @RequirePermissions('customer:create', 'workbench')
   @Post()
   createCustomer(@Body() createDto: Partial<BizCustomer>) {
     return this.customerService.create(createDto);

@@ -619,15 +619,25 @@ const Workbench: React.FC = () => {
                 </svg>
                 <input
                   value={phoneInput}
-                  onChange={e => setPhoneInput(e.target.value)}
+                  onChange={e => {
+                    setPhoneInput(e.target.value);
+                    // 清空输入时立即恢复全量列表，避免残留旧搜索条件（测试问题15）
+                    if (!e.target.value.trim() && phoneSearch) { setPhoneSearch(''); setPage(1); }
+                  }}
                   onKeyDown={e => { if (e.key === 'Enter') applyPhoneSearch(); }}
                   placeholder="搜索客户手机号"
                   style={{
-                    width: 240, padding: '7px 12px 7px 34px', borderRadius: 8,
+                    width: 240, padding: '7px 12px 7px 34px', paddingRight: 30, borderRadius: 8,
                     background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#e2e8f0', fontSize: 13, outline: 'none'
+                    color: '#e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box'
                   }}
                 />
+                {phoneInput && (
+                  <span
+                    onClick={() => { setPhoneInput(''); setPhoneSearch(''); setPage(1); }}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#8892b0', fontSize: 14, lineHeight: 1 }}
+                  >✕</span>
+                )}
               </div>
               <button className="call-btn btn-primary" onClick={applyPhoneSearch}>查 询</button>
               <Select
@@ -710,15 +720,24 @@ const Workbench: React.FC = () => {
                 </svg>
                 <input
                   value={orderPhoneInput}
-                  onChange={e => setOrderPhoneInput(e.target.value)}
+                  onChange={e => {
+                    setOrderPhoneInput(e.target.value);
+                    if (!e.target.value.trim() && orderPhoneSearch) { setOrderPhoneSearch(''); setOrderPage(1); }
+                  }}
                   onKeyDown={e => { if (e.key === 'Enter') { setOrderPhoneSearch(orderPhoneInput.trim()); setOrderPage(1); } }}
                   placeholder="搜索客户手机号"
                   style={{
-                    width: 240, padding: '7px 12px 7px 34px', borderRadius: 8,
+                    width: 240, padding: '7px 12px 7px 34px', paddingRight: 30, borderRadius: 8,
                     background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#e2e8f0', fontSize: 13, outline: 'none'
+                    color: '#e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box'
                   }}
                 />
+                {orderPhoneInput && (
+                  <span
+                    onClick={() => { setOrderPhoneInput(''); setOrderPhoneSearch(''); setOrderPage(1); }}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#8892b0', fontSize: 14, lineHeight: 1 }}
+                  >✕</span>
+                )}
               </div>
               <button className="call-btn btn-primary" onClick={() => { setOrderPhoneSearch(orderPhoneInput.trim()); setOrderPage(1); }}>查 询</button>
             </div>
@@ -842,15 +861,15 @@ const Workbench: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
               <div>
                 <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>订单编号</div>
-                <input disabled value={thirdTarget.orderCode} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px' }} />
+                <input disabled value={thirdTarget.orderCode} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px', boxSizing: 'border-box' }} />
               </div>
               <div>
                 <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>下单平台</div>
-                <input disabled value={thirdTarget.orderPlatform || ''} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px' }} />
+                <input disabled value={thirdTarget.orderPlatform || ''} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px', boxSizing: 'border-box' }} />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>平台订单编号</div>
-                <input disabled value={thirdTarget.platformOrderNo || ''} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px' }} />
+                <input disabled value={thirdTarget.platformOrderNo || ''} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px', boxSizing: 'border-box' }} />
               </div>
             </div>
             <div>
@@ -860,7 +879,7 @@ const Workbench: React.FC = () => {
                 onChange={e => setThirdNo(e.target.value)}
                 maxLength={30}
                 placeholder="请输入三方订单编号"
-                style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', padding: '0 12px', outline: 'none' }}
+                style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', padding: '0 12px', outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
           </>

@@ -1,4 +1,6 @@
 -- 线索作废原因字典（PRD 4.3.3 / 4.5）：幂等，可在 prod/test 重复执行
+-- ⚠️ 必须以 utf8mb4 连接执行，否则中文入库乱码：
+--    mysql --default-character-set=utf8mb4 -h<host> -u<user> -p <db> < 本文件
 INSERT INTO sys_dict_type (dict_type_code, dict_type_name, status, remark)
 SELECT 'lead_void_reason', '线索作废原因', 1, '作废线索弹框下拉选项（PRD 4.3.3）'
 WHERE NOT EXISTS (SELECT 1 FROM sys_dict_type WHERE dict_type_code = 'lead_void_reason');

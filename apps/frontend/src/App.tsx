@@ -65,7 +65,7 @@ function App() {
             <PermissionRoute permCode="order"><Order /></PermissionRoute>
           } />
           <Route path="order/detail/:id" element={
-            <PermissionRoute permCode="order"><OrderDetail /></PermissionRoute>
+            <PermissionRoute permCode="order,workbench"><OrderDetail /></PermissionRoute>
           } />
           <Route path="config" element={
             <PermissionRoute permCode="config"><Config /></PermissionRoute>

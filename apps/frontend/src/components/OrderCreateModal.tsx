@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin } from 'antd';
+import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Tooltip } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
 
@@ -54,6 +55,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
   const [gifts, setGifts] = useState<any[]>([]);         // 已选赠品（productRole=2）
   const [allProducts, setAllProducts] = useState<any[]>([]); // 可选商品（正常状态）
   const [pickerOpen, setPickerOpen] = useState<null | 'product' | 'gift'>(null);
+  const [pickerSearch, setPickerSearch] = useState(''); // 弹框内商品搜索（与意向商品弹框一致，测试问题4）
   const [pickerSelected, setPickerSelected] = useState<string[]>([]);
   const [draftId, setDraftId] = useState<string | null>(null);
 
@@ -529,27 +531,40 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
         centered
         title={pickerOpen === 'gift' ? '添加赠品' : '添加商品'}
         open={!!pickerOpen}
-        onCancel={() => setPickerOpen(null)}
+        onCancel={() => { setPickerOpen(null); setPickerSearch(''); }}
         onOk={confirmPicker}
         okText="确定"
         cancelText="取消"
         width={700}
         className="crm-unified-modal"
       >
+        <div style={{ marginBottom: 16 }}>
+          <Input
+            prefix={<SearchOutlined />}
+            placeholder="搜索商品名称或编码..."
+            value={pickerSearch}
+            onChange={e => setPickerSearch(e.target.value)}
+            allowClear
+            style={{ width: '100%', marginBottom: 8 }}
+            size="large"
+          />
+          <div style={{ color: '#6366f1' }}>已选择 {pickerSelected.length} 件商品</div>
+        </div>
         <Table
-          size="small"
+          size="middle"
           rowKey={(r: any) => String(r.id)}
-          dataSource={allProducts}
+          dataSource={allProducts.filter((p: any) => !pickerSearch
+            || (p.productName || '').includes(pickerSearch) || (p.productCode || '').includes(pickerSearch))}
           rowSelection={{
             selectedRowKeys: pickerSelected,
             onChange: (keys) => setPickerSelected(keys as string[]),
           }}
-          pagination={{ pageSize: 10, showSizeChanger: false }}
+          pagination={false}
+          scroll={{ y: 300 }}
           columns={[
-            { title: '商品名称', dataIndex: 'productName' },
-            { title: '编码', dataIndex: 'productCode', width: 150 },
-            { title: '商品类型', dataIndex: 'productType', width: 110 },
-            { title: '售价', dataIndex: 'salePrice', width: 100, render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
+            { title: '商品名称', dataIndex: 'productName', ellipsis: { showTitle: false }, render: (t: string) => <Tooltip title={t}><span>{t}</span></Tooltip> },
+            { title: '商品编码', dataIndex: 'productCode', width: 170, render: (t: string) => <span style={{ color: '#8892b0', whiteSpace: 'nowrap' }}>{t || '-'}</span> },
+            { title: '单价', dataIndex: 'salePrice', width: 110, render: (v: any) => <span style={{ color: '#6366f1', fontWeight: 600 }}>¥{Number(v || 0).toFixed(2)}</span> },
           ]}
         />
       </Modal>

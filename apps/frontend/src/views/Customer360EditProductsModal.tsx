@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Input, Table } from 'antd';
+import { Modal, Input, Table, Tooltip } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 
@@ -27,7 +27,8 @@ const EditProductsModal: React.FC<EditProductsModalProps> = ({ visible, onCancel
 
   const fetchProducts = async () => {
     try {
-      const res = await request.get('/product', { params: { productName: searchText, limit: 100 } }) as any;
+      // 仅正常状态商品可选（测试问题17：排除已归档）
+      const res = await request.get('/product', { params: { productName: searchText, status: 1, limit: 100 } }) as any;
       if (Array.isArray(res)) {
         setProducts(res);
       } else if (res.items) {
@@ -72,12 +73,15 @@ const EditProductsModal: React.FC<EditProductsModalProps> = ({ visible, onCancel
       title: '商品名称',
       dataIndex: 'productName',
       key: 'productName',
+      ellipsis: { showTitle: false },
+      render: (text: string) => <Tooltip title={text}><span>{text}</span></Tooltip>,
     },
     {
       title: '商品编码',
-      dataIndex: 'productModel',
-      key: 'productModel',
-      render: (text: string) => <span style={{ color: '#8892b0' }}>{text || '-'}</span>
+      dataIndex: 'productCode',
+      key: 'productCode',
+      width: 170,
+      render: (text: string) => <span style={{ color: '#8892b0', whiteSpace: 'nowrap' }}>{text || '-'}</span>
     },
     {
       title: '单价',

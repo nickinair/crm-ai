@@ -793,3 +793,19 @@ body {
     background: linear-gradient(90deg, #f59e0b, #f97316, #f59e0b);
     pointer-events: none;
 }
+
+/* ===== 排序激活态提亮（测试问题2：深色下选中排序看不清）===== */
+.custom-table .ant-table-column-sorter-up.active,
+.custom-table .ant-table-column-sorter-down.active,
+.workbench-table .ant-table-column-sorter-up.active,
+.workbench-table .ant-table-column-sorter-down.active {
+    color: #6366f1 !important;
+}
+.custom-table th.ant-table-column-sort,
+.workbench-table th.ant-table-column-sort {
+    background: rgba(99, 102, 241, 0.12) !important;
+}
+.custom-table td.ant-table-column-sort,
+.workbench-table td.ant-table-column-sort {
+    background: rgba(99, 102, 241, 0.04) !important;
+}

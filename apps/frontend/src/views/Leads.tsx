@@ -149,6 +149,8 @@ const LeadsManagement: React.FC = () => {
     fetchSales();
     // 有保存的筛选状态则恢复（从详情返回场景），否则默认加载
     if (savedListState && savedListState.values) {
+      // 用 setFieldsValue 回填而非 Form initialValues：initialValues 会让「重置」回到旧筛选值而非清空（测试问题12）
+      form.setFieldsValue(savedListState.values);
       setSortInfo(savedListState.sort || {});
       fetchLeads(savedListState.values, savedListState.page || 1, savedListState.limit || 10, savedListState.sort || {});
     } else {
@@ -363,7 +365,7 @@ const LeadsManagement: React.FC = () => {
     { title: '意向商品', key: 'intentProduct', width: 150, render: (_: any, record: any) => renderProducts(record.products, 1) },
     { title: '意向赠品', key: 'intentGift', width: 150, render: (_: any, record: any) => renderProducts(record.products, 2) },
     { title: '负责人', dataIndex: 'assignee', width: 100, render: (_: any, record: any) => record.assignee?.realName || record.assignee?.username || '-' },
-    { title: '创建人', dataIndex: 'creator', width: 100, render: (_: any, record: any) => record.creator?.realName || record.creator?.username || '-' },
+    { title: '创建人', dataIndex: 'creator', width: 100, render: (_: any, record: any) => record.createType === 2 ? '系统' : (record.creator?.realName || record.creator?.username || '-') },
     { title: '线索创建类型', dataIndex: 'createType', width: 110, render: (val: number) =>
         val === 2 ? <span className="crm-tag crm-tag-info">战败线索复活</span> : <span className="crm-tag crm-tag-default">普通新建</span> },
     { title: '创建时间', dataIndex: 'createdAt', width: 180, render: (val: string) => val ? new Date(val).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-') : '-' },
@@ -579,7 +581,8 @@ const LeadsManagement: React.FC = () => {
       setSelectedRowKeys(newSelectedRowKeys);
     },
     getCheckboxProps: (record: any) => ({
-      disabled: ![0, 4, 6].includes(record.leadStatus),
+      // 0/4/6 供批量分配，1/2 供批量重新分配（测试问题13）；仅已成交/已作废不可勾
+      disabled: ![0, 1, 2, 4, 6].includes(record.leadStatus),
     }),
     selections: [
       {
@@ -685,7 +688,7 @@ const LeadsManagement: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
       <div className="table-card">
         <div className="filter-section">
-          <LeadSearchForm form={form} onSearch={onSearch} salesList={salesList} storageScope="leads" initialValues={savedListState?.values} />
+          <LeadSearchForm form={form} onSearch={onSearch} salesList={salesList} storageScope="leads" />
         </div>
 
         <div className="table-header-actions">

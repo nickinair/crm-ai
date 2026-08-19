@@ -179,12 +179,13 @@ const OrderDetail: React.FC = () => {
             跟进人：<span style={{ color: '#E8ECF3' }}>{person(order.salesperson)}</span>
           </span>
         </div>
-        {canOperate && (
+        {(canOperate || (order && !isOrderFinal(order.orderStatus))) && (
           <div style={{ display: 'flex', gap: '10px' }}>
-            {order.orderStatus === 0 && <button className="call-btn btn-primary" disabled={submitting} onClick={handleSendSign}>已发送电子签</button>}
-            {order.orderStatus === 1 && <button className="call-btn btn-primary" disabled={submitting} onClick={handleSigned}>已签署电子签</button>}
-            {order.orderStatus === 2 && <button className="call-btn btn-primary" disabled={submitting} onClick={() => { setThirdNo(''); setThirdOpen(true); }}>录入三方订单编号</button>}
-            {order.orderStatus === 3 && <button className="call-btn btn-primary" disabled={submitting} onClick={handleDelivered}>已完成发货</button>}
+            {/* 状态流转按钮仅跟进人可见；作废不限跟进人（PRD 4.2.3「作废除外」，测试问题14） */}
+            {canOperate && order.orderStatus === 0 && <button className="call-btn btn-primary" disabled={submitting} onClick={handleSendSign}>已发送电子签</button>}
+            {canOperate && order.orderStatus === 1 && <button className="call-btn btn-primary" disabled={submitting} onClick={handleSigned}>已签署电子签</button>}
+            {canOperate && order.orderStatus === 2 && <button className="call-btn btn-primary" disabled={submitting} onClick={() => { setThirdNo(''); setThirdOpen(true); }}>录入三方订单编号</button>}
+            {canOperate && order.orderStatus === 3 && <button className="call-btn btn-primary" disabled={submitting} onClick={handleDelivered}>已完成发货</button>}
             <button className="call-btn btn-secondary" disabled={submitting} onClick={() => { setVoidReason(''); setVoidOpen(true); }}>作废</button>
           </div>
         )}

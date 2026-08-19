@@ -77,6 +77,9 @@ const MODIFIES = [
   ['biz_order', 'order_status',
     "ALTER TABLE biz_order MODIFY COLUMN order_status TINYINT NOT NULL DEFAULT 0 " +
     "COMMENT '0=待发送电子签,1=待签署电子签,2=待三方下单,3=待发货,4=已完结,5=已作废'"],
+  // 车辆里程改为可空（测试问题16：新增车辆不填里程报 Column 'mileage' cannot be null）
+  ['biz_vehicle', 'mileage',
+    "ALTER TABLE biz_vehicle MODIFY COLUMN mileage INT NULL COMMENT '里程数'"],
 ];
 
 // ---- 新建表 ----
