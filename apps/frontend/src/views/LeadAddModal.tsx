@@ -210,7 +210,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
 
   const fetchProducts = async () => {
     try {
-      const res = await request.get('/product');
+      const res = await request.get('/product', { params: { status: 1 } }); // 仅正常状态商品，排除已归档（测试问题17/26）
       const items = Array.isArray(res) ? res : (res as any).data || [];
       setProductOptions(items);
       setGiftOptions(items);
