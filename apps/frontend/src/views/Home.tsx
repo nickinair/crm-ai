@@ -97,7 +97,12 @@ const Home: React.FC = () => {
           dataSource={distribution}
           rowKey="accountId"
           loading={loading}
-          pagination={false}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50'],
+            showTotal: (t: number) => `共 ${t} 条数据`,
+          }}
           scroll={{ x: 'max-content' }}
           locale={{ emptyText: '暂无销售数据' }}
         />

@@ -27,7 +27,8 @@ const Workbench: React.FC = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [isReturnModalVisible, setIsReturnModalVisible] = useState(false);
   const [stats, setStats] = useState({ todayPendingFollowUp: 0, publicPoolCount: 0 });
-  const [orderSituationFilter, setOrderSituationFilter] = useState<number | undefined>(undefined); // 订单情况筛选，单选（PRD 4.2.4.1）
+  const [orderSituationFilter, setOrderSituationFilter] = useState<number | undefined>(undefined); // 订单情况筛选（已生效值，单选 PRD 4.2.4.1）
+  const [orderSituationInput, setOrderSituationInput] = useState<number | undefined>(undefined); // 订单情况草稿：点「查询」才生效
   const [voidLeadId, setVoidLeadId] = useState<string | null>(null); // 作废弹框（PRD 4.2.4.1）
   const [isOrderCreateOpen, setIsOrderCreateOpen] = useState(false); // 快捷工具栏-创建订单（PRD 4.2.3）
   const [isLeadAddOpen, setIsLeadAddOpen] = useState(false); // 快捷工具栏-新增线索（PRD 4.2.3）
@@ -129,6 +130,7 @@ const Workbench: React.FC = () => {
 
   const applyPhoneSearch = () => {
     setPhoneSearch(phoneInput.trim());
+    setOrderSituationFilter(orderSituationInput); // 订单情况与手机号一样，点「查询」才生效
     setPage(1);
   };
 
@@ -665,9 +667,9 @@ const Workbench: React.FC = () => {
                   <Select
                     placeholder="订单情况"
                     allowClear
-                    value={orderSituationFilter}
-                    onChange={(v) => { setOrderSituationFilter(v); setPage(1); }}
-                    style={{ width: 160 }}
+                    value={orderSituationInput}
+                    onChange={(v) => setOrderSituationInput(v)}
+                    style={{ width: 240 }}
                     options={[
                       { value: 0, label: '未下单' },
                       { value: 1, label: '存在未完结订单' },

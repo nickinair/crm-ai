@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Tooltip } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Checkbox } from 'antd';
+import { SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
 
@@ -56,7 +56,6 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
   const [allProducts, setAllProducts] = useState<any[]>([]); // 可选商品（正常状态）
   const [pickerOpen, setPickerOpen] = useState<null | 'product' | 'gift'>(null);
   const [pickerSearch, setPickerSearch] = useState(''); // 弹框内商品搜索（与意向商品弹框一致，测试问题4）
-  const [pickerSelected, setPickerSelected] = useState<string[]>([]);
   const [draftId, setDraftId] = useState<string | null>(null);
 
   // ---- 第三步：车辆 ----
@@ -281,20 +280,62 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
 
   // ---- 商品/赠品选择弹框 ----
   const openPicker = (mode: 'product' | 'gift') => {
-    setPickerSelected([]);
+    setPickerSearch('');
     setPickerOpen(mode);
   };
-  const confirmPicker = () => {
-    const chosen = allProducts.filter(p => pickerSelected.includes(String(p.id)));
-    if (pickerOpen === 'product') {
-      const exist = new Set(products.map(p => String(p.id)));
-      setProducts([...products, ...chosen.filter(p => !exist.has(String(p.id)))]);
-    } else {
-      const exist = new Set(gifts.map(p => String(p.id)));
-      setGifts([...gifts, ...chosen.filter(p => !exist.has(String(p.id)))]);
-    }
-    setPickerOpen(null);
+  /** 内联商品选择面板：与新增线索的添加商品面板同款样式（测试反馈：两处需一致） */
+  const renderInlinePicker = (mode: 'product' | 'gift') => {
+    const selectedList = mode === 'product' ? products : gifts;
+    const setList = mode === 'product' ? setProducts : setGifts;
+    const filtered = allProducts.filter((p: any) =>
+      !pickerSearch || (p.productName || '').includes(pickerSearch) || (p.productCode || '').includes(pickerSearch));
+    const handleCheck = (checked: boolean, item: any) => {
+      if (checked) {
+        if (!selectedList.some((x: any) => String(x.id) === String(item.id))) setList([...selectedList, item]);
+      } else {
+        setList(selectedList.filter((x: any) => String(x.id) !== String(item.id)));
+      }
+    };
+    const close = () => { setPickerOpen(null); setPickerSearch(''); };
+    return (
+      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
+          <Input
+            prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
+            placeholder="搜索商品名称或编码..."
+            value={pickerSearch}
+            onChange={e => setPickerSearch(e.target.value)}
+            style={{ flex: 1, borderRadius: '6px', display: 'flex', alignItems: 'center' }}
+          />
+          <Button type="primary" style={{ background: '#4F8DFF', borderRadius: '6px', border: 'none', padding: '0 24px' }} onClick={close}>确认添加</Button>
+          <Button type="text" icon={<CloseOutlined style={{ fontSize: '16px', color: '#94A3B8' }} />} onClick={close} />
+        </div>
+        <div style={{ maxHeight: 250, overflowY: 'auto' }}>
+          {filtered.map((p: any) => {
+            const isChecked = selectedList.some((x: any) => String(x.id) === String(p.id));
+            return (
+              <div key={p.id} style={{
+                display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F1F5F9',
+                color: isChecked ? '#4F8DFF' : '#64748B', fontWeight: isChecked ? 600 : 400,
+              }}>
+                <Checkbox checked={isChecked} onChange={e => handleCheck(e.target.checked, p)} style={{ marginRight: '16px' }} />
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '14px' }}>{p.productName}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', width: '260px' }}>
+                    <span style={{ color: '#94A3B8', fontSize: '13px', flex: 1, textAlign: 'left', paddingRight: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.productCode}</span>
+                    <span style={{ color: isChecked ? '#4F8DFF' : '#94A3B8', fontWeight: 600, width: '80px', textAlign: 'right', whiteSpace: 'nowrap' }}>¥{p.salePrice}</span>
+                    <span style={{ color: '#94A3B8', fontSize: '13px', width: '48px', textAlign: 'right', whiteSpace: 'nowrap', marginLeft: '12px' }}>{isChecked ? '已添加' : ''}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
+
+
 
   const itemTable = (list: any[], isGift: boolean, onRemove: (id: string) => void) => (
     <Table
@@ -453,12 +494,14 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
               <span style={{ fontWeight: 600, color: '#1f2937' }}><span style={{ color: '#ef4444' }}>*</span> 商品信息</span>
               <Button type="primary" size="small" onClick={() => openPicker('product')}>+ 添加商品</Button>
             </div>
+            {pickerOpen === 'product' && renderInlinePicker('product')}
             {itemTable(products, false, (id) => setProducts(products.filter(p => String(p.id) !== id)))}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '16px 0 8px' }}>
               <span style={{ fontWeight: 600, color: '#1f2937' }}>赠品信息</span>
               <Button type="primary" size="small" onClick={() => openPicker('gift')}>+ 添加赠品</Button>
             </div>
+            {pickerOpen === 'gift' && renderInlinePicker('gift')}
             {itemTable(gifts, true, (id) => setGifts(gifts.filter(p => String(p.id) !== id)))}
           </div>
         )}
@@ -526,48 +569,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
         )}
       </Modal>
 
-      {/* ===== 商品/赠品选择弹框（仅正常状态商品可选）===== */}
-      <Modal
-        centered
-        title={pickerOpen === 'gift' ? '添加赠品' : '添加商品'}
-        open={!!pickerOpen}
-        onCancel={() => { setPickerOpen(null); setPickerSearch(''); }}
-        onOk={confirmPicker}
-        okText="确定"
-        cancelText="取消"
-        width={700}
-        className="crm-unified-modal"
-      >
-        <div style={{ marginBottom: 16 }}>
-          <Input
-            prefix={<SearchOutlined />}
-            placeholder="搜索商品名称或编码..."
-            value={pickerSearch}
-            onChange={e => setPickerSearch(e.target.value)}
-            allowClear
-            style={{ width: '100%', marginBottom: 8 }}
-            size="large"
-          />
-          <div style={{ color: '#6366f1' }}>已选择 {pickerSelected.length} 件商品</div>
-        </div>
-        <Table
-          size="middle"
-          rowKey={(r: any) => String(r.id)}
-          dataSource={allProducts.filter((p: any) => !pickerSearch
-            || (p.productName || '').includes(pickerSearch) || (p.productCode || '').includes(pickerSearch))}
-          rowSelection={{
-            selectedRowKeys: pickerSelected,
-            onChange: (keys) => setPickerSelected(keys as string[]),
-          }}
-          pagination={false}
-          scroll={{ y: 300 }}
-          columns={[
-            { title: '商品名称', dataIndex: 'productName', ellipsis: { showTitle: false }, render: (t: string) => <Tooltip title={t}><span>{t}</span></Tooltip> },
-            { title: '商品编码', dataIndex: 'productCode', width: 170, render: (t: string) => <span style={{ color: '#8892b0', whiteSpace: 'nowrap' }}>{t || '-'}</span> },
-            { title: '单价', dataIndex: 'salePrice', width: 110, render: (v: any) => <span style={{ color: '#6366f1', fontWeight: 600 }}>¥{Number(v || 0).toFixed(2)}</span> },
-          ]}
-        />
-      </Modal>
+
     </>
   );
 };
