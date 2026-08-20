@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { message, Modal, Input, Table } from 'antd';
+import { message, Modal, Input, Table, Empty } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import request from '../utils/request';
@@ -45,9 +45,9 @@ const OrderDetail: React.FC = () => {
 
   useEffect(() => { if (id) fetchOrder(); }, [id]);
 
-  /** 仅订单跟进人具备操作权限（PRD 4.2.3）；超管不受限 */
+  /** 状态流转按钮仅订单跟进人本人可见（PRD 4.2.3；测试反馈：管理员等非跟进人只保留作废） */
   const canOperate = order
-    && (userInfo.roleCode === 'super_admin' || String(order.salespersonId || '') === String(userInfo.id || ''))
+    && String(order.salespersonId || '') === String(userInfo.id || '')
     && !isOrderFinal(order.orderStatus);
 
   const doStatus = async (action: string, successText: string) => {
@@ -257,7 +257,7 @@ const OrderDetail: React.FC = () => {
           rowKey="id"
           pagination={false}
           size="small"
-          locale={{ emptyText: '暂无商品' }}
+          locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无商品" style={{ margin: '24px auto' }} /> }}
         />
       </div>
 
@@ -271,7 +271,7 @@ const OrderDetail: React.FC = () => {
           rowKey="id"
           pagination={false}
           size="small"
-          locale={{ emptyText: '暂无赠品' }}
+          locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无赠品" style={{ margin: '24px auto' }} /> }}
         />
       </div>
 
