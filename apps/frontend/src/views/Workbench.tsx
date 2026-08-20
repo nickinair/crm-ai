@@ -639,20 +639,24 @@ const Workbench: React.FC = () => {
                   >✕</span>
                 )}
               </div>
+              {/* 订单情况：置于查询按钮左侧，深色风格（面板渲染进容器内以套用深色样式） */}
+              <div className="wb-dark-select">
+                <Select
+                  placeholder="订单情况"
+                  allowClear
+                  value={orderSituationFilter}
+                  onChange={(v) => { setOrderSituationFilter(v); setPage(1); }}
+                  style={{ width: 160 }}
+                  getPopupContainer={(t: any) => t?.parentElement || document.body}
+                  options={[
+                    { value: 0, label: '未下单' },
+                    { value: 1, label: '存在未完结订单' },
+                    { value: 2, label: '全部订单已作废' },
+                    { value: 3, label: '全部订单已完结' },
+                  ]}
+                />
+              </div>
               <button className="call-btn btn-primary" onClick={applyPhoneSearch}>查 询</button>
-              <Select
-                placeholder="订单情况"
-                allowClear
-                value={orderSituationFilter}
-                onChange={(v) => { setOrderSituationFilter(v); setPage(1); }}
-                style={{ width: 160 }}
-                options={[
-                  { value: 0, label: '未下单' },
-                  { value: 1, label: '存在未完结订单' },
-                  { value: 2, label: '全部订单已作废' },
-                  { value: 3, label: '全部订单已完结' },
-                ]}
-              />
             </div>
 
             <ConfigProvider 
