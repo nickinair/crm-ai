@@ -511,19 +511,8 @@ export class LeadService implements OnModuleInit {
           await queryRunner.manager.save(BizLeadProduct, newP);
         }
 
-        const followRecords = await queryRunner.manager.find(BizFollowRecord, { where: { leadId: lead.id } });
-        for (const fr of followRecords) {
-          const newFr = new BizFollowRecord();
-          newFr.leadId = newLead.id;
-          newFr.customerId = fr.customerId;
-          newFr.accountId = fr.accountId;
-          newFr.followType = fr.followType;
-          newFr.followContent = fr.followContent;
-          newFr.followTime = fr.followTime;
-          newFr.callResult = fr.callResult;
-          newFr.communicationTendency = fr.communicationTendency;
-          await queryRunner.manager.save(BizFollowRecord, newFr);
-        }
+        // 不复制父线索跟进记录：线索详情按父链合并展示历史记录（PRD 4.3.5），
+        // 复制会导致同一条记录出现两次（克隆副本 + 父线索历史，测试反馈）
 
         if (lead.customerId) {
           const activeRelation = await queryRunner.manager.findOne(BizPrivateRelation, {
@@ -1987,21 +1976,7 @@ export class LeadService implements OnModuleInit {
           ).execute();
         }
 
-        const followRecords = await queryRunner.manager.find(BizFollowRecord, { where: { leadId: lead.id } });
-        if (followRecords.length > 0) {
-          await queryRunner.manager.createQueryBuilder().insert().into(BizFollowRecord).values(
-            followRecords.map(fr => ({
-              leadId: newLead.id,
-              customerId: fr.customerId,
-              accountId: fr.accountId,
-              followType: fr.followType,
-              followContent: fr.followContent,
-              followTime: fr.followTime,
-              callResult: fr.callResult,
-              communicationTendency: fr.communicationTendency,
-            }))
-          ).execute();
-        }
+        // 不复制父线索跟进记录：线索详情按父链合并展示历史（PRD 4.3.5），复制会导致重复显示
       }
 
       // 5. 私域关系批量维护

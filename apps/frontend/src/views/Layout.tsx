@@ -20,6 +20,7 @@ import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Input } from 'antd';
 import request from '../utils/request';
 import ImportTaskFloat from '../components/ImportTaskFloat';
+import { hasPerm } from '../utils/perm';
 import { IS_TEST_ENV, ENV_LABEL, ENV_LABEL_SHORT } from '../utils/env';
 import './Layout.css';
 
@@ -168,10 +169,15 @@ const AppLayout: React.FC = () => {
     }
 
     // 订单详情：首页 → 订单管理 → 订单详情（PRD 配图 image5 面包屑）
+    // 销售（无订单管理菜单权限）从工作台进入：父级改为工作台，避免点面包屑落到无权限页（测试反馈）
     if (location.pathname.startsWith('/order/detail')) {
       const parts = location.pathname.split('/');
       const oid = parts[parts.length - 1];
-      items.push({ label: '订单管理', path: '/order' });
+      if (hasPerm('order')) {
+        items.push({ label: '订单管理', path: '/order' });
+      } else {
+        items.push({ label: '工作台', path: '/workbench' });
+      }
       items.push({ label: '订单详情', path: `/order/detail/${oid}` });
       return items;
     }
