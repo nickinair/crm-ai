@@ -548,7 +548,7 @@ const Customer360: React.FC = () => {
               rowKey="id"
               size="small"
               scroll={{ x: 'max-content' }}
-              pagination={{ pageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'], showTotal: (t: number) => `共 ${t} 条数据` }}
+              pagination={{ defaultPageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'], showTotal: (t: number) => `共 ${t} 条数据` }}
               locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无订单信息" style={{ margin: '40px auto' }} /> }}
               columns={[
                 { title: '订单编号', dataIndex: 'orderCode', width: 150 },
