@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, message, Tooltip, Select, Input, Modal, Table } from 'antd';
+import { Tabs, message, Tooltip, Select, Input, Modal, Table, Empty } from 'antd';
 import { 
   EditOutlined,
   CheckCircleOutlined,
@@ -545,7 +545,7 @@ const Customer360: React.FC = () => {
               size="small"
               scroll={{ x: 'max-content' }}
               pagination={{ pageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'], showTotal: (t: number) => `共 ${t} 条数据` }}
-              locale={{ emptyText: '暂无订单信息' }}
+              locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无订单信息" style={{ margin: '40px auto' }} /> }}
               columns={[
                 { title: '订单编号', dataIndex: 'orderCode', width: 150 },
                 { title: '客户姓名', key: 'cname', width: 90, render: (_: any, r: any) => r.customer?.customerName || r.snapCustomerName || '-' },
