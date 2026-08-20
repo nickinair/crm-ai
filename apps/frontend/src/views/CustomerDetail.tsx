@@ -495,7 +495,7 @@ const CustomerDetail: React.FC = () => {
                   { title: '意向赠品', dataIndex: 'intentGift', key: 'intentGift', width: 100, render: (v: string) => v || '-' },
                   { title: '线索状态', dataIndex: 'lead_status', key: 'lead_status', width: 80, render: (v: number) => {
                     const st = leadStatusMap[v];
-                    return st ? <span style={{ color: st.color, fontWeight: 600 }}>{st.label}</span> : '未知';
+                    return st ? <span style={{ color: st.color }}>{st.label}</span> : '未知';
                   }},
                   { title: '创建时间', dataIndex: 'created_at', key: 'created_at', width: 110, render: (v: string) => v ? dayjs(v).format('YYYY-MM-DD') : '-' },
                   { title: '更新时间', dataIndex: 'updated_at', key: 'updated_at', width: 110, render: (v: string) => v ? dayjs(v).format('YYYY-MM-DD') : '-' },

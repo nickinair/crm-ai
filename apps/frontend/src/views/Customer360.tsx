@@ -345,7 +345,7 @@ const Customer360: React.FC = () => {
             </div>
             <div className="c360-field">
               <span className="c360-label">客户电话</span>
-              <span className="c360-value font-bold">{customerInfo.phone || '-'}</span>
+              <span className="c360-value">{customerInfo.phone || '-'}</span>
             </div>
             <div className="c360-field">
               <span className="c360-label">身份证号</span>
@@ -408,7 +408,7 @@ const Customer360: React.FC = () => {
             </div>
             <div className="c360-field">
               <span className="c360-label">车型</span>
-              <span className="c360-value font-bold">
+              <span className="c360-value">
                 {vehicleInfo.model || '-'} {vehicleInfo.style ? ` ${vehicleInfo.style}` : ''}
               </span>
             </div>
@@ -418,7 +418,7 @@ const Customer360: React.FC = () => {
             </div>
             <div className="c360-field">
               <span className="c360-label">车牌号</span>
-              <span className="c360-value font-bold">{vehicleInfo.plateNo || '-'}</span>
+              <span className="c360-value">{vehicleInfo.plateNo || '-'}</span>
             </div>
             <div className="c360-field">
               <span className="c360-label">发票日期</span>
@@ -588,7 +588,7 @@ const Customer360: React.FC = () => {
               <div key={log.id} style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6366F1', marginTop: '6px', flexShrink: 0 }} />
                 <div>
-                  <div style={{ color: '#E8ECF3', fontSize: '13px', fontWeight: 600 }}>{log.action}</div>
+                  <div style={{ color: '#E8ECF3', fontSize: '13px' }}>{log.action}</div>
                   <div style={{ color: '#94A3B8', fontSize: '12px', marginTop: '2px' }}>操作人：{log.operator}</div>
                   {log.content && <div style={{ color: '#94A3B8', fontSize: '12px' }}>操作内容：{log.content}</div>}
                   <div style={{ color: '#64748B', fontSize: '12px', marginTop: '2px' }}>{dayjs(log.createdAt).format('YYYY-MM-DD HH:mm')}</div>

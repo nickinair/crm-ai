@@ -200,7 +200,7 @@ const OrderDetail: React.FC = () => {
           <div><div style={labelStyle}>下单平台</div><div style={valueStyle}>{fmt(order.orderPlatform)}</div></div>
           <div><div style={labelStyle}>平台订单编号</div><div style={valueStyle}>{fmt(order.platformOrderNo)}</div></div>
           <div><div style={labelStyle}>三方订单编号</div><div style={valueStyle}>{fmt(order.thirdOrderNo)}</div></div>
-          <div><div style={labelStyle}>实付金额</div><div style={{ ...valueStyle, color: '#F59E0B', fontWeight: 600 }}>¥{Number(order.totalAmount || 0).toFixed(2)}</div></div>
+          <div><div style={labelStyle}>实付金额</div><div style={{ ...valueStyle, color: '#F59E0B' }}>¥{Number(order.totalAmount || 0).toFixed(2)}</div></div>
           <div><div style={labelStyle}>营销活动</div><div style={valueStyle}>{fmt(order.marketingActivity)}</div></div>
           <div><div style={labelStyle}>创建时间 / 创建人</div><div style={valueStyle}>{fmtTime(order.createdAt)} / {person(order.creator)}</div></div>
           <div><div style={labelStyle}>更新时间 / 更新人</div><div style={valueStyle}>{fmtTime(order.updatedAt)} / {person(order.updater)}</div></div>
@@ -283,7 +283,7 @@ const OrderDetail: React.FC = () => {
           <div key={log.id} style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', marginTop: '6px', flexShrink: 0 }} />
             <div>
-              <div style={{ color: '#E8ECF3', fontSize: '13px', fontWeight: 600 }}>{log.action}</div>
+              <div style={{ color: '#E8ECF3', fontSize: '13px' }}>{log.action}</div>
               <div style={{ color: '#94A3B8', fontSize: '12px', marginTop: '2px' }}>操作人：{log.operator}</div>
               <div style={{ color: '#94A3B8', fontSize: '12px' }}>操作内容：{log.content}</div>
               <div style={{ color: '#64748B', fontSize: '12px', marginTop: '2px' }}>{dayjs(log.createdAt).format('YYYY-MM-DD HH:mm')}</div>

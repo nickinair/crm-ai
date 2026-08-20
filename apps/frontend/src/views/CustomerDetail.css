@@ -131,7 +131,7 @@
 .cd-info-value {
   color: #F8FAFC;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .cd-wechat-status {
@@ -291,7 +291,7 @@
 .cd-vehicle-value {
   color: #F8FAFC;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .cd-vehicle-value.subdued {
