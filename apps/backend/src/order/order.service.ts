@@ -169,6 +169,7 @@ export class OrderService {
     if (vin) qb.andWhere('order.snapVehicleVin LIKE :vin', { vin: `%${vin}%` });
     if (salespersonId) qb.andWhere('order.salespersonId = :salespersonId', { salespersonId });
     if (leadId) qb.andWhere('order.leadId = :leadId', { leadId });
+    if (query.leadIds?.length) qb.andWhere('order.leadId IN (:...leadIds)', { leadIds: query.leadIds });
     if (customerId) qb.andWhere('order.customerId = :customerId', { customerId });
     if (orderStatus !== undefined && orderStatus !== '' && orderStatus !== null) {
       const list = String(orderStatus).split(',').map(s => Number(s.trim())).filter(n => !Number.isNaN(n));
@@ -246,6 +247,20 @@ export class OrderService {
 
   async getOrdersByCustomer(customerId: string) {
     const res = await this.getOrders({ customerId, page: 1, limit: 200 });
+    return res.items;
+  }
+
+  /** 线索维度历史订单：当前线索 + 沿父链所有父线索关联的订单（线索详情页历史订单 tab，PRD 4.3.5） */
+  async getOrdersByLeadChain(leadId: string) {
+    const chain: string[] = [];
+    let cursor: string | null = leadId;
+    for (let depth = 0; cursor && depth < 10; depth++) {
+      if (chain.includes(String(cursor))) break;
+      chain.push(String(cursor));
+      const rows: any[] = await this.orderRepo.manager.query('SELECT parent_lead_id FROM biz_lead WHERE id = ?', [cursor]);
+      cursor = rows[0]?.parent_lead_id ? String(rows[0].parent_lead_id) : null;
+    }
+    const res = await this.getOrders({ leadIds: chain, page: 1, limit: 200 });
     return res.items;
   }
 

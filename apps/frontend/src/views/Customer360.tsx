@@ -174,7 +174,11 @@ const Customer360: React.FC = () => {
 
   const fetchCustomerOrders = async (custId: string) => {
     try {
-      const res = await request.get(`/order/customer/${custId}`) as any;
+      // 线索跟进页：历史订单为线索维度（当前线索+父链关联订单，PRD 4.3.5）；
+      // 无线索上下文时回退客户维度（客户360视图为客户维度，走 CustomerDetail 页）
+      const res = leadId
+        ? await request.get(`/order/lead-chain/${leadId}`) as any
+        : await request.get(`/order/customer/${custId}`) as any;
       if (res && Array.isArray(res)) {
         setCustomerOrders(res);
       }

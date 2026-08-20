@@ -33,6 +33,15 @@ export class OrderController {
     return this.orderService.getOrdersByCustomer(customerId);
   }
 
+  /** 线索维度历史订单：当前线索+父链（线索详情页 tab；须在 :id 路由之前注册） */
+  @RequirePermissions('order', 'workbench')
+  @Get('lead-chain/:leadId')
+  async getOrdersByLeadChain(@Param('leadId') leadId: string, @Request() req: any) {
+    const rows = await this.orderService['orderRepo'].manager.query('SELECT customer_id FROM biz_lead WHERE id = ?', [leadId]);
+    if (rows[0]?.customer_id) await this.assertCustomerAccess(req, String(rows[0].customer_id));
+    return this.orderService.getOrdersByLeadChain(leadId);
+  }
+
   /** 我的跟单订单：按状态统计（须在 :id 路由之前注册） */
   @RequirePermissions('order', 'workbench')
   @Get('status-count')
