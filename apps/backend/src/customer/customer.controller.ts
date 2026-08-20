@@ -22,8 +22,11 @@ export class CustomerController {
 
   @RequirePermissions('customer:create', 'workbench')
   @Post()
-  createCustomer(@Body() createDto: Partial<BizCustomer>) {
-    return this.customerService.create(createDto);
+  createCustomer(@Body() createDto: Partial<BizCustomer>, @Request() req: any) {
+    // 仅工作台权限的用户（销售）新建客户时，同时建立私域关系（管理员创建不绑定）
+    const user = req?.user;
+    const isSalesOnly = user && !user.permissions.includes('customer') && user.permissions.includes('workbench');
+    return this.customerService.create(createDto, isSalesOnly ? String(user.sub) : undefined);
   }
 
   @Get()

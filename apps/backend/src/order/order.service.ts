@@ -267,12 +267,16 @@ export class OrderService {
   // A sales person can reach a customer if they have an active private relation,
   // or the customer is linked to a lead currently assigned to them
   async isCustomerAccessibleBy(customerId: string, accountId: string): Promise<boolean> {
+    // 可达 = 有效私域关系 / 名下有分配给自己的线索 / 名下有自己跟进的订单
+    // 第三条覆盖「线索重新分配未连带订单」场景：订单跟进人必须始终能访问自己的订单
     const rows = await this.orderRepo.manager.query(
       `SELECT 1 FROM biz_private_relation WHERE customer_id = ? AND account_id = ? AND status = 1
        UNION
        SELECT 1 FROM biz_lead WHERE customer_id = ? AND assigned_account_id = ?
+       UNION
+       SELECT 1 FROM biz_order WHERE customer_id = ? AND salesperson_id = ? AND is_draft = 0
        LIMIT 1`,
-      [customerId, accountId, customerId, accountId],
+      [customerId, accountId, customerId, accountId, customerId, accountId],
     );
     return rows.length > 0;
   }

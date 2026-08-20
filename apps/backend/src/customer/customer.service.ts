@@ -22,7 +22,7 @@ export class CustomerService {
     @InjectRepository(BizCustomerNote) private readonly noteRepo: Repository<BizCustomerNote>,
   ) {}
 
-  async create(createDto: Partial<BizCustomer>) {
+  async create(createDto: Partial<BizCustomer>, bindAccountId?: string) {
     try {
       const phoneHash = crypto.createHash('sha256').update(createDto.phone || '').digest('hex');
       // Check for duplicate phone
@@ -31,7 +31,13 @@ export class CustomerService {
         throw new BadRequestException('该电话号码已存在！');
       }
       const customer = this.customerRepo.create({ ...createDto, phoneHash });
-      return this.customerRepo.save(customer);
+      const saved = await this.customerRepo.save(customer);
+      // 销售新建的客户立即建立私域关系：否则后续车辆/订单等接口的归属校验会把创建者自己挡在门外
+      if (bindAccountId) {
+        const rel = this.relationRepo.create({ customerId: saved.id, accountId: bindAccountId, status: 1, firstBindtime: new Date() });
+        await this.relationRepo.save(rel);
+      }
+      return saved;
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       if (error?.code === 'ER_DUP_ENTRY' || error?.message?.includes('Duplicate')) {
@@ -47,7 +53,10 @@ export class CustomerService {
     const rel = await this.relationRepo.findOne({ where: { customerId, accountId, status: 1 } });
     if (rel) return true;
     const lead = await this.leadRepo.findOne({ where: { customerId, assignedAccountId: accountId } });
-    return !!lead;
+    if (lead) return true;
+    // 名下有自己跟进的订单也算可达（线索重新分配未连带订单时，原跟进人仍需访问客户/车辆信息）
+    const order = await this.orderRepo.findOne({ where: { customerId, salespersonId: accountId, isDraft: 0 } });
+    return !!order;
   }
 
   async getCustomers(query: any) {
