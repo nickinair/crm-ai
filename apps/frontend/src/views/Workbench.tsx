@@ -641,7 +641,27 @@ const Workbench: React.FC = () => {
               </div>
               {/* 订单情况：置于查询按钮左侧，深色风格（面板渲染进容器内以套用深色样式） */}
               <div className="wb-dark-select">
-                <ConfigProvider getPopupContainer={(trigger: any) => trigger?.parentElement || document.body}>
+                <ConfigProvider
+                  getPopupContainer={(trigger: any) => trigger?.parentElement || document.body}
+                  theme={{
+                    components: {
+                      Select: {
+                        /* antd v6：Select DOM 已重构（无 .ant-select-selector），深色必须走主题 token */
+                        colorBgContainer: '#1e293b',
+                        colorBgElevated: '#1e293b',
+                        colorText: '#e2e8f0',
+                        colorTextPlaceholder: 'rgba(255,255,255,0.35)',
+                        colorBorder: 'rgba(255,255,255,0.15)',
+                        colorTextQuaternary: 'rgba(255,255,255,0.55)',
+                        optionActiveBg: 'rgba(255,255,255,0.08)',
+                        optionSelectedBg: 'rgba(99,102,241,0.28)',
+                        optionSelectedColor: '#ffffff',
+                        activeBorderColor: '#6366F1',
+                        hoverBorderColor: '#6366F1',
+                      },
+                    },
+                  }}
+                >
                   <Select
                     placeholder="订单情况"
                     allowClear

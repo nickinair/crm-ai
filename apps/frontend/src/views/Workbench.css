@@ -974,41 +974,26 @@
 }
 
 
-/* ===== 工作台私池「订单情况」下拉：深色风格（同公域池方案，antd v6 需直接覆盖 selector）===== */
-.wb-dark-select .ant-select .ant-select-selector {
-    background-color: #1e293b !important;
-    border-color: rgba(255, 255, 255, 0.15) !important;
-    color: #e2e8f0 !important;
-    border-radius: 8px !important;
+/* ===== 工作台私池「订单情况」下拉（antd v6 类名：select-input 体系；主色由 ConfigProvider token 提供，此处兜底箭头/清除/圆角）===== */
+.wb-dark-select .ant-select .ant-select-input,
+.wb-dark-select .ant-select .ant-select-content {
+    color: #e2e8f0;
 }
-.wb-dark-select .ant-select:hover .ant-select-selector,
-.wb-dark-select .ant-select-focused .ant-select-selector {
-    border-color: #6366F1 !important;
+.wb-dark-select .ant-select .ant-select-placeholder {
+    color: rgba(255, 255, 255, 0.35);
 }
-.wb-dark-select .ant-select-selection-item { color: #e2e8f0 !important; }
-.wb-dark-select .ant-select-selection-placeholder { color: rgba(255, 255, 255, 0.35) !important; }
-.wb-dark-select .ant-select-selection-search-input { color: #e2e8f0 !important; }
-/* 下拉箭头提亮（antd v6 为 .ant-select-suffix，旧类名一并保留） */
 .wb-dark-select .ant-select-suffix,
-.wb-dark-select .ant-select-arrow,
-.wb-dark-select .ant-select-suffix .anticon,
-.wb-dark-select .ant-select-arrow .anticon { color: rgba(255, 255, 255, 0.9) !important; }
-.wb-dark-select .ant-select-suffix svg,
-.wb-dark-select .ant-select-arrow svg { fill: rgba(255, 255, 255, 0.9) !important; }
+.wb-dark-select .ant-select-suffix .anticon {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+.wb-dark-select .ant-select-suffix svg {
+    fill: rgba(255, 255, 255, 0.9) !important;
+}
 .wb-dark-select .ant-select-clear {
     color: rgba(255, 255, 255, 0.55) !important;
     background: #1e293b !important;
 }
-/* 下拉面板深色（面板渲染进本容器内） */
 .wb-dark-select .ant-select-dropdown {
-    background-color: #1E293B !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45) !important;
 }
-.wb-dark-select .ant-select-item { color: #E8ECF3 !important; }
-.wb-dark-select .ant-select-item-option-active { background-color: rgba(255, 255, 255, 0.08) !important; }
-.wb-dark-select .ant-select-item-option-selected {
-    background-color: rgba(99, 102, 241, 0.28) !important;
-    color: #fff !important;
-}
-.wb-dark-select .ant-select-item-empty { color: rgba(255, 255, 255, 0.4) !important; }
