@@ -25,7 +25,8 @@ interface PermissionItem {
 const SYSTEM_ROLES = ['super_admin', 'super__admin', 'admin', 'sales'];
 
 // 尚未上线的模块（菜单中标注"敬请期待"），暂不开放权限配置
-const HIDDEN_MODULES = ['order', 'message', 'log', 'outbound'];
+// 未上线模块在权限配置中隐藏；订单模块已随 V1.1.0 上线，从清单移除（2026-08-22）
+const HIDDEN_MODULES = ['message', 'log', 'outbound'];
 
 export const PermissionConfigDrawer: React.FC<PermissionConfigDrawerProps> = ({
   visible,
