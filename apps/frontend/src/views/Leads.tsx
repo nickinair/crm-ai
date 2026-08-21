@@ -364,12 +364,13 @@ const LeadsManagement: React.FC = () => {
               }}>编辑</a>
             )}
             
-            {/* 回收待分配(6)也可看详情：退回的线索可能已有跟进记录，管理者需要查看（2026-08-13） */}
+            {/* 回收待分配(6)也可看详情：退回的线索可能已有跟进记录，管理者需要查看（2026-08-13）
+                详情改为跳转线索详情页（与工作台一致；弹框为 V1.0.0 旧交互，2026-08-21 恢复跳转） */}
             {[1, 2, 3, 4, 5, 6].includes(record.leadStatus) && (
               <a onClick={() => {
-                setEditLeadId(record.id);
-                setIsViewModal(true);
-                setIsModalOpen(true);
+                const custId = record.customerId || record.customer?.id;
+                if (!custId) { message.warning('该线索暂无关联客户，无法查看详情'); return; }
+                navigate(`/customer/360/${custId}?leadId=${record.id}`);
               }}>详情</a>
             )}
 
