@@ -40,7 +40,7 @@ const LeadSearchForm: React.FC<Props> = ({ form, onSearch, salesList = [], darkL
 
   const groupTitle = (text: string) => (
     <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, margin: '6px 0 2px' }}>
-      <span style={{ color: darkLabels ? '#E2E8F0' : '#1F2937', fontSize: 15, fontWeight: 600, flexShrink: 0 }}>{text}</span>
+      <span style={{ color: darkLabels ? '#E2E8F0' : '#1F2937', fontSize: 14, fontWeight: 600, flexShrink: 0 }}>{text}</span>
       <span style={{ flex: 1, height: 1, background: darkLabels ? 'rgba(255,255,255,0.12)' : '#EBEEF3' }} />
     </div>
   );
@@ -175,10 +175,10 @@ const LeadSearchForm: React.FC<Props> = ({ form, onSearch, salesList = [], darkL
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <Button htmlType="button" onClick={() => { form.resetFields(); onSearch({}); }} className="crm-btn crm-btn-outline" style={{ height: '36px' }}>重置</Button>
           <Button htmlType="submit" className="crm-btn crm-btn-primary" style={{ height: '36px' }}>查询</Button>
-          <a style={{ fontSize: 13, marginLeft: 4, color: linkColor, cursor: 'pointer' }} onClick={() => setIsAdvancedSearch(!isAdvancedSearch)}>
+          <a style={{ fontSize: 14, marginLeft: 4, color: linkColor, cursor: 'pointer' }} onClick={() => setIsAdvancedSearch(!isAdvancedSearch)}>
             {isAdvancedSearch ? '收起' : '高级搜索'}
           </a>
-          <a style={{ fontSize: 13, marginLeft: 4, color: linkColor, cursor: 'pointer' }} onClick={openQuickEdit}>编辑常用搜索</a>
+          <a style={{ fontSize: 14, marginLeft: 4, color: linkColor, cursor: 'pointer' }} onClick={openQuickEdit}>编辑常用搜索</a>
         </div>
       </Form.Item>
     </Form>
@@ -197,7 +197,7 @@ const LeadSearchForm: React.FC<Props> = ({ form, onSearch, salesList = [], darkL
         <Button key="save" type="primary" onClick={saveQuickSearch}>保存</Button>,
       ]}
     >
-      <div style={{ color: '#64748B', fontSize: 13, marginBottom: 12 }}>
+      <div style={{ color: '#64748B', fontSize: 12, marginBottom: 12 }}>
         先点击选中一个位置，再从下方字段中选择要放入的搜索项；每个字段只能使用一次。
       </div>
       <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
@@ -208,7 +208,7 @@ const LeadSearchForm: React.FC<Props> = ({ form, onSearch, salesList = [], darkL
               border: activeSlot === i ? '2px solid #6366F1' : '1px solid #D1D5DB',
               background: activeSlot === i ? '#EEF2FF' : '#F8FAFC', color: '#1F2937', fontWeight: 500,
             }}>
-            <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 2 }}>位置 {i + 1}</div>
+            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 2 }}>位置 {i + 1}</div>
             {fieldMap[k]?.label || '-'}
           </div>
         ))}
@@ -232,7 +232,7 @@ const LeadSearchForm: React.FC<Props> = ({ form, onSearch, salesList = [], darkL
                     setActiveSlot(s => Math.min(s + 1, 3));
                   }}
                   style={{
-                    padding: '6px 14px', borderRadius: 16, fontSize: 13,
+                    padding: '6px 14px', borderRadius: 16, fontSize: 12,
                     cursor: usedElsewhere ? 'not-allowed' : 'pointer',
                     border: inActive ? '1px solid #6366F1' : '1px solid #E2E8F0',
                     background: inActive ? '#EEF2FF' : usedElsewhere ? '#F1F5F9' : '#fff',

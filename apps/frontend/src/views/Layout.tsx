@@ -287,7 +287,7 @@ const AppLayout: React.FC = () => {
         <Layout className="site-layout">
           <Header className="app-header" style={{ display: 'block', padding: 0, height: 'auto', marginBottom: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '72px', padding: '0 40px' }}>
-              <div className="breadcrumb" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+              <div className="breadcrumb" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                 {getBreadcrumbItems().map((item, idx, arr) => (
                   <span key={item.path + idx}>
                     {idx > 0 && <span style={{ margin: '0 8px', color: '#475569' }}>/</span>}
@@ -310,10 +310,10 @@ const AppLayout: React.FC = () => {
               {IS_TEST_ENV && <span className="env-badge">当前为{ENV_LABEL}，数据与生产环境隔离</span>}
               <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click', 'hover']}>
                 <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 16px 6px 6px', borderRadius: '30px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <Avatar size={34} style={{ background: 'linear-gradient(135deg, #A855F7, #3B82F6)', color: '#fff', fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Avatar size={34} style={{ background: 'linear-gradient(135deg, #A855F7, #3B82F6)', color: '#fff', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {(user.realName || user.username || '超').charAt(0)}
                   </Avatar>
-                  <span style={{ fontSize: '15px', fontWeight: 500, color: '#f8fafc', letterSpacing: '1px' }}>{user.realName || user.username || '超级管理员'}</span>
+                  <span style={{ fontSize: '14px', fontWeight: 500, color: '#f8fafc', letterSpacing: '1px' }}>{user.realName || user.username || '超级管理员'}</span>
                 </div>
               </Dropdown>
               </div>

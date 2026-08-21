@@ -35,7 +35,7 @@
 }
 
 .cd-customer-name {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: #F8FAFC;
 }
@@ -130,7 +130,7 @@
 
 .cd-info-value {
   color: #F8FAFC;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
 }
 
@@ -166,7 +166,7 @@
 
 .cd-tabs .ant-tabs-tab {
   color: #94A3B8 !important;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   padding: 12px 24px;
   margin: 0 8px 0 0 !important;
@@ -235,7 +235,7 @@
   border: 1px solid #3B82F6;
   border-radius: 6px;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 16px;
   color: white;
   letter-spacing: 1px;
 }
@@ -290,7 +290,7 @@
 
 .cd-vehicle-value {
   color: #F8FAFC;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
 }
 
@@ -307,7 +307,7 @@
 
 .cd-reason-label {
   color: #94A3B8;
-  font-size: 13px;
+  font-size: 12px;
   margin-bottom: 4px;
 }
 
@@ -400,7 +400,7 @@
 }
 
 .cd-follow-content {
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.5;
   color: #F8FAFC;
   white-space: pre-wrap;
@@ -424,7 +424,7 @@
 
 .cd-note-time {
   color: #94A3B8;
-  font-size: 13px;
+  font-size: 12px;
   margin-bottom: 6px;
 }
 
@@ -461,7 +461,7 @@
 
 .cd-lead-info {
   color: #94A3B8;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 /* ── Empty state (参考图四：暂无数据图标) ──────────── */
@@ -514,7 +514,7 @@
 
 .cd-note-header {
   color: #94A3B8;
-  font-size: 13px;
+  font-size: 12px;
   margin-bottom: 8px;
 }
 

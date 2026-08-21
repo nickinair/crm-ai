@@ -27,7 +27,7 @@ const LoadingLogo: React.FC<LoadingLogoProps> = ({ text = '加载中...', style 
           <div
             style={{
               color: 'rgba(255, 255, 255, 0.4)',
-              fontSize: '13px',
+              fontSize: '12px',
               letterSpacing: '2px',
               animation: 'crm-text-fade 2.5s ease-in-out infinite',
             }}

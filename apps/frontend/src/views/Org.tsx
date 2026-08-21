@@ -120,12 +120,12 @@ const OrgManagement: React.FC = () => {
             <div>
               <p style={{ marginBottom: 8 }}>{checkResult.message}</p>
               {checkResult.reason === 'hasAccounts' && (
-                <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
                   请前往「账号管理」将相关账号迁移至其他组织或删除后，再回来删除该组织。
                 </p>
               )}
               {checkResult.reason === 'hasChildren' && (
-                <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
                   请先逐一删除下级子组织后，再删除当前组织。
                 </p>
               )}

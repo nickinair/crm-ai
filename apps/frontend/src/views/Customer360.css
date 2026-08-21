@@ -25,7 +25,7 @@
 }
 
 .c360-lead-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: #f1f5f9;
 }
@@ -97,7 +97,7 @@
 }
 
 .c360-value {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
   color: #f8fafc;
 }
@@ -135,7 +135,7 @@
 }
 
 .c360-card-title {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -209,7 +209,7 @@
 }
 
 .c360-remark {
-  font-size: 13px;
+  font-size: 14px;
   color: #cbd5e1;
   display: flex;
   align-items: center;
@@ -252,7 +252,7 @@
 
 .c360-bottom-tabs .ant-tabs-tab {
   color: #94a3b8;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .c360-bottom-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
@@ -282,7 +282,7 @@
 .c360-record-item:nth-child(3) { border-left-color: #8b5cf6; }
 
 .c360-record-header {
-  font-size: 13px;
+  font-size: 12px;
   color: #94a3b8;
   margin-bottom: 12px;
   display: flex;
@@ -339,7 +339,7 @@
 }
 
 .c360-record-content {
-  font-size: 15px;
+  font-size: 14px;
   color: #e2e8f0;
   line-height: 1.5;
 }
@@ -358,7 +358,7 @@
   padding: 4px 12px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .c360-page-btn:hover {
@@ -389,6 +389,6 @@
   padding: 4px 14px;
   border: 1px solid;
   border-radius: 16px;
-  font-size: 13px;
+  font-size: 12px;
   background: transparent;
 }

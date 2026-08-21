@@ -157,7 +157,7 @@ const OrderDetail: React.FC = () => {
     borderRadius: '12px', padding: '20px', marginBottom: '16px',
   };
   const titleStyle: React.CSSProperties = {
-    color: '#F8FAFC', fontSize: '15px', fontWeight: 600, marginBottom: '16px',
+    color: '#F8FAFC', fontSize: '16px', fontWeight: 600, marginBottom: '16px',
     borderLeft: '3px solid #6366F1', paddingLeft: '10px',
   };
 
@@ -173,10 +173,10 @@ const OrderDetail: React.FC = () => {
       {/* ===== 头部：编号 + 状态 + 跟进人 + 操作按钮 ===== */}
       <div style={{ ...cardStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <span style={{ color: '#F8FAFC', fontSize: '18px', fontWeight: 600 }}>订单编号</span>
-          <span style={{ color: '#94A3B8', fontSize: '15px' }}>（{order.orderCode}）</span>
+          <span style={{ color: '#F8FAFC', fontSize: '20px', fontWeight: 600 }}>订单编号</span>
+          <span style={{ color: '#94A3B8', fontSize: '14px' }}>（{order.orderCode}）</span>
           {getOrderStatusTag(order.orderStatus)}
-          <span style={{ color: '#94A3B8', fontSize: '13px', marginLeft: '12px' }}>
+          <span style={{ color: '#94A3B8', fontSize: '12px', marginLeft: '12px' }}>
             跟进人：<span style={{ color: '#E8ECF3' }}>{person(order.salesperson)}</span>
           </span>
         </div>
@@ -278,12 +278,12 @@ const OrderDetail: React.FC = () => {
       {/* ===== 订单操作日志（PRD 4.3.3 日志结构：操作类型/操作人/操作时间/操作内容）===== */}
       <div style={cardStyle}>
         <div style={titleStyle}>订单操作日志</div>
-        {(order.operationLogs || []).length === 0 && <div style={{ color: '#64748B', fontSize: '13px' }}>暂无操作日志</div>}
+        {(order.operationLogs || []).length === 0 && <div style={{ color: '#64748B', fontSize: '14px' }}>暂无操作日志</div>}
         {(order.operationLogs || []).map((log: any) => (
           <div key={log.id} style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', marginTop: '6px', flexShrink: 0 }} />
             <div>
-              <div style={{ color: '#E8ECF3', fontSize: '13px' }}>{log.action}</div>
+              <div style={{ color: '#E8ECF3', fontSize: '14px' }}>{log.action}</div>
               <div style={{ color: '#94A3B8', fontSize: '12px', marginTop: '2px' }}>操作人：{log.operator}</div>
               <div style={{ color: '#94A3B8', fontSize: '12px' }}>操作内容：{log.content}</div>
               <div style={{ color: '#64748B', fontSize: '12px', marginTop: '2px' }}>{dayjs(log.createdAt).format('YYYY-MM-DD HH:mm')}</div>
@@ -301,20 +301,20 @@ const OrderDetail: React.FC = () => {
         {/* 其他字段回显不可编辑，仅三方订单编号可填 */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
           <div>
-            <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>订单编号</div>
+            <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>订单编号</div>
             <Input value={order.orderCode} disabled />
           </div>
           <div>
-            <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>下单平台</div>
+            <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>下单平台</div>
             <Input value={order.orderPlatform || ''} disabled />
           </div>
           <div style={{ gridColumn: '1 / -1' }}>
-            <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>平台订单编号</div>
+            <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>平台订单编号</div>
             <Input value={order.platformOrderNo || ''} disabled />
           </div>
         </div>
         <div>
-          <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>
+          <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>
             <span style={{ color: '#ef4444' }}>*</span> 三方订单编号
           </div>
           <Input

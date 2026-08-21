@@ -246,7 +246,7 @@ const LeadsManagement: React.FC = () => {
   const handleVinClick = (record: any) => {
     const v = record.vehicle || {};
     const boolLabel = (val: any) => val === true || val === 1 || val === '1' || val === '是' ? '是' : '否';
-    const fieldStyle = { background: '#f5f7fa', padding: '6px 10px', borderRadius: 4, color: '#333', minHeight: 32, display: 'flex', alignItems: 'center', fontSize: 13 };
+    const fieldStyle = { background: '#f5f7fa', padding: '6px 10px', borderRadius: 4, color: '#333', minHeight: 32, display: 'flex', alignItems: 'center', fontSize: 14 };
     const labelStyle: React.CSSProperties = { color: '#999', marginBottom: 4, fontSize: 12, lineHeight: 1 };
 
     // Calculate vehicle age in months
@@ -755,7 +755,7 @@ const LeadsManagement: React.FC = () => {
           <Radio value={true}>是</Radio>
           <Radio value={false}>否</Radio>
         </Radio.Group>
-        <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '6px' }}>请选择分配的销售</div>
+        <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '6px' }}>请选择分配的销售</div>
         <Select
           style={{ width: '100%' }}
           placeholder="请选择销售"
@@ -881,7 +881,7 @@ const LeadsManagement: React.FC = () => {
         
         <div style={{ background: '#F8FAFC', borderRadius: '8px', padding: '16px 20px', marginBottom: '32px', border: '1px solid #E2E8F0' }}>
           <div style={{ color: '#475569', marginBottom: '12px', fontWeight: 500 }}>模板包含字段（带 <span style={{ color: '#EF4444' }}>*</span> 为必填项）：</div>
-          <div style={{ color: '#64748B', lineHeight: '28px', fontSize: '13px' }}>
+          <div style={{ color: '#64748B', lineHeight: '28px', fontSize: '12px' }}>
             <span style={{ color: '#EF4444' }}>* 渠道来源 * 线索来源方式 * 来源日期 * 客户电话</span> 客户姓名 车架号 品牌 车型 款式 车牌号 发票日期 里程数 里程≥4万公里（1：是；0：否） 里程≥9.5万公里（1：是；0：否） 是否已购整车延保（1：是；0：否） 是否已购电池延保（1：是；0：否） 是否已购安心保（1：是；0：否） 是否已购轮胎保障（1：是；0：否） 意向商品名称 意向商品编码 意向赠品名称
           </div>
         </div>
@@ -903,7 +903,7 @@ const LeadsManagement: React.FC = () => {
             <p className="ant-upload-drag-icon">
               <InboxOutlined style={{ color: '#94A3B8', fontSize: '32px' }} />
             </p>
-            <p className="ant-upload-text" style={{ color: '#64748B', fontSize: '13px' }}>点击或将文件拖拽到此处上传</p>
+            <p className="ant-upload-text" style={{ color: '#64748B', fontSize: '12px' }}>点击或将文件拖拽到此处上传</p>
           </Upload.Dragger>
         )}
 
@@ -933,9 +933,9 @@ const LeadsManagement: React.FC = () => {
           return (
             <div style={{ marginTop: '20px', padding: '14px 16px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                <span style={{ color: '#334155', fontSize: '13px', fontWeight: 500 }}>{stageText}</span>
+                <span style={{ color: '#334155', fontSize: '14px', fontWeight: 500 }}>{stageText}</span>
                 {p.phase === 'processing' && (
-                  <span style={{ color: '#64748B', fontSize: '13px' }}>
+                  <span style={{ color: '#64748B', fontSize: '12px' }}>
                     成功 {p.successCount || 0} · 失败 {p.failCount || 0} · 冲突 {p.warnCount || 0}
                   </span>
                 )}
@@ -969,7 +969,7 @@ const LeadsManagement: React.FC = () => {
       >
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <CheckCircleFilled style={{ fontSize: '48px', color: '#10B981', marginBottom: '16px' }} />
-          <div style={{ fontSize: '18px', fontWeight: 600, color: '#1E293B' }}>数据校验完成</div>
+          <div style={{ fontSize: '16px', fontWeight: 600, color: '#1E293B' }}>数据校验完成</div>
         </div>
 
         <div style={{ background: '#F8FAFC', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>

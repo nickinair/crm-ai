@@ -504,10 +504,10 @@ const ProductManagement: React.FC = () => {
         </div>
 
         <div style={{ background: '#F8FAFC', borderRadius: '8px', padding: '16px 20px', marginBottom: '24px', border: '1px solid #E2E8F0' }}>
-          <div style={{ color: '#475569', marginBottom: '10px', fontWeight: 500, fontSize: '13px' }}>
+          <div style={{ color: '#475569', marginBottom: '10px', fontWeight: 500, fontSize: '12px' }}>
             模板包含字段（带 <span style={{ color: '#EF4444' }}>*</span> 为必填项）：
           </div>
-          <div style={{ lineHeight: '26px', fontSize: '13px' }}>
+          <div style={{ lineHeight: '26px', fontSize: '12px' }}>
             {IMPORT_HEADERS.map(h => (
               <span key={h.label} style={{ color: h.required ? '#EF4444' : '#64748B', marginRight: '10px' }}>
                 {h.required ? `* ${h.label}` : h.label}
@@ -517,7 +517,7 @@ const ProductManagement: React.FC = () => {
         </div>
 
         <div style={{ color: '#475569', marginBottom: '16px', fontSize: '14px' }}>
-          第二步：上传填写好的数据文件 <span style={{ color: '#94A3B8', fontSize: '13px' }}>(仅支持 .xls, .xlsx, 最大5M)</span>
+          第二步：上传填写好的数据文件 <span style={{ color: '#94A3B8', fontSize: '12px' }}>(仅支持 .xls, .xlsx, 最大5M)</span>
         </div>
 
         <Upload.Dragger
@@ -536,7 +536,7 @@ const ProductManagement: React.FC = () => {
           <p className="ant-upload-drag-icon">
             <InboxOutlined style={{ color: '#94A3B8', fontSize: '32px' }} />
           </p>
-          <p className="ant-upload-text" style={{ color: '#64748B', fontSize: '13px' }}>点击或将文件拖拽到此处上传</p>
+          <p className="ant-upload-text" style={{ color: '#64748B', fontSize: '12px' }}>点击或将文件拖拽到此处上传</p>
         </Upload.Dragger>
       </Modal>
 
@@ -554,7 +554,7 @@ const ProductManagement: React.FC = () => {
         {importResult && (
           <div style={{ textAlign: 'center', padding: '8px 0' }}>
             <CheckCircleFilled style={{ fontSize: '52px', color: '#10b981', marginBottom: '16px' }} />
-            <div style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '20px' }}>导入处理完成</div>
+            <div style={{ fontSize: '16px', fontWeight: 600, color: '#1f2937', marginBottom: '20px' }}>导入处理完成</div>
             <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', marginBottom: importResult.failed > 0 ? '20px' : 0 }}>
               {[
                 { label: '总共操作', value: importResult.total, color: '#1f2937' },
@@ -594,7 +594,7 @@ const ProductManagement: React.FC = () => {
         className="crm-unified-modal"
       >
         {detailRecord && (() => {
-          const labelStyle: React.CSSProperties = { color: '#64748b', fontWeight: 500, fontSize: '13px', marginBottom: '4px' };
+          const labelStyle: React.CSSProperties = { color: '#64748b', fontWeight: 500, fontSize: '12px', marginBottom: '4px' };
           const valueStyle: React.CSSProperties = { background: '#f1f5f9', borderRadius: '6px', padding: '6px 12px', fontSize: '14px', color: '#1f2937', minHeight: '32px', display: 'flex', alignItems: 'center' };
           return (
             <div>

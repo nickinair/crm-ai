@@ -651,7 +651,7 @@ const CustomerDetail: React.FC = () => {
         className="crm-unified-modal"
       >
         <div style={{ padding: '20px 0' }}>
-          <span style={{ fontSize: '15px' }}>确定要退回公域池吗？</span>
+          <span style={{ fontSize: '14px' }}>确定要退回公域池吗？</span>
         </div>
       </Modal>
 
@@ -693,7 +693,7 @@ const CustomerDetail: React.FC = () => {
         okButtonProps={{ danger: true }}
       >
         <div style={{ padding: '20px 0' }}>
-          <span style={{ fontSize: '15px' }}>确定要删除该车辆信息吗？删除后不可恢复。</span>
+          <span style={{ fontSize: '14px' }}>确定要删除该车辆信息吗？删除后不可恢复。</span>
         </div>
       </Modal>
     </div>

@@ -1,4 +1,12 @@
 :root {
+  /* 字号规范 v1.0（2026-08-21）：文字仅允许这 6 级 */
+  --fs-xs: 12px;     /* 辅助信息 */
+  --fs-base: 14px;   /* 正文默认 */
+  --fs-md: 16px;     /* 卡片/弹窗标题 */
+  --fs-lg: 20px;     /* 详情页主体行 */
+  --fs-xl: 24px;     /* 页面标题 */
+  --fs-stat: 28px;   /* 统计大数字专用 */
+
   --primary: #6366F1;
   --primary-hover: #4F46E5;
   --bg-dark: #0B0F19;
@@ -95,7 +103,7 @@ body {
 }
 
 .logo-text {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.5px;
   background: linear-gradient(to right, #fff, #94A3B8);
@@ -119,7 +127,7 @@ body {
   padding-right: 16px !important;
   border-radius: 12px;
   color: var(--text-secondary);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   transition: all 0.2s ease;
   height: auto !important;
@@ -142,7 +150,7 @@ body {
   padding-right: 16px !important;
   border-radius: 12px;
   color: var(--text-secondary);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   height: auto !important;
   line-height: normal !important;
@@ -195,7 +203,7 @@ body {
 }
 
 .page-title-display {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: #fff;
   text-shadow: 0 2px 4px rgba(0,0,0,0.1);

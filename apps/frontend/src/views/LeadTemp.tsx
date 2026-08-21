@@ -216,7 +216,7 @@ const LeadTemp: React.FC = () => {
     return (
       <div style={{ padding: 24, background: '#fff', minHeight: 'calc(100vh - 120px)', textAlign: 'center', paddingTop: 80 }}>
         <WarningOutlined style={{ fontSize: 48, color: '#94A3B8', marginBottom: 16 }} />
-        <div style={{ fontSize: 16, color: '#94A3B8', marginBottom: 24 }}>暂无警告数据</div>
+        <div style={{ fontSize: 14, color: '#94A3B8', marginBottom: 24 }}>暂无警告数据</div>
         <Button className="crm-btn crm-btn-primary" onClick={() => navigate('/leads')}>返回线索管理</Button>
       </div>
     );

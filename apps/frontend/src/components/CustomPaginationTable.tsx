@@ -35,12 +35,12 @@ export const CustomPaginationTable = (props: any) => {
       />
       {total > 0 && (
         <div className="custom-pagination-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0', background: 'transparent' }}>
-          <div style={{ color: 'var(--text-secondary, #8c8c8c)', fontSize: '13px' }}>
+          <div style={{ color: 'var(--text-secondary, #8c8c8c)', fontSize: '14px' }}>
             共 {total} 条记录，每页 {pageSize} 条
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <Button disabled={current === 1} onClick={handlePrev} size="small">上一页</Button>
-            <span style={{ color: 'var(--text-main, #333)', fontSize: '13px' }}>{current} / {totalPages}</span>
+            <span style={{ color: 'var(--text-main, #333)', fontSize: '14px' }}>{current} / {totalPages}</span>
             <Button disabled={current === totalPages} onClick={handleNext} size="small">下一页</Button>
           </div>
         </div>

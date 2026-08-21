@@ -72,7 +72,7 @@ const Home: React.FC = () => {
       <div style={{ display: 'flex', gap: '20px', marginBottom: '24px', flexWrap: 'wrap' }}>
         {metricCards.map(card => (
           <div key={card.label} style={cardStyle}>
-            <div style={{ color: '#94A3B8', fontSize: '13px', marginBottom: '10px' }}>{card.label}</div>
+            <div style={{ color: '#94A3B8', fontSize: '12px', marginBottom: '10px' }}>{card.label}</div>
             <div style={{ color: '#F8FAFC', fontSize: '28px', fontWeight: 700, lineHeight: 1.2 }}>{card.value}</div>
           </div>
         ))}
@@ -86,7 +86,7 @@ const Home: React.FC = () => {
         padding: '20px 24px',
       }}>
         <div style={{
-          color: '#F8FAFC', fontSize: '15px', fontWeight: 600, marginBottom: '16px',
+          color: '#F8FAFC', fontSize: '16px', fontWeight: 600, marginBottom: '16px',
           borderLeft: '3px solid #6366F1', paddingLeft: '10px',
         }}>
           销售线索分布

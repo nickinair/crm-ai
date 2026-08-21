@@ -262,13 +262,13 @@ const CustomerManagement: React.FC = () => {
     { title: '操作', key: 'action', fixed: 'right' as const, width: 220, render: (_val: any, record: any) => {
       return (
         <div style={{ display: 'flex', gap: '8px' }}>
-          {hasPerm('customer:edit', 'workbench') && <a onClick={() => handleEdit(record)} style={{ color: '#3b82f6', fontSize: '13px' }}>编辑</a>}
+          {hasPerm('customer:edit', 'workbench') && <a onClick={() => handleEdit(record)} style={{ color: '#3b82f6', fontSize: '14px' }}>编辑</a>}
           {isSales ? (
-            <a onClick={() => navigate(`/customer/detail/${record.id}?from=${fromWorkbench ? 'workbench_customer' : 'customer'}`)} style={{ color: '#3b82f6', fontSize: '13px' }}>客户360</a>
+            <a onClick={() => navigate(`/customer/detail/${record.id}?from=${fromWorkbench ? 'workbench_customer' : 'customer'}`)} style={{ color: '#3b82f6', fontSize: '14px' }}>客户360</a>
           ) : (
             <>
-              <a onClick={() => handleDetail(record)} style={{ color: '#3b82f6', fontSize: '13px' }}>详情</a>
-              <a onClick={() => handleVehicle(record)} style={{ color: '#3b82f6', fontSize: '13px' }}>查看车辆信息</a>
+              <a onClick={() => handleDetail(record)} style={{ color: '#3b82f6', fontSize: '14px' }}>详情</a>
+              <a onClick={() => handleVehicle(record)} style={{ color: '#3b82f6', fontSize: '14px' }}>查看车辆信息</a>
             </>
           )}
         </div>
@@ -277,7 +277,7 @@ const CustomerManagement: React.FC = () => {
   ];
 
   // ---- Label style for detail modal ----
-  const labelStyle: React.CSSProperties = { color: '#64748b', fontWeight: 500, fontSize: '13px', marginBottom: '4px' };
+  const labelStyle: React.CSSProperties = { color: '#64748b', fontWeight: 500, fontSize: '12px', marginBottom: '4px' };
   const valueStyle: React.CSSProperties = { background: '#f1f5f9', borderRadius: '6px', padding: '6px 14px', fontSize: '14px', color: '#1f2937', lineHeight: '24px' };
 
   return (
@@ -530,7 +530,7 @@ const CustomerManagement: React.FC = () => {
             </Row>
 
             {/* 客户备注 */}
-            <div style={{ fontWeight: 600, fontSize: '15px', color: '#1f2937', marginBottom: '12px' }}>客户备注</div>
+            <div style={{ fontWeight: 600, fontSize: '16px', color: '#1f2937', marginBottom: '12px' }}>客户备注</div>
             {detailData.notes && detailData.notes.length > 0 ? detailData.notes.map((note: any, idx: number) => (
               <div key={idx} style={{ background: '#f8fafc', borderRadius: '8px', padding: '14px 16px', marginBottom: '10px', borderLeft: '3px solid #3b82f6' }}>
                 <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>
@@ -539,7 +539,7 @@ const CustomerManagement: React.FC = () => {
                 <div style={{ fontSize: '14px', color: '#1f2937' }}>{note.noteContent}</div>
               </div>
             )) : (
-              <div style={{ color: '#94a3b8', fontSize: '13px' }}>暂无备注</div>
+              <div style={{ color: '#94a3b8', fontSize: '14px' }}>暂无备注</div>
             )}
           </div>
         )}

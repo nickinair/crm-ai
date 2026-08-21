@@ -186,8 +186,8 @@ const Config: React.FC = () => {
             style={{ marginBottom: '12px' }}
           />
           <div style={{ maxHeight: '620px', overflowY: 'auto' }}>
-            {loadingTypes && <div style={{ color: '#94A3B8', fontSize: 13, padding: '8px 0' }}>加载中…</div>}
-            {!loadingTypes && types.length === 0 && <div style={{ color: '#94A3B8', fontSize: 13, padding: '8px 0' }}>暂无配置项</div>}
+            {loadingTypes && <div style={{ color: '#94A3B8', fontSize: 12, padding: '8px 0' }}>加载中…</div>}
+            {!loadingTypes && types.length === 0 && <div style={{ color: '#94A3B8', fontSize: 12, padding: '8px 0' }}>暂无配置项</div>}
             {types.map(t => {
               const active = activeType && String(activeType.id) === String(t.id);
               return (
@@ -227,7 +227,7 @@ const Config: React.FC = () => {
 
           {/* 单值型配置（如冷却天数）给出使用提示 */}
           {activeType?.dictTypeCode === 'defeat_cooldown_days' && (
-            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', color: '#475569', fontSize: '13px' }}>
+            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', color: '#475569', fontSize: '12px' }}>
               该配置为单值配置：<b>存储值</b>即冷却天数。线索转为「已战败」后进入冷却期，满该天数后自动解冻，方可被重新分配或在公域池领取。修改后立即生效，无需重启服务。
             </div>
           )}

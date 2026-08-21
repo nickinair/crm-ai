@@ -11,7 +11,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-main);
             font-weight: 600;
         }
@@ -144,7 +144,7 @@
 
         .stat-title {
             color: var(--text-secondary);
-            font-size: 15px;
+            font-size: 12px;
         }
 
         .stat-value {
@@ -253,7 +253,7 @@
             color: var(--text-secondary);
             padding: 6px 12px;
             border-radius: 20px;
-            font-size: 13px;
+            font-size: 14px;
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -270,7 +270,7 @@
             padding: 0 7px;
             border-radius: 10px;
             background: rgba(255,255,255,0.12);
-            font-size: 11px;
+            font-size: 12px;
             line-height: 16px;
             color: inherit;
         }
@@ -321,7 +321,7 @@
             color: var(--primary);
             text-decoration: none;
             margin-right: 12px;
-            font-size: 13px;
+            font-size: 14px;
         }
         
         .td-actions a:hover {
@@ -427,7 +427,7 @@
         }
         
         .recent-desc {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
         }
 
@@ -518,7 +518,7 @@
             color: var(--primary);
             text-decoration: none;
             margin-right: 12px;
-            font-size: 13px;
+            font-size: 14px;
         }
         
         .td-actions a:hover {
@@ -625,7 +625,7 @@
         }
         
         .recent-desc {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
         }
 
@@ -711,7 +711,7 @@
 .workbench-table .ant-table-thead .ant-table-cell {
   color: var(--text-secondary) !important;
   font-weight: 600 !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
   background: #0f172a !important;
   background-color: #0f172a !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -731,7 +731,7 @@
 .workbench-table .ant-table-tbody > tr:not(.ant-table-measure-row) > td {
   padding: 14px 16px !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
   color: var(--text-main) !important;
   background: #1e293b !important;
   background-color: #1e293b !important;
@@ -924,7 +924,7 @@
     align-items: center;
     gap: 8px;
     color: var(--text-main, #fff);
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 500;
     margin-bottom: 20px;
 }

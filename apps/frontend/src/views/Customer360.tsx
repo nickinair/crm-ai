@@ -484,7 +484,7 @@ const Customer360: React.FC = () => {
           })()}
           {vehicleInfo.remark && (
             <div className="c360-card-footer" style={{ borderTop: '1px solid #1e2235', paddingTop: '16px', marginTop: '16px' }}>
-              <div className="c360-remark" style={{ color: '#a0a5b5', fontSize: '13px' }}>
+              <div className="c360-remark" style={{ color: '#a0a5b5', fontSize: '14px' }}>
                 <FileTextOutlined className="c360-remark-icon" style={{ marginRight: '6px' }} /> 车辆备注: {vehicleInfo.remark}
               </div>
             </div>
@@ -531,7 +531,7 @@ const Customer360: React.FC = () => {
                   <div className="c360-record-header" style={{ marginBottom: 10, color: '#a0a5b5' }}>
                     {note.createdByName || '未知'} ({note.createdByAccount || note.createdBy}) <span className="divider">|</span> {dayjs(note.createdAt).format('YYYY-MM-DD HH:mm')}
                   </div>
-                  <div className="c360-record-content" style={{ color: '#d1d5db', fontSize: '13px', lineHeight: '1.6' }}>
+                  <div className="c360-record-content" style={{ color: '#d1d5db', fontSize: '14px', lineHeight: '1.6' }}>
                     {note.noteContent}
                   </div>
                 </div>
@@ -592,7 +592,7 @@ const Customer360: React.FC = () => {
               <div key={log.id} style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6366F1', marginTop: '6px', flexShrink: 0 }} />
                 <div>
-                  <div style={{ color: '#E8ECF3', fontSize: '13px' }}>{log.action}</div>
+                  <div style={{ color: '#E8ECF3', fontSize: '14px' }}>{log.action}</div>
                   <div style={{ color: '#94A3B8', fontSize: '12px', marginTop: '2px' }}>操作人：{log.operator}</div>
                   {log.content && <div style={{ color: '#94A3B8', fontSize: '12px' }}>操作内容：{log.content}</div>}
                   <div style={{ color: '#64748B', fontSize: '12px', marginTop: '2px' }}>{dayjs(log.createdAt).format('YYYY-MM-DD HH:mm')}</div>
@@ -688,7 +688,7 @@ const Customer360: React.FC = () => {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '20px 0' }}>
           <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '20px' }} />
-          <span style={{ fontSize: '15px' }}>确定要退回公域池吗？</span>
+          <span style={{ fontSize: '14px' }}>确定要退回公域池吗？</span>
         </div>
       </Modal>
 

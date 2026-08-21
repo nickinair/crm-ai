@@ -322,9 +322,9 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '14px' }}>{p.productName}</span>
                   <div style={{ display: 'flex', alignItems: 'center', width: '260px' }}>
-                    <span style={{ color: '#94A3B8', fontSize: '13px', flex: 1, textAlign: 'left', paddingRight: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.productCode}</span>
+                    <span style={{ color: '#94A3B8', fontSize: '12px', flex: 1, textAlign: 'left', paddingRight: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.productCode}</span>
                     <span style={{ color: isChecked ? '#4F8DFF' : '#94A3B8', fontWeight: 600, width: '80px', textAlign: 'right', whiteSpace: 'nowrap' }}>¥{p.salePrice}</span>
-                    <span style={{ color: '#94A3B8', fontSize: '13px', width: '48px', textAlign: 'right', whiteSpace: 'nowrap', marginLeft: '12px' }}>{isChecked ? '已添加' : ''}</span>
+                    <span style={{ color: '#94A3B8', fontSize: '12px', width: '48px', textAlign: 'right', whiteSpace: 'nowrap', marginLeft: '12px' }}>{isChecked ? '已添加' : ''}</span>
                   </div>
                 </div>
               </div>
@@ -387,7 +387,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
               // 线索详情入口：默认展示当前线索的线索编码，不可修改（PRD 4.2.4.2）
               <div>
                 <div style={{ fontWeight: 600, color: '#1f2937', marginBottom: '12px' }}>线索信息</div>
-                <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>线索编码</div>
+                <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>线索编码</div>
                 <Input value={fixedLead.leadCode} disabled style={{ backgroundColor: '#f3f4f6', color: '#6b7280' }} />
               </div>
             ) : fixedCustomer ? (
@@ -396,11 +396,11 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
                 <div style={{ fontWeight: 600, color: '#1f2937', marginBottom: '12px' }}>客户信息</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>客户名称</div>
+                    <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>客户名称</div>
                     <Input value={fixedCustomer.customerName} disabled style={{ backgroundColor: '#f3f4f6', color: '#6b7280' }} />
                   </div>
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>客户电话</div>
+                    <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>客户电话</div>
                     <Input value={fixedCustomer.phone} disabled style={{ backgroundColor: '#f3f4f6', color: '#6b7280' }} />
                   </div>
                 </div>
@@ -415,7 +415,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
                 </div>
                 {customerMode === 'select' ? (
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>
+                    <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>
                       <span style={{ color: '#ef4444' }}>*</span> 客户选择
                     </div>
                     <Select
@@ -527,7 +527,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
                   options={vehicles.map(v => ({ label: vehicleDisplay(v), value: String(v.id) }))}
                 />
                 {hasWarranty && (
-                  <div style={{ color: '#EF4444', fontSize: '13px', marginTop: '8px' }}>
+                  <div style={{ color: '#EF4444', fontSize: '12px', marginTop: '8px' }}>
                     该订单包含延保商品，必须填写或选择含有车架号的车辆信息
                   </div>
                 )}
@@ -559,7 +559,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
                   </Form.Item>
                 </div>
                 {hasWarranty && (
-                  <div style={{ color: '#EF4444', fontSize: '13px' }}>
+                  <div style={{ color: '#EF4444', fontSize: '12px' }}>
                     该订单包含延保商品，必须填写或选择含有车架号的车辆信息
                   </div>
                 )}

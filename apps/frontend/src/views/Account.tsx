@@ -163,7 +163,7 @@ const AccountManagement: React.FC = () => {
           <p style={{ marginBottom: 8 }}>
             您即将删除账号 <strong style={{ color: '#ef4444' }}>{record.realName || record.username}</strong>（{record.accountCode}），请确认以下风险：
           </p>
-          <ul style={{ paddingLeft: 20, margin: 0, color: '#64748b', fontSize: 13 }}>
+          <ul style={{ paddingLeft: 20, margin: 0, color: '#64748b', fontSize: 12 }}>
             <li>该操作<strong style={{ color: '#ef4444' }}>不可逆</strong>，删除后<strong>无法恢复</strong></li>
             <li>该账号关联的<strong>客户分配关系</strong>将被清除</li>
             <li>该账号的<strong>跟进记录、操作日志</strong>等历史数据可能受影响</li>

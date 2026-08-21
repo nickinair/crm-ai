@@ -587,7 +587,7 @@ const Workbench: React.FC = () => {
                     onClick={() => setActiveTab(key)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
-                      padding: '4px 2px 12px', fontSize: '15px', fontWeight: 600,
+                      padding: '4px 2px 12px', fontSize: '16px', fontWeight: 600,
                       color: activeTab === key ? '#818CF8' : 'var(--text-secondary)',
                       borderBottom: activeTab === key ? '2px solid #6366F1' : '2px solid transparent',
                       marginBottom: '-1px', transition: 'color 0.2s',
@@ -631,7 +631,7 @@ const Workbench: React.FC = () => {
                   style={{
                     width: 240, padding: '7px 12px 7px 34px', paddingRight: 30, borderRadius: 8,
                     background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box'
+                    color: '#e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box'
                   }}
                 />
                 {phoneInput && (
@@ -756,7 +756,7 @@ const Workbench: React.FC = () => {
                   style={{
                     width: 240, padding: '7px 12px 7px 34px', paddingRight: 30, borderRadius: 8,
                     background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box'
+                    color: '#e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box'
                   }}
                 />
                 {orderPhoneInput && (
@@ -852,7 +852,7 @@ const Workbench: React.FC = () => {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '20px 0' }}>
           <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '20px' }} />
-          <span style={{ fontSize: '15px' }}>确定要退回公域池吗？</span>
+          <span style={{ fontSize: '14px' }}>确定要退回公域池吗？</span>
         </div>
       </Modal>
       <OrderCreateModal
@@ -887,20 +887,20 @@ const Workbench: React.FC = () => {
           <>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
               <div>
-                <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>订单编号</div>
+                <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>订单编号</div>
                 <input disabled value={thirdTarget.orderCode} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>下单平台</div>
+                <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>下单平台</div>
                 <input disabled value={thirdTarget.orderPlatform || ''} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px', boxSizing: 'border-box' }} />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>平台订单编号</div>
+                <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>平台订单编号</div>
                 <input disabled value={thirdTarget.platformOrderNo || ''} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px', boxSizing: 'border-box' }} />
               </div>
             </div>
             <div>
-              <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}><span style={{ color: '#ef4444' }}>*</span> 三方订单编号</div>
+              <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}><span style={{ color: '#ef4444' }}>*</span> 三方订单编号</div>
               <input
                 value={thirdNo}
                 onChange={e => setThirdNo(e.target.value)}

@@ -373,9 +373,9 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '14px' }}>{p.productName}</span>
                   <div style={{ display: 'flex', alignItems: 'center', width: '260px' }}>
-                    <span style={{ color: '#94A3B8', fontSize: '13px', flex: 1, textAlign: 'left', paddingRight: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.productCode}</span>
+                    <span style={{ color: '#94A3B8', fontSize: '12px', flex: 1, textAlign: 'left', paddingRight: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.productCode}</span>
                     <span style={{ color: isChecked ? '#4F8DFF' : '#94A3B8', fontWeight: 600, width: '80px', textAlign: 'right', whiteSpace: 'nowrap' }}>¥{p.salePrice}</span>
-                    <span style={{ color: '#94A3B8', fontSize: '13px', width: '48px', textAlign: 'right', whiteSpace: 'nowrap', marginLeft: '12px' }}>{isChecked ? '已添加' : ''}</span>
+                    <span style={{ color: '#94A3B8', fontSize: '12px', width: '48px', textAlign: 'right', whiteSpace: 'nowrap', marginLeft: '12px' }}>{isChecked ? '已添加' : ''}</span>
                   </div>
                 </div>
               </div>
@@ -416,7 +416,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
       )}
       <Form form={form} layout="vertical" onFinish={onFinish} disabled={isView}>
         <div style={{ display: (!isThreeStep || step === 0) ? 'block' : 'none' }}>
-        <div style={{ fontSize: '15px', fontWeight: 600, color: '#111827', marginBottom: '16px' }}>基础信息</div>
+        <div style={{ fontSize: '16px', fontWeight: 600, color: '#111827', marginBottom: '16px' }}>基础信息</div>
 
         <Row gutter={24}>
           <Col span={24}>
@@ -519,7 +519,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
         {/* ===== 车辆信息（三步式第二步：默认选择方式 + 新增切换，PRD 配图 image24/25）===== */}
         <div style={{ display: (!isThreeStep || step === 1) ? 'block' : 'none' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', marginTop: '8px' }}>
-          <span style={{ fontSize: '15px', fontWeight: 600, color: '#111827' }}>车辆信息</span>
+          <span style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>车辆信息</span>
           {isThreeStep && (
             vehicleMode === 'select'
               ? <Button type="link" onClick={() => setVehicleMode('create')}>+ 新增车辆</Button>
@@ -528,7 +528,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
         </div>
         {isThreeStep && vehicleMode === 'select' && (
           <div style={{ marginBottom: '16px' }}>
-            <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '8px' }}>选择车辆</div>
+            <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '8px' }}>选择车辆</div>
             <Select
               style={{ width: '100%' }}
               placeholder={customerVehicles.length ? '请选择车辆' : '该客户暂无车辆，可点击右上角新增'}

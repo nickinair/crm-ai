@@ -118,12 +118,12 @@ const ImportTaskFloat: React.FC = () => {
       onClick={handleExpand}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-        <span style={{ color: '#E2E8F0', fontSize: '13px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '230px' }}>
+        <span style={{ color: '#E2E8F0', fontSize: '14px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '230px' }}>
           批量导入：{task.fileName}
         </span>
         <div style={{ display: 'flex', gap: '10px' }}>
           <FullscreenOutlined 
-            style={{ color: '#94A3B8', fontSize: '13px', cursor: 'pointer' }}
+            style={{ color: '#94A3B8', fontSize: '12px', cursor: 'pointer' }}
             title="放大查看详细进度"
           />
           <CloseOutlined
@@ -145,7 +145,7 @@ const ImportTaskFloat: React.FC = () => {
         format={(pct) => <span style={{ color: '#CBD5E1' }}>{pct}%</span>}
       />
       {p && p.phase === 'processing' && (
-        <div style={{ color: '#64748B', fontSize: '11px', marginTop: '2px' }}>
+        <div style={{ color: '#64748B', fontSize: '12px', marginTop: '2px' }}>
           成功 {p.successCount || 0} · 失败 {p.failCount || 0} · 冲突 {p.warnCount || 0}
           <br />已用时 {fmtDur(elapsedSec)}{etaReady
             ? ` · 预计剩余 ${fmtDur(remainSec)} · 预计总耗时 ${fmtDur(elapsedSec + remainSec)}`
@@ -153,7 +153,7 @@ const ImportTaskFloat: React.FC = () => {
         </div>
       )}
       {isFinal && p.phase === 'done' && (
-        <div style={{ color: '#64748B', fontSize: '11px', marginTop: '2px' }}>
+        <div style={{ color: '#64748B', fontSize: '12px', marginTop: '2px' }}>
           成功 {p.successCount || 0} · 失败 {p.failCount || 0} · 冲突 {p.warnCount || 0} · 用时 {fmtDur(elapsedSec)}
         </div>
       )}

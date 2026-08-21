@@ -39,7 +39,7 @@
   margin-bottom: 16px;
 }
 .table-header-actions h3 {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #0F172A;
   display: flex;
@@ -136,7 +136,7 @@
 .custom-table .ant-table-tbody > tr:not(.ant-table-measure-row) > td {
   padding: 14px 16px;
   border-bottom: 1px solid #F1F5F9;
-  font-size: 13px;
+  font-size: 14px;
   color: #1E293B;
 }
 .custom-table .ant-table-tbody > tr:hover > td {
@@ -171,7 +171,7 @@
   color: var(--primary);
   text-decoration: none;
   font-weight: 500;
-  font-size: 13px;
+  font-size: 14px;
   transition: color 0.2s;
 }
 .action-links a:hover {
