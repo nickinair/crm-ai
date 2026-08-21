@@ -174,6 +174,22 @@ const AppLayout: React.FC = () => {
     if (location.pathname.startsWith('/order/detail')) {
       const parts = location.pathname.split('/');
       const oid = parts[parts.length - 1];
+      // 从线索详情的历史订单进入：面包屑带上线索层级，可返回原线索（测试反馈）
+      if (searchParams.get('from') === 'lead' && searchParams.get('custId')) {
+        const custId = searchParams.get('custId');
+        const lId = searchParams.get('leadId');
+        const leadFrom = searchParams.get('leadFrom');
+        const leadPath = `/customer/360/${custId}?leadId=${lId || ''}${leadFrom ? `&from=${leadFrom}` : ''}`;
+        if (leadFrom === 'leads') {
+          items.push({ label: '线索池管理', path: '/leads' });
+          items.push({ label: '线索详情', path: leadPath });
+        } else {
+          items.push({ label: '工作台', path: '/workbench' });
+          items.push({ label: '线索跟进', path: leadPath });
+        }
+        items.push({ label: '订单详情', path: `/order/detail/${oid}${location.search}` });
+        return items;
+      }
       const fromWorkbench = searchParams.get('from') === 'workbench';
       if (!fromWorkbench && hasPerm('order')) {
         items.push({ label: '订单管理', path: '/order' });

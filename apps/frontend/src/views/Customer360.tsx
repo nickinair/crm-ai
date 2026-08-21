@@ -570,7 +570,8 @@ const Customer360: React.FC = () => {
                     : (r.snapLeadCode || '-') },
                 { title: '创建时间', dataIndex: 'createdAt', width: 150, render: (v: string) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-' },
                 { title: '操作', key: 'op', width: 70, fixed: 'right', render: (_: any, r: any) => (
-                    <a onClick={() => navigate(`/order/detail/${r.id}`)}>详情</a>
+                    // 带线索上下文：订单详情面包屑可返回本线索详情页（含线索池/工作台两种来源）
+                    <a onClick={() => navigate(`/order/detail/${r.id}?from=lead&custId=${customerInfo?.id || r.customerId}&leadId=${leadId || ''}&leadFrom=${searchParams.get('from') || ''}`)}>详情</a>
                 ) },
               ] as any}
             />
