@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Form, Input, Select, Row, Col, Modal, message, Table, Tooltip, ConfigProvider, DatePicker } from 'antd';
+import { Button, Form, Input, Select, Row, Col, Modal, message, Table, Tooltip, ConfigProvider } from 'antd';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import dayjs from 'dayjs';
@@ -395,11 +395,8 @@ const CustomerManagement: React.FC = () => {
           </Row>
           <Row gutter={24}>
             <Col span={12}>
-              <Form.Item name="birthday" label={<span style={{ color: '#1f2937', fontWeight: 500 }}>生日</span>}
-                getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })}
-              normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}
-              >
-                <DatePicker style={{ width: '100%', height: '40px' }} placeholder="请选择生日" />
+              <Form.Item name="birthday" label={<span style={{ color: '#1f2937', fontWeight: 500 }}>生日</span>}>
+                <Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: '100%', height: '40px', borderRadius: '6px', borderColor: '#d1d5db', color: '#1f2937' }} />
               </Form.Item>
             </Col>
           </Row>
@@ -464,8 +461,8 @@ const CustomerManagement: React.FC = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="birthday" getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })} normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)} label={<span style={{ color: '#1f2937', fontWeight: 500 }}>生日</span>}>
-                <DatePicker style={{ width: '100%', height: '40px' }} placeholder="请选择日期" />
+              <Form.Item name="birthday" label={<span style={{ color: '#1f2937', fontWeight: 500 }}>生日</span>}>
+                <Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: '100%', height: '40px', borderRadius: '6px', borderColor: '#d1d5db', color: '#1f2937' }} />
               </Form.Item>
             </Col>
           </Row>

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Modal, Form, Input, Select, message, Row, Col, AutoComplete, DatePicker } from 'antd';
+import { Modal, Form, Input, Select, message, Row, Col, AutoComplete } from 'antd';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import request from '../utils/request';
@@ -147,11 +147,8 @@ const EditVehicleModal: React.FC<EditVehicleModalProps> = ({ open, onCancel, onS
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item label="发票日期" name="purchaseDate"
-              getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })}
-              normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}
-            >
-              <DatePicker style={{ width: '100%', height: '40px' }} placeholder="请选择发票日期" />
+            <Form.Item label="发票日期" name="purchaseDate">
+              <Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: '100%', height: '40px', borderRadius: '6px', borderColor: '#d1d5db', color: '#1f2937' }} />
             </Form.Item>
           </Col>
           <Col span={12}>

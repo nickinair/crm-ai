@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, message, DatePicker } from 'antd';
+import { Modal, Form, Input, Select, message } from 'antd';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import request from '../utils/request';
@@ -104,8 +104,8 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ visible, onCancel
               <Option value="0">未知</Option>
             </Select>
           </Form.Item>
-          <Form.Item label="生日" name="birthday" getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })} normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)} style={{ flex: 1 }}>
-            <DatePicker style={{ width: '100%', height: '40px' }} placeholder="请选择日期" />
+          <Form.Item label="生日" name="birthday" style={{ flex: 1 }}>
+            <Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: '100%', height: '40px', borderRadius: '6px', borderColor: '#d1d5db', color: '#1f2937' }} />
           </Form.Item>
         </div>
       </Form>

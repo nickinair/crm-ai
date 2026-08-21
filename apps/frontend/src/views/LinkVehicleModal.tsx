@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { Modal, Form, Input, Select, message, AutoComplete, DatePicker } from 'antd';
-import dayjs from 'dayjs';
+import { Modal, Form, Input, Select, message, AutoComplete } from 'antd';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
 import './Customer360.css';
@@ -93,11 +92,8 @@ const LinkVehicleModal: React.FC<LinkVehicleModalProps> = ({ open, onCancel, onS
             <Input />
           </AutoComplete>
         </Form.Item>
-        <Form.Item label="发票日期" name="purchaseDate"
-          getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })}
-              normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}
-        >
-          <DatePicker style={{ width: '100%', height: '40px' }} placeholder="请选择发票日期" />
+        <Form.Item label="发票日期" name="purchaseDate">
+          <Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: '100%', height: '40px', borderRadius: '6px', borderColor: '#d1d5db', color: '#1f2937' }} />
         </Form.Item>
         <Form.Item label="里程≥4万公里" name="isMileageOver40k">
           <Select placeholder="请选择" options={yesNoOptions} />

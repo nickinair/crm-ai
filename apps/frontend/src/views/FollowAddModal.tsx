@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Select, Input, message, DatePicker } from 'antd';
+import { Modal, Form, Select, Input, message } from 'antd';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
 import dayjs from 'dayjs';
@@ -88,11 +88,8 @@ const FollowAddModal: React.FC<FollowAddModalProps> = ({ open, onCancel, onSucce
     >
       <Form form={form} layout="vertical" style={{ marginTop: '16px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-          <Form.Item name="nextPlanTime" label="下次回访时间"
-            getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })}
-              normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}
-          >
-            <DatePicker style={{ width: '100%', height: '40px' }} placeholder="请选择日期" />
+          <Form.Item name="nextPlanTime" label="下次回访时间">
+            <Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: '100%', height: '40px', borderRadius: '6px', borderColor: '#d1d5db', color: '#1f2937' }} />
           </Form.Item>
 
           <Form.Item name="callResult" label="呼叫结果" rules={[{ required: true, message: '请选择呼叫结果' }]}>
