@@ -3,6 +3,7 @@ import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Checkb
 import { SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
+import { getRecentCustomers, addRecentCustomer, type RecentCustomer } from '../utils/recentCustomers';
 
 /**
  * 三步式创建订单弹框（PRD 4.2.3.2 / 配图 image16~image22）
@@ -46,6 +47,8 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
   const [customerMode, setCustomerMode] = useState<'select' | 'create'>('select');
   const [customerOptions, setCustomerOptions] = useState<any[]>([]);
   const [customerSearching, setCustomerSearching] = useState(false);
+  const [customerKeyword, setCustomerKeyword] = useState('');
+  const [recentCustomers, setRecentCustomers] = useState<RecentCustomer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null); // {id, customerName, phone}
   const [newCustomerForm] = Form.useForm();
 
@@ -90,6 +93,8 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
       newCustomerForm.resetFields();
       orderForm.resetFields();
       newVehicleForm.resetFields();
+      setCustomerKeyword('');
+      setRecentCustomers(getRecentCustomers()); // 未输入搜索词时默认展示最近创建/选择过的客户
       // 可选商品：仅正常状态（PRD 4.2.3.2）
       request.get('/product', { params: { status: 1 } }).then((res: any) => {
         setAllProducts(Array.isArray(res) ? res : (res?.data || []));
@@ -101,6 +106,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
   let searchTimer: any;
   const searchCustomers = (kw: string) => {
     clearTimeout(searchTimer);
+    setCustomerKeyword(kw || '');
     if (!kw || !kw.trim()) { setCustomerOptions([]); return; }
     searchTimer = setTimeout(async () => {
       setCustomerSearching(true);
@@ -139,6 +145,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
         return;
       }
       setSelectedCustomer({ id: res.id, customerName: values.customerName, phone: values.phone, isNew: true });
+      addRecentCustomer({ id: String(res.id), customerName: values.customerName, phone: values.phone });
       setStep(1);
     } catch (e: any) {
       if (e?.errorFields) return;
@@ -426,13 +433,17 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
                       placeholder="输入客户姓名或电话搜索..."
                       filterOption={false}
                       onSearch={searchCustomers}
-                      notFoundContent={customerSearching ? <Spin size="small" /> : '未搜索到客户'}
+                      notFoundContent={customerSearching ? <Spin size="small" /> : (customerKeyword.trim() ? '未搜索到客户' : '暂无最近客户，输入姓名或电话搜索')}
                       value={selectedCustomer?.id}
                       onChange={(id) => {
-                        const c = customerOptions.find(o => String(o.id) === String(id));
-                        if (c) setSelectedCustomer({ id: c.id, customerName: c.customerName, phone: c.phone });
+                        const pool = customerKeyword.trim() ? customerOptions : recentCustomers;
+                        const c: any = pool.find((o: any) => String(o.id) === String(id));
+                        if (c) {
+                          setSelectedCustomer({ id: c.id, customerName: c.customerName, phone: c.phone });
+                          addRecentCustomer({ id: String(c.id), customerName: c.customerName, phone: c.phone });
+                        }
                       }}
-                      options={customerOptions.map(c => ({
+                      options={(customerKeyword.trim() ? customerOptions : recentCustomers).map((c: any) => ({
                         label: `${c.customerName || '未知'}（${c.phone || '-'}）`,
                         value: c.id,
                       }))}
