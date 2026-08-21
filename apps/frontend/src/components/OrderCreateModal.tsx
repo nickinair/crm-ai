@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Checkbox, Tooltip, AutoComplete } from 'antd';
-import { SearchOutlined, CloseOutlined } from '@ant-design/icons';
+import { SearchOutlined, CloseOutlined, LoadingOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
 import { getRecentCustomers, addRecentCustomer, type RecentCustomer } from '../utils/recentCustomers';
@@ -433,7 +433,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
                       placeholder="输入客户姓名或电话搜索..."
                       filterOption={false}
                       onSearch={searchCustomers}
-                      notFoundContent={customerSearching ? <Spin size="small" /> : (customerKeyword.trim() ? '未搜索到客户' : '暂无最近客户，输入姓名或电话搜索')}
+                      notFoundContent={customerSearching ? <div style={{ textAlign: 'center', padding: '8px 0' }}><Spin size="small" indicator={<LoadingOutlined style={{ fontSize: 16 }} spin />} /></div> : (customerKeyword.trim() ? '未搜索到客户' : '暂无最近客户，输入姓名或电话搜索')}
                       value={selectedCustomer?.id}
                       onChange={(id) => {
                         const pool = customerKeyword.trim() ? customerOptions : recentCustomers;
