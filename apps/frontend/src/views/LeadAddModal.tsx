@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Modal, Form, Input, Select, Row, Col, Button, Table, message, Checkbox, Spin, AutoComplete, Steps, DatePicker } from 'antd';
+import { Modal, Form, Input, Select, Row, Col, Button, Table, message, Checkbox, Spin, AutoComplete, Steps } from 'antd';
 import { DeleteOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
@@ -494,11 +494,8 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
         </Row>
         <Row gutter={24}>
           <Col span={12}>
-            <Form.Item name="sourceDate" label="来源日期" rules={[{ required: true, message: '请选择来源日期' }]}
-              getValueProps={(v) => ({ value: v ? dayjs(v) : undefined })}
-              normalize={(v) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}
-            >
-              <DatePicker style={{ width: '100%' }} placeholder="请选择来源日期" />
+            <Form.Item name="sourceDate" label="来源日期" rules={[{ required: true, message: '请选择来源日期' }]}>
+              <Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: '100%' }} />
             </Form.Item>
           </Col>
           {showWorkbenchFields && (
