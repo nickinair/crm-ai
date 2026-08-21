@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Checkbox } from 'antd';
+import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Checkbox, Tooltip } from 'antd';
 import { SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
@@ -319,9 +319,9 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
                 color: isChecked ? '#4F8DFF' : '#64748B', fontWeight: isChecked ? 600 : 400,
               }}>
                 <Checkbox checked={isChecked} onChange={e => handleCheck(e.target.checked, p)} style={{ marginRight: '16px' }} />
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '14px' }}>{p.productName}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', width: '260px' }}>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '14px', flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '8px' }} title={p.productName}>{p.productName}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', width: '260px', flexShrink: 0 }}>
                     <span style={{ color: '#94A3B8', fontSize: '12px', flex: 1, textAlign: 'left', paddingRight: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.productCode}</span>
                     <span style={{ color: isChecked ? '#4F8DFF' : '#94A3B8', fontWeight: 600, width: '80px', textAlign: 'right', whiteSpace: 'nowrap' }}>¥{p.salePrice}</span>
                     <span style={{ color: '#94A3B8', fontSize: '12px', width: '48px', textAlign: 'right', whiteSpace: 'nowrap', marginLeft: '12px' }}>{isChecked ? '已添加' : ''}</span>
@@ -343,10 +343,11 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
       rowKey="id"
       dataSource={list}
       pagination={false}
+      tableLayout="fixed"
       locale={{ emptyText: isGift ? '暂无赠品，请点击右上角添加' : '暂无商品，请点击右上角添加' }}
       columns={[
-        { title: isGift ? '赠品名称' : '商品名称', dataIndex: 'productName' },
-        { title: '编码', dataIndex: 'productCode' },
+        { title: isGift ? '赠品名称' : '商品名称', dataIndex: 'productName', ellipsis: { showTitle: false }, render: (t: string) => <Tooltip title={t}><span>{t}</span></Tooltip> },
+        { title: '编码', dataIndex: 'productCode', width: 150, ellipsis: true },
         { title: isGift ? '单价/价值' : '单价', dataIndex: 'salePrice', width: 110, render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
         { title: '操作', key: 'op', width: 70, render: (_: any, r: any) => <a style={{ color: '#DC2626' }} onClick={() => onRemove(String(r.id))}>删除</a> },
       ]}
@@ -371,6 +372,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
         onCancel={handleCancel}
         footer={stepButtons}
         width={640}
+        styles={{ body: { overflowX: 'hidden' } }}
         className="crm-unified-modal"
         maskClosable={false}
       >
