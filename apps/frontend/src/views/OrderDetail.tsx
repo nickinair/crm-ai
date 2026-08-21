@@ -150,7 +150,7 @@ const OrderDetail: React.FC = () => {
   const fmtTime = (v: any) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-';
   const person = (p: any) => p ? `${p.realName || p.username}（${p.username}）` : '系统（system）';
 
-  const labelStyle: React.CSSProperties = { color: '#94A3B8', fontSize: '12px', marginBottom: '4px' };
+  const labelStyle: React.CSSProperties = { color: '#64748B', fontSize: '12px', marginBottom: '4px' };
   const valueStyle: React.CSSProperties = { color: '#E8ECF3', fontSize: '14px' };
   const cardStyle: React.CSSProperties = {
     background: 'rgba(30, 41, 59, 0.7)', border: '1px solid rgba(255,255,255,0.08)',
