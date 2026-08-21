@@ -888,6 +888,7 @@ const Workbench: React.FC = () => {
         onCancel={() => setIsLeadAddOpen(false)}
         onSuccess={() => { setIsLeadAddOpen(false); fetchLeads(); }}
         defaultAssigneeId={userInfoRef.id}
+        showWorkbenchFields
       />
 
       {/* 录入三方订单编号（PRD 4.2.3.1：其他字段回显不可编辑） */}
