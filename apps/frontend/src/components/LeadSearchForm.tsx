@@ -1,5 +1,6 @@
+import dayjs from 'dayjs';
 import React, { useState } from 'react';
-import { Form, Input, Select, Button, Modal, message, ConfigProvider } from 'antd';
+import { Form, Input, Select, Button, Modal, message, ConfigProvider, DatePicker } from 'antd';
 import { useDict } from '../hooks/useDict';
 
 interface Props {
@@ -99,8 +100,8 @@ const LeadSearchForm: React.FC<Props> = ({ form, onSearch, salesList = [], darkL
           options={salesList.map((s: any) => ({ value: s.id, label: s.realName || s.username }))} />
       </Form.Item>) },
     { key: 'createdAt', label: '创建时间', group: '基础信息', render: () => (<>
-      <Form.Item name="createdAtStart" label={L('创建时间')}><Input type="date" style={{ width: 150 }} /></Form.Item>
-      <Form.Item name="createdAtEnd" label={L('至')} style={{ marginLeft: -8 }}><Input type="date" style={{ width: 150 }} /></Form.Item>
+      <Form.Item name="createdAtStart" label={L('创建时间')} getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })} normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}><DatePicker style={{ width: 150 }} placeholder="开始日期" /></Form.Item>
+      <Form.Item name="createdAtEnd" label={L('至')} style={{ marginLeft: -8 }} getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })} normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}><DatePicker style={{ width: 150 }} placeholder="结束日期" /></Form.Item>
     </>) },
 
     { key: 'carModel', label: '车型', group: '车辆信息', render: () => (
@@ -108,8 +109,8 @@ const LeadSearchForm: React.FC<Props> = ({ form, onSearch, salesList = [], darkL
     { key: 'carStyle', label: '款式', group: '车辆信息', render: () => (
       <Form.Item name="carStyle" label={L('款式')}><Input placeholder="请输入款式" style={{ width: 140 }} allowClear /></Form.Item>) },
     { key: 'invoiceDate', label: '发票日期', group: '车辆信息', render: () => (<>
-      <Form.Item name="invoiceDateStart" label={L('发票日期')}><Input type="date" style={{ width: 150 }} /></Form.Item>
-      <Form.Item name="invoiceDateEnd" label={L('至')} style={{ marginLeft: -8 }}><Input type="date" style={{ width: 150 }} /></Form.Item>
+      <Form.Item name="invoiceDateStart" label={L('发票日期')} getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })} normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}><DatePicker style={{ width: 150 }} placeholder="开始日期" /></Form.Item>
+      <Form.Item name="invoiceDateEnd" label={L('至')} style={{ marginLeft: -8 }} getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })} normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}><DatePicker style={{ width: 150 }} placeholder="结束日期" /></Form.Item>
     </>) },
     { key: 'vin', label: '车架号', group: '车辆信息', render: () => (
       <Form.Item name="vin" label={L('车架号')}><Input placeholder="请输入车架号" style={{ width: 170 }} allowClear /></Form.Item>) },

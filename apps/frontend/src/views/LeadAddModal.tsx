@@ -603,8 +603,11 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="purchaseDate" label="发票日期">
-              <Input type="date" style={{ width: '100%' }} />
+            <Form.Item name="purchaseDate" label="发票日期"
+              getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })}
+              normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}
+            >
+              <DatePicker style={{ width: '100%' }} placeholder="请选择发票日期" />
             </Form.Item>
           </Col>
         </Row>

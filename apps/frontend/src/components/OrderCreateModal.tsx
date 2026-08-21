@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Checkbox, Tooltip, AutoComplete } from 'antd';
+import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Checkbox, Tooltip, AutoComplete, DatePicker } from 'antd';
 import { SearchOutlined, CloseOutlined, LoadingOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
 import { getRecentCustomers, addRecentCustomer, type RecentCustomer } from '../utils/recentCustomers';
@@ -604,8 +605,11 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
                   ]}>
                     <Input placeholder="请输入车架号" maxLength={17} />
                   </Form.Item>
-                  <Form.Item name="purchaseDate" label="发票日期">
-                    <Input type="date" />
+                  <Form.Item name="purchaseDate" label="发票日期"
+                    getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })}
+                    normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}
+                  >
+                    <DatePicker style={{ width: '100%' }} placeholder="请选择发票日期" />
                   </Form.Item>
                 </div>
                 {hasWarranty && (

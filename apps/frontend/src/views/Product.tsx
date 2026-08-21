@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Tag, Form, Input, Modal, Select, message, Row, Col, Table, ConfigProvider, Tooltip, Upload } from 'antd';
+import { Button, Tag, Form, Input, Modal, Select, message, Row, Col, Table, ConfigProvider, Tooltip, Upload, DatePicker } from 'antd';
 import { InboxOutlined, CheckCircleFilled } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
@@ -340,12 +340,18 @@ const ProductManagement: React.FC = () => {
             </Form.Item>
             <Form.Item label={<span style={{ fontWeight: 500, color: '#1f2937' }}>创建时间</span>} style={{ marginRight: '24px', marginBottom: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Form.Item name="createdAtStart" noStyle>
-                  <Input type="date" style={{ width: '150px', height: '36px', borderRadius: '6px' }} />
+                <Form.Item name="createdAtStart" noStyle
+                  getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })}
+              normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}
+                >
+                  <DatePicker style={{ width: '150px', height: '36px' }} placeholder="开始日期" />
                 </Form.Item>
                 <span style={{ color: '#6b7280' }}>至</span>
-                <Form.Item name="createdAtEnd" noStyle>
-                  <Input type="date" style={{ width: '150px', height: '36px', borderRadius: '6px' }} />
+                <Form.Item name="createdAtEnd" noStyle
+                  getValueProps={(v: any) => ({ value: v ? dayjs(v) : undefined })}
+              normalize={(v: any) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}
+                >
+                  <DatePicker style={{ width: '150px', height: '36px' }} placeholder="结束日期" />
                 </Form.Item>
               </div>
             </Form.Item>
