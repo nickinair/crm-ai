@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Modal, Form, Input, Select, Row, Col, Button, Table, message, Checkbox, Spin, AutoComplete, Steps } from 'antd';
+import { Modal, Form, Input, Select, Row, Col, Button, Table, message, Checkbox, Spin, AutoComplete, Steps, DatePicker } from 'antd';
 import { DeleteOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
@@ -51,10 +51,14 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
   const [customerVehicles, setCustomerVehicles] = useState<any[]>([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>(undefined);
 
-  /** 车辆下拉展示：品牌 车型 (VIN)，只拼有值字段（PRD 配图 image24） */
+  /** 车辆下拉展示：车型（车架号）_车牌，只拼有值字段，全空展示占位（PRD 4.2.3.2） */
   const vehicleLabel = (v: any) => {
-    const head = [v.brand, v.model].filter(Boolean).join(' ');
-    const text = head + (v.vin ? `${head ? ' ' : ''}(${v.vin})` : '');
+    const parts: string[] = [];
+    if (v.model) parts.push(v.vin ? `${v.model}（${v.vin}）` : v.model);
+    else if (v.vin) parts.push(`（${v.vin}）`);
+    const head = parts.join('');
+    const tail = v.plateNo || '';
+    const text = [head, tail].filter(Boolean).join('_');
     return text || '未获取到车辆展示信息';
   };
 
@@ -490,8 +494,11 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
         </Row>
         <Row gutter={24}>
           <Col span={12}>
-            <Form.Item name="sourceDate" label="来源日期" rules={[{ required: true, message: '请选择来源日期' }]}>
-              <Input type="date" style={{ width: '100%' }} />
+            <Form.Item name="sourceDate" label="来源日期" rules={[{ required: true, message: '请选择来源日期' }]}
+              getValueProps={(v) => ({ value: v ? dayjs(v) : undefined })}
+              normalize={(v) => (v ? dayjs(v).format('YYYY-MM-DD') : undefined)}
+            >
+              <DatePicker style={{ width: '100%' }} placeholder="请选择来源日期" />
             </Form.Item>
           </Col>
           {showWorkbenchFields && (
