@@ -359,6 +359,13 @@ export class CustomerService {
     if (!vehicle) throw new Error('Vehicle not found');
 
     this.normalizeVehicleDto(updateDto);
+    // 车架号变更时同样校验唯一（排除自身）
+    if (updateDto.vin && String(updateDto.vin).trim() && String(updateDto.vin).trim() !== (vehicle.vin || '')) {
+      const dupe = await this.vehicleRepo.findOne({ where: { vin: String(updateDto.vin).trim() } });
+      if (dupe && String(dupe.id) !== String(id)) {
+        throw new BadRequestException(`车架号 ${String(updateDto.vin).trim()} 已存在，请勿重复录入`);
+      }
+    }
 
     // 里程数容错：数据库列为数字类型，非数字输入直接拦截，避免写库报错
     if (updateDto.mileage !== undefined && updateDto.mileage !== null && updateDto.mileage !== '') {
@@ -396,6 +403,11 @@ export class CustomerService {
     if (!createDto.customerId) throw new Error('customerId is required');
 
     this.normalizeVehicleDto(createDto);
+    // 车架号全局唯一（测试反馈：重复 VIN 可创建成功）
+    if (createDto.vin && String(createDto.vin).trim()) {
+      const dupe = await this.vehicleRepo.findOne({ where: { vin: String(createDto.vin).trim() } });
+      if (dupe) throw new BadRequestException(`车架号 ${String(createDto.vin).trim()} 已存在，请勿重复录入`);
+    }
     if (createDto.mileage !== undefined && createDto.mileage !== null) {
       const mileageNum = Number(String(createDto.mileage).trim());
       if (Number.isNaN(mileageNum) || mileageNum < 0) {
