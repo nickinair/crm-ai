@@ -246,10 +246,26 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
       // ③ 未绑定线索且客户存在未完结线索：询问是否绑定（绑定/不绑定都继续创建）
       let bindLeadId: string | undefined = fixedLead?.id || undefined;
       if (!bindLeadId && check?.unfinishedLead) {
+        const ul = check.unfinishedLead;
         const bind = await new Promise<boolean>(resolve => {
           Modal.confirm({
             title: '提示',
-            content: `客户${effectiveCustomer.customerName || ''}存在未完结线索，线索信息如下：${check.unfinishedLead.leadCode}；是否要绑定该线索创建订单？`,
+            width: 520,
+            content: (
+              <div>
+                <div style={{ marginBottom: 12 }}>
+                  客户 <b>{effectiveCustomer.customerName || '-'}</b> 存在未完结线索，线索信息如下：
+                </div>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '12px 16px', marginBottom: 12, lineHeight: 2 }}>
+                  <div>线索编码：{ul.leadCode}</div>
+                  <div>线索状态：{ul.statusName || '-'}</div>
+                  <div>跟进人：{ul.assigneeName || '-'}</div>
+                  <div>意向商品：{ul.intentProducts || '无'}</div>
+                  <div>赠品信息：{ul.intentGifts || '无'}</div>
+                </div>
+                <div style={{ fontWeight: 600, color: '#1f2937' }}>是否要绑定该线索创建订单？</div>
+              </div>
+            ),
             okText: '绑定', cancelText: '不绑定', centered: true, className: 'crm-unified-modal',
             onOk: () => resolve(true),
             onCancel: () => resolve(false),

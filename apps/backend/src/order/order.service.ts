@@ -656,13 +656,37 @@ export class OrderService {
     }
 
     // ---- ② 未完结线索：订单未绑定线索时才检查（0待分配/1待跟进/2跟进中/6回收待分配）----
-    let unfinishedLead: { leadId: string; leadCode: string } | null = null;
+    // 提示弹框需展示线索详情（PRD 配图：编码/状态/跟进人/意向商品/赠品信息）
+    let unfinishedLead: {
+      leadId: string; leadCode: string; statusName: string;
+      assigneeName: string; intentProducts: string; intentGifts: string;
+    } | null = null;
     if (!leadId) {
       const lead = await this.dataSource.getRepository(BizLead).findOne({
         where: { customerId, leadStatus: In([0, 1, 2, 6]) },
         order: { createdAt: 'DESC' },
       });
-      if (lead) unfinishedLead = { leadId: lead.id, leadCode: lead.leadCode };
+      if (lead) {
+        const STATUS_NAME: Record<number, string> = { 0: '待分配', 1: '待跟进', 2: '跟进中', 6: '回收待分配' };
+        let assigneeName = '-';
+        if (lead.assignedAccountId) {
+          const rows: any[] = await this.dataSource.query(
+            'SELECT real_name, username FROM sys_account WHERE id = ?', [lead.assignedAccountId]);
+          assigneeName = rows[0]?.real_name || rows[0]?.username || '-';
+        }
+        const prods: any[] = await this.dataSource.query(
+          `SELECT lp.product_role, p.product_name FROM biz_lead_product lp
+           JOIN biz_product p ON p.id = lp.product_id WHERE lp.lead_id = ?`, [lead.id]);
+        const names = (role: number) => prods.filter(r => Number(r.product_role) === role).map(r => r.product_name).join('；') || '无';
+        unfinishedLead = {
+          leadId: lead.id,
+          leadCode: lead.leadCode,
+          statusName: STATUS_NAME[lead.leadStatus] || '未知',
+          assigneeName,
+          intentProducts: names(1),
+          intentGifts: names(2),
+        };
+      }
     }
 
     return { vehicleConflict, unfinishedLead };
