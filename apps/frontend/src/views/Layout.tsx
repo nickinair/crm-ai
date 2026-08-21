@@ -63,7 +63,6 @@ const AppLayout: React.FC = () => {
     { key: '/customer', icon: <UserOutlined />, label: '客户管理', permCode: 'customer' },
     { key: '/product', icon: <ShopOutlined />, label: '商品管理', permCode: 'product' },
     { key: '/order', icon: <ProfileOutlined />, label: '订单管理', permCode: 'order' },
-    { key: '/config', icon: <SettingOutlined />, label: '配置管理', permCode: 'config' },
     { 
       key: 'org-group', 
       icon: <BankOutlined />, 
@@ -83,6 +82,7 @@ const AppLayout: React.FC = () => {
         { key: '/role', label: '角色管理' }
       ]
     },
+    { key: '/config', icon: <SettingOutlined />, label: '配置管理', permCode: 'config' },
     { key: '/message', icon: <MessageOutlined />, label: '消息中心（敬请期待）', disabled: true, permCode: 'message' },
     { key: '/log', icon: <FileTextOutlined />, label: '日志管理（敬请期待）', disabled: true, permCode: 'log' },
     { key: '/outbound', icon: <PhoneOutlined />, label: '智能外呼管理（敬请期待）', disabled: true, permCode: 'outbound' }
