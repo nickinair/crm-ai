@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Checkbox, Tooltip } from 'antd';
+import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Checkbox, Tooltip, AutoComplete } from 'antd';
 import { SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
@@ -539,16 +539,37 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
               <Form form={newVehicleForm} layout="vertical">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
                   <Form.Item name="brand" label="品牌">
-                    <Input placeholder="请输入品牌" maxLength={64} />
+                    <AutoComplete
+                      options={getDictOptions('vehicle_brand')}
+                      filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
+                      placeholder="请选择或输入品牌"
+                      allowClear
+                    >
+                      <Input maxLength={64} />
+                    </AutoComplete>
                   </Form.Item>
                   <Form.Item name="plateNo" label="车牌号">
                     <Input placeholder="请输入车牌号" maxLength={16} />
                   </Form.Item>
                   <Form.Item name="model" label="车型">
-                    <Input placeholder="请输入车型" maxLength={64} />
+                    <AutoComplete
+                      options={getDictOptions('vehicle_model')}
+                      filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
+                      placeholder="请选择或输入车型"
+                      allowClear
+                    >
+                      <Input maxLength={64} />
+                    </AutoComplete>
                   </Form.Item>
                   <Form.Item name="style" label="款式">
-                    <Input placeholder="请输入款式" maxLength={64} />
+                    <AutoComplete
+                      options={getDictOptions('vehicle_style')}
+                      filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
+                      placeholder="请选择或输入款式"
+                      allowClear
+                    >
+                      <Input maxLength={64} />
+                    </AutoComplete>
                   </Form.Item>
                   <Form.Item name="vin" label="车架号(VIN)" rules={[
                     { required: true, message: '请输入车架号' },

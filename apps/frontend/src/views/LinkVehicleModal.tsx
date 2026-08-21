@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Modal, Form, Input, Select, message, AutoComplete } from 'antd';
 import request from '../utils/request';
-import { useVehicleOptions } from '../hooks/useVehicleOptions';
+import { useDict } from '../hooks/useDict';
 import './Customer360.css';
 
 interface LinkVehicleModalProps {
@@ -13,7 +13,10 @@ interface LinkVehicleModalProps {
 
 const LinkVehicleModal: React.FC<LinkVehicleModalProps> = ({ open, onCancel, onSuccess, customerId }) => {
   const [form] = Form.useForm();
-  const { modelOptions, styleOptions } = useVehicleOptions();
+  const { getDictOptions } = useDict();
+  // 车型/款式选项改为数据字典驱动（PRD 4.7）
+  const modelOptions = getDictOptions('vehicle_model');
+  const styleOptions = getDictOptions('vehicle_style');
 
   useEffect(() => {
     if (open) {

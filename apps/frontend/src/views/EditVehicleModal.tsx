@@ -3,7 +3,7 @@ import { Modal, Form, Input, Select, message, Row, Col, AutoComplete } from 'ant
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import request from '../utils/request';
-import { useVehicleOptions } from '../hooks/useVehicleOptions';
+import { useDict } from '../hooks/useDict';
 import './Customer360.css';
 
 interface EditVehicleModalProps {
@@ -17,7 +17,11 @@ interface EditVehicleModalProps {
 
 const EditVehicleModal: React.FC<EditVehicleModalProps> = ({ open, onCancel, onSuccess, vehicleInfo, customerId, leadId }) => {
   const [form] = Form.useForm();
-  const { brandOptions, modelOptions, styleOptions } = useVehicleOptions();
+  const { getDictOptions } = useDict();
+  // 品牌/车型/款式选项改为数据字典驱动（PRD 4.7）
+  const brandOptions = getDictOptions('vehicle_brand');
+  const modelOptions = getDictOptions('vehicle_model');
+  const styleOptions = getDictOptions('vehicle_style');
 
   useEffect(() => {
     if (open && vehicleInfo) {

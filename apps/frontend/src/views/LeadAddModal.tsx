@@ -3,7 +3,6 @@ import { Modal, Form, Input, Select, Row, Col, Button, Table, message, Checkbox,
 import { DeleteOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
-import { useVehicleOptions } from '../hooks/useVehicleOptions';
 import debounce from 'lodash/debounce';
 import dayjs from 'dayjs';
 
@@ -23,7 +22,10 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
   const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [loading, setLoading] = useState(false);
   const { getDictOptions } = useDict();
-  const { brandOptions, modelOptions, styleOptions } = useVehicleOptions();
+  // 品牌/车型/款式选项改为数据字典驱动（PRD 4.7；原为既有车辆数据去重）
+  const brandOptions = getDictOptions('vehicle_brand');
+  const modelOptions = getDictOptions('vehicle_model');
+  const styleOptions = getDictOptions('vehicle_style');
   
   // Customer Search
   const [customerOptions, setCustomerOptions] = useState<any[]>([]);
