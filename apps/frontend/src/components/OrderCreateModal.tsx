@@ -337,11 +337,11 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
           {filtered.map((p: any) => {
             const isChecked = selectedList.some((x: any) => String(x.id) === String(p.id));
             return (
-              <div key={p.id} style={{
+              <div key={p.id} onClick={() => handleCheck(!isChecked, p)} style={{
                 display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F1F5F9',
-                color: isChecked ? '#4F8DFF' : '#64748B', fontWeight: isChecked ? 600 : 400,
+                color: isChecked ? '#4F8DFF' : '#64748B', fontWeight: isChecked ? 600 : 400, cursor: 'pointer',
               }}>
-                <Checkbox checked={isChecked} onChange={e => handleCheck(e.target.checked, p)} style={{ marginRight: '16px' }} />
+                <Checkbox checked={isChecked} onClick={e => e.stopPropagation()} onChange={e => handleCheck(e.target.checked, p)} style={{ marginRight: '16px' }} />
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '14px', flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '8px' }} title={p.productName}>{p.productName}</span>
                   <div style={{ display: 'flex', alignItems: 'center', width: '260px', flexShrink: 0 }}>

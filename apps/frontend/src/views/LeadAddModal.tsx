@@ -359,16 +359,18 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
           {filteredOptions.map(p => {
             const isChecked = selectedList.some((selected: any) => selected.id === p.id);
             return (
-              <div key={p.id} style={{ 
+              <div key={p.id} onClick={() => handleCheck(!isChecked, p)} style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
                 padding: '12px 0', 
                 borderBottom: '1px solid #F1F5F9',
                 color: isChecked ? '#4F8DFF' : '#64748B',
                 fontWeight: isChecked ? 600 : 400,
+                cursor: 'pointer',
               }}>
                 <Checkbox 
                   checked={isChecked} 
+                  onClick={e => e.stopPropagation()}
                   onChange={e => handleCheck(e.target.checked, p)}
                   style={{ marginRight: '16px' }}
                 />
