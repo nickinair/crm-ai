@@ -12,6 +12,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import request from '../utils/request';
+import { hasPerm } from '../utils/perm';
 import { useDict } from '../hooks/useDict';
 import { useLeadLock } from '../hooks/useLeadLock';
 import { maskIdCard } from '../utils/mask';
@@ -264,7 +265,7 @@ const Customer360: React.FC = () => {
               {/* 待跟进/跟进中：作废按钮在退回公域池前（PRD 4.3.5） */}
               {[1, 2].includes(leadInfo.leadStatus) && <button className="crm-btn crm-btn-outline" onClick={() => setVoidLeadOpen(true)}>作废</button>}
               <button className="crm-btn crm-btn-outline" onClick={handleReturnPublic}>退回公域池</button>
-              <button className="crm-btn crm-btn-outline" onClick={handleAddOrder}>新增订单</button>
+              {hasPerm('order:create', 'order') && <button className="crm-btn crm-btn-outline" onClick={handleAddOrder}>新增订单</button>}
               <button className="crm-btn crm-btn-primary" onClick={handleAddFollow}>添加跟进记录</button>
             </>}
           </div>

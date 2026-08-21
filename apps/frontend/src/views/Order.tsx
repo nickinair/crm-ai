@@ -3,6 +3,7 @@ import { Table, Form, Input, Button, Select, ConfigProvider, message, Modal } fr
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import request from '../utils/request';
+import { hasPerm } from '../utils/perm';
 import './Leads.css';
 
 /** 订单状态（PRD 4.2.2） */
@@ -122,8 +123,8 @@ const OrderManagement: React.FC = () => {
       render: (_: any, record: any) => (
         <div className="action-links">
           <a onClick={() => navigate(`/order/detail/${record.id}`)}>详情</a>
-          {/* 非终态且当前登录人为跟进人时可作废（PRD 4.2.3 状态与操作关系表） */}
-          {!isOrderFinal(record.orderStatus) && canOperate(record) && (
+          {/* 非终态且（跟进人或订单管理权限）且有作废权限时可作废（PRD 4.2.3 + 订单权限细分） */}
+          {!isOrderFinal(record.orderStatus) && canOperate(record) && hasPerm('order:void', 'order') && (
             <a className="delete-link" onClick={() => { setVoidTarget(record); setVoidReason(''); }}>作废</a>
           )}
         </div>

@@ -62,11 +62,14 @@ export class AuthService {
           const allPerms = await this.permissionRepo.find({ where: { status: 1 } });
           permissions = allPerms.map(p => p.permCode);
         } else if (roleCode === 'sales') {
-          // 销售：工作台模块及其全部子权限
+          // 销售：工作台模块及其全部子权限 + 订单细分权限（与 JwtAuthGuard 硬编码集合保持一致）
           const wbPerms = await this.permissionRepo.find({ where: { status: 1 } });
           permissions = wbPerms
             .filter(p => p.permCode === 'workbench' || p.permCode.startsWith('workbench:'))
             .map(p => p.permCode);
+          for (const code of ['order:create', 'order:void']) {
+            if (!permissions.includes(code)) permissions.push(code);
+          }
         } else {
           // 自定义角色查关联表
           const rps = await this.rolePermissionRepo.find({ where: { roleId: role.id } });

@@ -65,7 +65,7 @@ export class OrderController {
     return order;
   }
 
-  @RequirePermissions('order', 'workbench')
+  @RequirePermissions('order:create', 'order')
   @Post()
   async createOrder(@Body() data: any, @Request() req: any) {
     if (data?.customerId) {
@@ -113,7 +113,7 @@ export class OrderController {
   }
 
   /** 作废订单，需填写作废原因（PRD 4.2.3.1） */
-  @RequirePermissions('order', 'workbench')
+  @RequirePermissions('order:void', 'order')
   @Post(':id/void')
   voidOrder(@Param('id') id: string, @Body('voidReason') voidReason: string, @Request() req: any) {
     return this.orderService.voidOrder(id, voidReason, req);

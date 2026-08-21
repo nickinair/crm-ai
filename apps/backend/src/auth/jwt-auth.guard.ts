@@ -112,6 +112,10 @@ export class JwtAuthGuard implements CanActivate {
         where: [{ permCode: 'workbench', status: 1 }, { permCode: Like('workbench:%'), status: 1 }],
       });
       salesCodes = wbPerms.map(p => p.permCode);
+      // 订单细分权限默认授予销售：可创建订单、可作废自己跟进的订单（行级仍限跟进人）
+      for (const code of ['order:create', 'order:void']) {
+        if (!salesCodes.includes(code)) salesCodes.push(code);
+      }
     }
 
     if (rolePermissions.length === 0) {

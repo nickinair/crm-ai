@@ -279,7 +279,7 @@ const Workbench: React.FC = () => {
           {r.orderStatus === 2 && <a onClick={() => { setThirdTarget(r); setThirdNo(''); }}>录入三方订单编号</a>}
           {r.orderStatus === 3 && <a onClick={() => handleOrderDelivered(r)}>已完成发货</a>}
           <a onClick={() => navigate(`/order/detail/${r.id}`)}>详情</a>
-          {!isOrderFinal(r.orderStatus) && <a className="delete-link" onClick={() => { setVoidTarget(r); setVoidReason(''); }}>作废</a>}
+          {!isOrderFinal(r.orderStatus) && hasPerm('order:void', 'order') && <a className="delete-link" onClick={() => { setVoidTarget(r); setVoidReason(''); }}>作废</a>}
         </div>
       ),
     },
@@ -569,12 +569,12 @@ const Workbench: React.FC = () => {
                 </div>
                 新增线索
               </div>
-              <div className="quick-tool-btn" onClick={() => setIsOrderCreateOpen(true)}>
+              {hasPerm('order:create', 'order') && <div className="quick-tool-btn" onClick={() => setIsOrderCreateOpen(true)}>
                 <div className="quick-tool-icon">
                   <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
                 </div>
                 创建订单
-              </div>
+              </div>}
             </div>
           </div>
 

@@ -4,6 +4,7 @@ import { Tabs, message, Modal, Form, Input, Select, Table } from 'antd';
 import { EditOutlined, WarningOutlined, InboxOutlined, DeleteOutlined, CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import request from '../utils/request';
+import { hasPerm } from '../utils/perm';
 import { useDict } from '../hooks/useDict';
 import { maskPhone, maskIdCard } from '../utils/mask';
 import EditCustomerModal from './Customer360EditCustomerModal';
@@ -235,7 +236,7 @@ const CustomerDetail: React.FC = () => {
             {statusLabel && <span className="cd-tag cd-tag-primary">{statusLabel}</span>}
           </div>
           <div className="cd-actions">
-            <button className="cd-action-btn" onClick={() => setOrderCreateVisible(true)}>创建订单</button>
+            {hasPerm('order:create', 'order') && <button className="cd-action-btn" onClick={() => setOrderCreateVisible(true)}>创建订单</button>}
             <button className="cd-action-btn" onClick={handleAddLeadClick}>新增线索</button>
             {!isCtxLeadClosed && <>
               <button className="cd-action-btn" onClick={() => setLinkVehicleVisible(true)}>关联车辆</button>

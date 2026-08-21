@@ -134,6 +134,17 @@ export class OrderService {
     }
   }
 
+  /** 作废专用行级校验：跟进人本人 或 具备订单管理权限（管理侧可作废他人订单）——订单权限细分方案 */
+  private assertFollowerOrOrderAdmin(order: BizOrder, req: any) {
+    const user = req?.user;
+    if (!user) throw new ForbiddenException('未登录');
+    if (user.isSuperAdmin) return;
+    if ((user.permissions || []).includes('order')) return;
+    if (String(order.salespersonId || '') !== String(user.sub)) {
+      throw new ForbiddenException('您不是该订单的跟进人，无法作废该订单');
+    }
+  }
+
   // ============================================================
   // 查询
   // ============================================================
@@ -573,7 +584,7 @@ export class OrderService {
       const order = await manager.findOne(BizOrder, { where: { id } });
       if (!order) throw new NotFoundException('订单不存在');
       if (order.isDraft) throw new BadRequestException('草稿订单不可作废');
-      this.assertFollower(order, req);
+      this.assertFollowerOrOrderAdmin(order, req);
       if (FINAL_STATUSES.includes(order.orderStatus)) {
         throw new BadRequestException('已完结或已作废的订单不可再作废');
       }
