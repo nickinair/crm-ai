@@ -168,17 +168,19 @@ const AppLayout: React.FC = () => {
       return items;
     }
 
-    // 订单详情：首页 → 订单管理 → 订单详情（PRD 配图 image5 面包屑）
-    // 销售（无订单管理菜单权限）从工作台进入：父级改为工作台，避免点面包屑落到无权限页（测试反馈）
+    // 订单详情：面包屑父级按入口来源（PRD 配图 image5）
+    // 从工作台「我的跟单订单」进入 → 工作台；订单管理进入 → 订单管理；
+    // 无订单管理权限的销售一律工作台，避免点面包屑落到无权限页（测试反馈）
     if (location.pathname.startsWith('/order/detail')) {
       const parts = location.pathname.split('/');
       const oid = parts[parts.length - 1];
-      if (hasPerm('order')) {
+      const fromWorkbench = searchParams.get('from') === 'workbench';
+      if (!fromWorkbench && hasPerm('order')) {
         items.push({ label: '订单管理', path: '/order' });
       } else {
         items.push({ label: '工作台', path: '/workbench' });
       }
-      items.push({ label: '订单详情', path: `/order/detail/${oid}` });
+      items.push({ label: '订单详情', path: `/order/detail/${oid}${location.search}` });
       return items;
     }
 

@@ -34,16 +34,21 @@ const Workbench: React.FC = () => {
   const [isLeadAddOpen, setIsLeadAddOpen] = useState(false); // 快捷工具栏-新增线索（PRD 4.2.3）
 
   // ===== 我的跟单订单 tab（PRD 4.2.3.1）=====
-  const [activeTab, setActiveTab] = useState<'leads' | 'orders'>('leads');
+  // tab 与筛选状态持久化：进订单详情再返回时恢复（sessionStorage，测试反馈）
+  const WB_STATE_KEY = 'crm-workbench-state';
+  const savedWbState = (() => {
+    try { return JSON.parse(sessionStorage.getItem(WB_STATE_KEY) || 'null') || {}; } catch { return {}; }
+  })();
+  const [activeTab, setActiveTab] = useState<'leads' | 'orders'>(savedWbState.activeTab === 'orders' ? 'orders' : 'leads');
   const [orders, setOrders] = useState<any[]>([]);
   const [orderTotal, setOrderTotal] = useState(0);
-  const [orderPage, setOrderPage] = useState(1);
-  const [orderPageSize, setOrderPageSize] = useState(10);
+  const [orderPage, setOrderPage] = useState(savedWbState.orderPage || 1);
+  const [orderPageSize, setOrderPageSize] = useState(savedWbState.orderPageSize || 10);
   const [orderLoading, setOrderLoading] = useState(false);
-  const [orderStatusFilter, setOrderStatusFilter] = useState<number[]>([]); // 默认全部；切换其他状态可多选
-  const [orderPhoneInput, setOrderPhoneInput] = useState('');
-  const [orderPhoneSearch, setOrderPhoneSearch] = useState('');
-  const [orderSort, setOrderSort] = useState<{ field?: string; order?: string }>({});
+  const [orderStatusFilter, setOrderStatusFilter] = useState<number[]>(Array.isArray(savedWbState.orderStatusFilter) ? savedWbState.orderStatusFilter : []); // 默认全部；切换其他状态可多选
+  const [orderPhoneInput, setOrderPhoneInput] = useState(savedWbState.orderPhoneSearch || '');
+  const [orderPhoneSearch, setOrderPhoneSearch] = useState(savedWbState.orderPhoneSearch || '');
+  const [orderSort, setOrderSort] = useState<{ field?: string; order?: string }>(savedWbState.orderSort || {});
   const [orderCounts, setOrderCounts] = useState<{ total: number; byStatus: Record<number, number> }>({ total: 0, byStatus: {} });
   // 行内操作弹框
   const [voidTarget, setVoidTarget] = useState<any>(null);
@@ -173,6 +178,15 @@ const Workbench: React.FC = () => {
     if (activeTab === 'orders') fetchOrders();
   }, [activeTab, orderPage, orderPageSize, orderStatusFilter, orderPhoneSearch, orderSort]);
 
+  // 状态变化即持久化（返回本页时恢复 tab 与筛选）
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(WB_STATE_KEY, JSON.stringify({
+        activeTab, orderPage, orderPageSize, orderStatusFilter, orderPhoneSearch, orderSort,
+      }));
+    } catch { /* 忽略 */ }
+  }, [activeTab, orderPage, orderPageSize, orderStatusFilter, orderPhoneSearch, orderSort]);
+
   const toggleOrderStatus = (status: number) => {
     setOrderStatusFilter(prev => prev.includes(status) ? prev.filter(x => x !== status) : [...prev, status]);
     setOrderPage(1);
@@ -278,7 +292,7 @@ const Workbench: React.FC = () => {
           {r.orderStatus === 1 && <a onClick={() => handleOrderSign(r, 'signed')}>已签署电子签</a>}
           {r.orderStatus === 2 && <a onClick={() => { setThirdTarget(r); setThirdNo(''); }}>录入三方订单编号</a>}
           {r.orderStatus === 3 && <a onClick={() => handleOrderDelivered(r)}>已完成发货</a>}
-          <a onClick={() => navigate(`/order/detail/${r.id}`)}>详情</a>
+          <a onClick={() => navigate(`/order/detail/${r.id}?from=workbench`)}>详情</a>
           {!isOrderFinal(r.orderStatus) && hasPerm('order:void', 'order') && <a className="delete-link" onClick={() => { setVoidTarget(r); setVoidReason(''); }}>作废</a>}
         </div>
       ),
