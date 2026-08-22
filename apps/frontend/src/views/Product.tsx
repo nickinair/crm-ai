@@ -315,37 +315,37 @@ const ProductManagement: React.FC = () => {
         <div className="filter-section" style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #e5e7eb' }}>
           <Form form={searchForm} layout="inline" onFinish={onSearch} style={{ display: 'flex', width: '100%', alignItems: 'center', flexWrap: 'wrap', rowGap: '12px' }}>
             <Form.Item name="productName" label={<span style={{ fontWeight: 500, color: '#1f2937' }}>商品名称</span>} style={{ marginRight: '24px' }}>
-              <Input placeholder="模糊查询" allowClear style={{ width: '180px', height: '36px', borderRadius: '6px' }} />
+              <Input placeholder="模糊查询" allowClear style={{ width: '160px', height: '36px', borderRadius: '6px' }} />
             </Form.Item>
             <Form.Item name="productCode" label={<span style={{ fontWeight: 500, color: '#1f2937' }}>商品编码</span>} style={{ marginRight: '24px' }}>
-              <Input placeholder="精确查询" allowClear style={{ width: '180px', height: '36px', borderRadius: '6px' }} />
+              <Input placeholder="精确查询" allowClear style={{ width: '160px', height: '36px', borderRadius: '6px' }} />
             </Form.Item>
             <Form.Item name="productType" label={<span style={{ fontWeight: 500, color: '#1f2937' }}>商品类型</span>} style={{ marginRight: '24px' }}>
               <Select
-                placeholder="全部" allowClear style={{ width: '150px', height: '36px' }}
+                placeholder="全部" allowClear style={{ width: '160px', height: '36px' }}
                 options={getDictOptions('product_type')}
                 onChange={(v) => { setSearchProductType(v); searchForm.setFieldValue('productAttribute', undefined); }}
               />
             </Form.Item>
             <Form.Item name="productAttribute" label={<span style={{ fontWeight: 500, color: '#1f2937' }}>商品属性</span>} style={{ marginRight: '24px' }}>
               <Select
-                placeholder="全部" allowClear style={{ width: '180px', height: '36px' }}
+                placeholder="全部" allowClear style={{ width: '160px', height: '36px' }}
                 options={getDictOptionsByParent('product_attribute', searchProductType)}
                 notFoundContent={searchProductType ? '该商品类型下暂无可选属性' : '请先选择商品类型'}
               />
             </Form.Item>
             <Form.Item name="status" label={<span style={{ fontWeight: 500, color: '#1f2937' }}>状态</span>} style={{ marginRight: '24px' }}>
-              <Select placeholder="全部" allowClear style={{ width: '120px', height: '36px' }}
+              <Select placeholder="全部" allowClear style={{ width: '160px', height: '36px' }}
                 options={[{ label: '已生效', value: 1 }, { label: '已归档', value: 0 }]} />
             </Form.Item>
             <Form.Item label={<span style={{ fontWeight: 500, color: '#1f2937' }}>创建时间</span>} style={{ marginRight: '24px', marginBottom: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Form.Item name="createdAtStart" noStyle>
-                  <Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: '150px', height: '36px', borderRadius: '6px' }} />
+                  <Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: '160px', height: '36px', borderRadius: '6px' }} />
                 </Form.Item>
                 <span style={{ color: '#6b7280' }}>至</span>
                 <Form.Item name="createdAtEnd" noStyle>
-                  <Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: '150px', height: '36px', borderRadius: '6px' }} />
+                  <Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: '160px', height: '36px', borderRadius: '6px' }} />
                 </Form.Item>
               </div>
             </Form.Item>
