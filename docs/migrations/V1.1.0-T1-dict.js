@@ -25,7 +25,6 @@ const TYPES = [
   ['vehicle_brand', '车辆品牌', '车辆-品牌'],
   ['vehicle_model', '车辆车型', '车辆-车型'],
   ['vehicle_style', '车辆款式', '车辆-款式'],
-  ['product_applicable_model', '适用车型', '商品-适用车型'],
   ['product_install_attribute', '安装属性', '商品-安装属性'],
   ['product_attribute', '商品属性', '商品-商品属性（选项随商品类型联动，parent_value=商品类型）'],
   ['defeat_cooldown_days', '战败线索冷却期', '单位：天；仅一条有效配置，item_value 为天数'],
@@ -101,12 +100,14 @@ const ITEMS = {
     console.log(`  ℹ  ${code} 从现有车辆数据提取到 ${rows.length} 个选项`);
   }
 
-  // 适用车型：先放系统在用的通用口径（存量商品的真实取值），再补具体车型
-  ITEMS.product_applicable_model = [
-    ['通用', '通用', 1, null],
-    ['专车专用', '专车专用', 2, null],
-    ...(ITEMS.vehicle_model || []).map(([l, v, s]) => [l, v, s + 2, null]),
-  ];
+  // 车辆车型 与 商品适用车型 合并为一套（2026-08-22 业务确认，保留 vehicle_model）：
+  // 存量商品在用的通用口径 通用/专车专用 并入车辆车型，排在具体车型之后
+  {
+    const base = ITEMS.vehicle_model || [];
+    const have = new Set(base.map(([, v]) => v));
+    const extra = ['通用', '专车专用'].filter(v => !have.has(v)).map((v, i) => [v, v, base.length + i + 1, null]);
+    ITEMS.vehicle_model = [...base, ...extra];
+  }
 
   // 3. 字典项
   for (const [code, items] of Object.entries(ITEMS)) {

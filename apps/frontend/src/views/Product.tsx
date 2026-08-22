@@ -431,7 +431,7 @@ const ProductManagement: React.FC = () => {
             </Col>
             <Col span={12}>
               <Form.Item name="applicableModel" label="适用车型">
-                <Select placeholder="请选择适用车型" allowClear options={getDictOptions('product_applicable_model')} />
+                <Select placeholder="请选择适用车型" allowClear options={getDictOptions('vehicle_model')} />
               </Form.Item>
             </Col>
             <Col span={12}>

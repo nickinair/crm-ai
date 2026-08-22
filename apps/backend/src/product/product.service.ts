@@ -12,7 +12,7 @@ export const PRODUCT_IMPORT_HEADERS = [
   { key: 'productName', label: '商品名称', required: true, maxLength: 30 },
   { key: 'productType', label: '商品类型', required: true, dict: 'product_type' },
   { key: 'productAttribute', label: '商品属性', required: false, dict: 'product_attribute', parentKey: 'productType' },
-  { key: 'applicableModel', label: '适用车型', required: false, dict: 'product_applicable_model' },
+  { key: 'applicableModel', label: '适用车型', required: false, dict: 'vehicle_model' },
   { key: 'installAttribute', label: '安装属性', required: false, dict: 'product_install_attribute' },
   { key: 'unit', label: '单位', required: true, dict: 'product_unit' },
   { key: 'costPrice', label: '成本价', required: false, numeric: true },
