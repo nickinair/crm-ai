@@ -2067,7 +2067,30 @@ export class LeadService implements OnModuleInit {
       // 2. 锁定判断：被销售锁定（正在跟进中）的线索不可重新分配；可分配的直接分配（PRD 4.3.1）
       const lockMap = await this.getActiveLocks(leads.map(l => l.id), operatorId);
       const lockedLeads = leads.filter(l => lockMap.has(String(l.id)));
-      const assignable = leads.filter(l => !lockMap.has(String(l.id)));
+      const selected = leads.filter(l => !lockMap.has(String(l.id)));
+
+      // 客户一并重新分配（业务确认 2026-08-22）：被分配线索所属客户名下、原销售手里的其他
+      // 未完结线索（待跟进/跟进中）随之转给新销售；已成交/已战败/已作废等历史线索不动。
+      // 目的：原销售彻底看不到该客户；被锁定的兄弟线索跳过并在结果中提示。
+      let siblings: BizLead[] = [];
+      if (selected.length > 0) {
+        const pairs = selected.filter(l => l.customerId && l.assignedAccountId);
+        if (pairs.length > 0) {
+          const cond = pairs.map(() => '(bl.customer_id = ? AND bl.assigned_account_id = ?)').join(' OR ');
+          const params: any[] = pairs.flatMap(l => [l.customerId, l.assignedAccountId]);
+          const rows: any[] = await queryRunner.manager.query(
+            `SELECT bl.id FROM biz_lead bl WHERE (${cond}) AND bl.lead_status IN (1, 2) AND bl.id NOT IN (${leads.map(() => '?').join(',')})`,
+            [...params, ...leads.map(l => l.id)],
+          );
+          if (rows.length) {
+            siblings = await queryRunner.manager.find(BizLead, { where: { id: In(rows.map(r => String(r.id))) } });
+          }
+        }
+      }
+      const siblingLockMap = siblings.length ? await this.getActiveLocks(siblings.map(l => l.id), operatorId) : new Map();
+      const siblingLocked = siblings.filter(l => siblingLockMap.has(String(l.id)));
+      const siblingMovable = siblings.filter(l => !siblingLockMap.has(String(l.id)));
+      const assignable = [...selected, ...siblingMovable];
 
       const now = new Date();
       if (assignable.length > 0) {
@@ -2123,13 +2146,19 @@ export class LeadService implements OnModuleInit {
       }
 
       await queryRunner.commitTransaction();
-      for (const l of assignable) {
+      for (const l of selected) {
         this.addLeadLog(l.id, operatorId, '重新分配', `负责人：${l.assignedAccountId || '空'} -> ${accountId}${l.leadStatus !== 1 ? '；线索状态：变更为 待跟进' : ''}${moveOrders ? '（含未完结订单一并改派）' : ''}`);
       }
+      for (const l of siblingMovable) {
+        this.addLeadLog(l.id, operatorId, '重新分配', `随客户一并重新分配：负责人 ${l.assignedAccountId || '空'} -> ${accountId}${l.leadStatus !== 1 ? '；线索状态：变更为 待跟进' : ''}`);
+      }
       return {
-        successCount: assignable.length,
+        successCount: selected.length,
         failCount: lockedLeads.length,
         failedCodes: lockedLeads.map(l => l.leadCode),
+        siblingCount: siblingMovable.length,
+        siblingCodes: siblingMovable.map(l => l.leadCode),
+        siblingLockedCodes: siblingLocked.map(l => l.leadCode),
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();

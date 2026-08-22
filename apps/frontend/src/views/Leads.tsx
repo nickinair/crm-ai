@@ -632,13 +632,13 @@ const LeadsManagement: React.FC = () => {
           className: 'crm-unified-modal',
           content: (
             <div>
-              <div>成功重新分配 {res.successCount}条，失败{res.failCount}条；</div>
-              <div style={{ marginTop: 8 }}>以下线索销售正在跟进中，请等待销售跟进结束再操作：{(res.failedCodes || []).join('，')}</div>
+              <div>成功重新分配 {res.successCount}条，失败{res.failCount}条；{res.siblingCount ? `随客户一并转移 ${res.siblingCount} 条；` : ''}</div>
+              <div style={{ marginTop: 8 }}>以下线索销售正在跟进中，请等待销售跟进结束再操作：{[...(res.failedCodes || []), ...(res.siblingLockedCodes || [])].join('，')}</div>
             </div>
           ),
         });
       } else {
-        message.success(`成功重新分配 ${res.successCount}条`);
+        message.success(`成功重新分配 ${res.successCount}条${res.siblingCount ? `，客户名下其他线索随之转移 ${res.siblingCount} 条` : ''}`);
       }
       refreshLeads();
     } catch (e: any) {
@@ -750,7 +750,8 @@ const LeadsManagement: React.FC = () => {
         width={440}
         className="crm-unified-modal"
       >
-        <div style={{ marginBottom: '12px', color: '#1f2937' }}>是否连带线索未完结订单一并重新分配？</div>
+        <div style={{ marginBottom: '8px', color: '#1f2937' }}>是否连带线索未完结订单一并重新分配？</div>
+        <div style={{ marginBottom: '12px', color: '#64748b', fontSize: '12px' }}>说明：客户将一并转给新销售——该客户名下原销售的其他未完结线索（待跟进/跟进中）随之转移，原销售不再看到该客户。</div>
         <Radio.Group value={reassignMoveOrders} onChange={e => setReassignMoveOrders(e.target.value)} style={{ marginBottom: '20px' }}>
           <Radio value={true}>是</Radio>
           <Radio value={false}>否</Radio>

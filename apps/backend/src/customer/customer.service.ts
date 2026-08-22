@@ -68,7 +68,7 @@ export class CustomerService {
     if (ownerId) {
       qb.andWhere(
         `(EXISTS (SELECT 1 FROM biz_private_relation pr WHERE pr.customer_id = customer.id AND pr.account_id = :ownerId AND pr.status = 1)
-          OR EXISTS (SELECT 1 FROM biz_lead l WHERE l.customer_id = customer.id AND l.assigned_account_id = :ownerId))`,
+          OR EXISTS (SELECT 1 FROM biz_lead l WHERE l.customer_id = customer.id AND l.assigned_account_id = :ownerId AND l.lead_status IN (1, 2)))`,
         { ownerId },
       );
     }
@@ -133,7 +133,7 @@ export class CustomerService {
     if (ownerId) {
       qb.andWhere(
         `(EXISTS (SELECT 1 FROM biz_private_relation pr WHERE pr.customer_id = customer.id AND pr.account_id = :ownerId AND pr.status = 1)
-          OR EXISTS (SELECT 1 FROM biz_lead l WHERE l.customer_id = customer.id AND l.assigned_account_id = :ownerId))`,
+          OR EXISTS (SELECT 1 FROM biz_lead l WHERE l.customer_id = customer.id AND l.assigned_account_id = :ownerId AND l.lead_status IN (1, 2)))`,
         { ownerId },
       );
     }
