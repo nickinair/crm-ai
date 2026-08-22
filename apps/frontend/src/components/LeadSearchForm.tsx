@@ -49,18 +49,18 @@ const LeadSearchForm: React.FC<Props> = ({ form, onSearch, salesList = [], darkL
   // 全部搜索字段注册表：key / 标签 / 分组 / 渲染器
   const searchFieldDefs: Array<{ key: string; label: string; group: string; render: () => React.ReactNode }> = [
     { key: 'customerName', label: '客户姓名', group: '基础信息', render: () => (
-      <Form.Item name="customerName" label={L('客户姓名')}><Input placeholder="请输入姓名" style={{ width: 140 }} allowClear /></Form.Item>) },
+      <Form.Item name="customerName" label={L('客户姓名')}><Input placeholder="请输入姓名" style={{ width: 160 }} allowClear /></Form.Item>) },
     { key: 'customerPhone', label: '客户电话', group: '基础信息', render: () => (
-      <Form.Item name="customerPhone" label={L('客户电话')}><Input placeholder="请输入电话" style={{ width: 140 }} allowClear /></Form.Item>) },
+      <Form.Item name="customerPhone" label={L('客户电话')}><Input placeholder="请输入电话" style={{ width: 160 }} allowClear /></Form.Item>) },
     { key: 'channelSource', label: '渠道来源', group: '基础信息', render: () => (
-      <Form.Item name="channelSource" label={L('渠道来源')}><Select placeholder="请选择" style={{ width: 140 }} allowClear options={getDictOptions('channel_source')} /></Form.Item>) },
+      <Form.Item name="channelSource" label={L('渠道来源')}><Select placeholder="请选择" style={{ width: 160 }} allowClear options={getDictOptions('channel_source')} /></Form.Item>) },
     { key: 'sourceMethod', label: '线索来源方式', group: '基础信息', render: () => (
-      <Form.Item name="sourceMethod" label={L('线索来源方式')}><Select placeholder="请选择" style={{ width: 140 }} allowClear options={getDictOptions('lead_source_method')} /></Form.Item>) },
+      <Form.Item name="sourceMethod" label={L('线索来源方式')}><Select placeholder="请选择" style={{ width: 160 }} allowClear options={getDictOptions('lead_source_method')} /></Form.Item>) },
     { key: 'leadCode', label: '线索编码', group: '基础信息', render: () => (
-      <Form.Item name="leadCode" label={L('线索编码')}><Input placeholder="请输入线索编码" style={{ width: 150 }} allowClear /></Form.Item>) },
+      <Form.Item name="leadCode" label={L('线索编码')}><Input placeholder="请输入线索编码" style={{ width: 160 }} allowClear /></Form.Item>) },
     { key: 'leadStatus', label: '线索状态', group: '基础信息', render: () => (
       <Form.Item name="leadStatus" label={L('线索状态')}>
-        <Select placeholder="请选择" style={{ width: 150 }} mode="multiple" allowClear maxTagCount="responsive">
+        <Select placeholder="请选择" style={{ width: 160 }} mode="multiple" allowClear maxTagCount="responsive">
           <Select.Option value={0}>待分配</Select.Option>
           <Select.Option value={1}>待跟进</Select.Option>
           <Select.Option value={2}>跟进中</Select.Option>
@@ -72,14 +72,14 @@ const LeadSearchForm: React.FC<Props> = ({ form, onSearch, salesList = [], darkL
       </Form.Item>) },
     { key: 'assignControl', label: '分配管控标识', group: '基础信息', render: () => (
       <Form.Item name="assignControl" label={L('分配管控标识')}>
-        <Select placeholder="请选择" style={{ width: 140 }} allowClear>
+        <Select placeholder="请选择" style={{ width: 160 }} allowClear>
           <Select.Option value={1}>战败冷却期</Select.Option>
           <Select.Option value={2}>战败已复活</Select.Option>
         </Select>
       </Form.Item>) },
     { key: 'orderSituation', label: '订单情况', group: '基础信息', render: () => (
       <Form.Item name="orderSituation" label={L('订单情况')}>
-        <Select placeholder="请选择" style={{ width: 150 }} allowClear>
+        <Select placeholder="请选择" style={{ width: 160 }} allowClear>
           <Select.Option value={0}>未下单</Select.Option>
           <Select.Option value={1}>存在未完结订单</Select.Option>
           <Select.Option value={2}>全部订单已作废</Select.Option>
@@ -88,62 +88,62 @@ const LeadSearchForm: React.FC<Props> = ({ form, onSearch, salesList = [], darkL
       </Form.Item>) },
     { key: 'createType', label: '线索创建类型', group: '基础信息', render: () => (
       <Form.Item name="createType" label={L('线索创建类型')}>
-        <Select placeholder="请选择" style={{ width: 140 }} allowClear>
+        <Select placeholder="请选择" style={{ width: 160 }} allowClear>
           <Select.Option value={1}>普通新建</Select.Option>
           <Select.Option value={2}>战败线索复活</Select.Option>
         </Select>
       </Form.Item>) },
     { key: 'assignedAccountId', label: '负责人', group: '基础信息', render: () => (
       <Form.Item name="assignedAccountId" label={L('负责人')}>
-        <Select placeholder="请选择" style={{ width: 140 }} allowClear showSearch optionFilterProp="label"
+        <Select placeholder="请选择" style={{ width: 160 }} allowClear showSearch optionFilterProp="label"
           options={salesList.map((s: any) => ({ value: s.id, label: s.realName || s.username }))} />
       </Form.Item>) },
     { key: 'createdAt', label: '创建时间', group: '基础信息', render: () => (<>
-      <Form.Item name="createdAtStart" label={L('创建时间')}><Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: 150 }} /></Form.Item>
-      <Form.Item name="createdAtEnd" label={L('至')} style={{ marginLeft: -8 }}><Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: 150 }} /></Form.Item>
+      <Form.Item name="createdAtStart" label={L('创建时间')}><Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: 160 }} /></Form.Item>
+      <Form.Item name="createdAtEnd" label={L('至')} style={{ marginLeft: -8 }}><Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: 160 }} /></Form.Item>
     </>) },
 
     { key: 'carModel', label: '车型', group: '车辆信息', render: () => (
-      <Form.Item name="carModel" label={L('车型')}><Input placeholder="请输入车型" style={{ width: 140 }} allowClear /></Form.Item>) },
+      <Form.Item name="carModel" label={L('车型')}><Input placeholder="请输入车型" style={{ width: 160 }} allowClear /></Form.Item>) },
     { key: 'carStyle', label: '款式', group: '车辆信息', render: () => (
-      <Form.Item name="carStyle" label={L('款式')}><Input placeholder="请输入款式" style={{ width: 140 }} allowClear /></Form.Item>) },
+      <Form.Item name="carStyle" label={L('款式')}><Input placeholder="请输入款式" style={{ width: 160 }} allowClear /></Form.Item>) },
     { key: 'invoiceDate', label: '发票日期', group: '车辆信息', render: () => (<>
-      <Form.Item name="invoiceDateStart" label={L('发票日期')}><Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: 150 }} /></Form.Item>
-      <Form.Item name="invoiceDateEnd" label={L('至')} style={{ marginLeft: -8 }}><Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: 150 }} /></Form.Item>
+      <Form.Item name="invoiceDateStart" label={L('发票日期')}><Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: 160 }} /></Form.Item>
+      <Form.Item name="invoiceDateEnd" label={L('至')} style={{ marginLeft: -8 }}><Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: 160 }} /></Form.Item>
     </>) },
     { key: 'vin', label: '车架号', group: '车辆信息', render: () => (
-      <Form.Item name="vin" label={L('车架号')}><Input placeholder="请输入车架号" style={{ width: 170 }} allowClear /></Form.Item>) },
+      <Form.Item name="vin" label={L('车架号')}><Input placeholder="请输入车架号" style={{ width: 160 }} allowClear /></Form.Item>) },
     { key: 'vehicleAgeMin', label: '车龄（月）', group: '车辆信息', render: () => (
-      <Form.Item name="vehicleAgeMin" label={L('车龄（月）')}><Input type="number" min={0} placeholder="≥ 月数" style={{ width: 110 }} /></Form.Item>) },
+      <Form.Item name="vehicleAgeMin" label={L('车龄（月）')}><Input type="number" min={0} placeholder="≥ 月数" style={{ width: 160 }} /></Form.Item>) },
     { key: 'mileageMin', label: '里程数', group: '车辆信息', render: () => (
-      <Form.Item name="mileageMin" label={L('里程数')}><Input type="number" min={0} placeholder="≥ 公里" style={{ width: 120 }} /></Form.Item>) },
+      <Form.Item name="mileageMin" label={L('里程数')}><Input type="number" min={0} placeholder="≥ 公里" style={{ width: 160 }} /></Form.Item>) },
     { key: 'isMileageOver40k', label: '里程≥4万公里', group: '车辆信息', render: () => (
-      <Form.Item name="isMileageOver40k" label={L('里程≥4万公里')}><Select placeholder="请选择" style={{ width: 100 }} allowClear options={yesNoOptions} /></Form.Item>) },
+      <Form.Item name="isMileageOver40k" label={L('里程≥4万公里')}><Select placeholder="请选择" style={{ width: 160 }} allowClear options={yesNoOptions} /></Form.Item>) },
     { key: 'isMileageOver95k', label: '里程≥9.5万公里', group: '车辆信息', render: () => (
-      <Form.Item name="isMileageOver95k" label={L('里程≥9.5万公里')}><Select placeholder="请选择" style={{ width: 100 }} allowClear options={yesNoOptions} /></Form.Item>) },
+      <Form.Item name="isMileageOver95k" label={L('里程≥9.5万公里')}><Select placeholder="请选择" style={{ width: 160 }} allowClear options={yesNoOptions} /></Form.Item>) },
     { key: 'hasExtendedWarranty', label: '是否已购整车延保', group: '车辆信息', render: () => (
-      <Form.Item name="hasExtendedWarranty" label={L('是否已购整车延保')}><Select placeholder="请选择" style={{ width: 100 }} allowClear options={yesNoOptions} /></Form.Item>) },
+      <Form.Item name="hasExtendedWarranty" label={L('是否已购整车延保')}><Select placeholder="请选择" style={{ width: 160 }} allowClear options={yesNoOptions} /></Form.Item>) },
     { key: 'hasBatteryWarranty', label: '是否已购电池延保', group: '车辆信息', render: () => (
-      <Form.Item name="hasBatteryWarranty" label={L('是否已购电池延保')}><Select placeholder="请选择" style={{ width: 100 }} allowClear options={yesNoOptions} /></Form.Item>) },
+      <Form.Item name="hasBatteryWarranty" label={L('是否已购电池延保')}><Select placeholder="请选择" style={{ width: 160 }} allowClear options={yesNoOptions} /></Form.Item>) },
     { key: 'hasPeaceOfMind', label: '是否已购安心保', group: '车辆信息', render: () => (
-      <Form.Item name="hasPeaceOfMind" label={L('是否已购安心保')}><Select placeholder="请选择" style={{ width: 100 }} allowClear options={yesNoOptions} /></Form.Item>) },
+      <Form.Item name="hasPeaceOfMind" label={L('是否已购安心保')}><Select placeholder="请选择" style={{ width: 160 }} allowClear options={yesNoOptions} /></Form.Item>) },
     { key: 'hasTireProtection', label: '是否已购轮胎保障', group: '车辆信息', render: () => (
-      <Form.Item name="hasTireProtection" label={L('是否已购轮胎保障')}><Select placeholder="请选择" style={{ width: 100 }} allowClear options={yesNoOptions} /></Form.Item>) },
+      <Form.Item name="hasTireProtection" label={L('是否已购轮胎保障')}><Select placeholder="请选择" style={{ width: 160 }} allowClear options={yesNoOptions} /></Form.Item>) },
 
     { key: 'isAddWechat', label: '添加微信状态', group: '跟进情况', render: () => (
-      <Form.Item name="isAddWechat" label={L('添加微信状态')}><Select placeholder="请选择" style={{ width: 130 }} allowClear options={getDictOptions('wechat_add_status')} /></Form.Item>) },
+      <Form.Item name="isAddWechat" label={L('添加微信状态')}><Select placeholder="请选择" style={{ width: 160 }} allowClear options={getDictOptions('wechat_add_status')} /></Form.Item>) },
     { key: 'purchaseIntention', label: '购买意向', group: '跟进情况', render: () => (
-      <Form.Item name="purchaseIntention" label={L('购买意向')}><Select placeholder="请选择" style={{ width: 130 }} allowClear options={getDictOptions('purchase_intention')} /></Form.Item>) },
+      <Form.Item name="purchaseIntention" label={L('购买意向')}><Select placeholder="请选择" style={{ width: 160 }} allowClear options={getDictOptions('purchase_intention')} /></Form.Item>) },
     { key: 'communicationTendency', label: '客户沟通倾向', group: '跟进情况', render: () => (
-      <Form.Item name="communicationTendency" label={L('客户沟通倾向')}><Select placeholder="请选择" style={{ width: 140 }} allowClear options={getDictOptions('communication_tendency')} /></Form.Item>) },
+      <Form.Item name="communicationTendency" label={L('客户沟通倾向')}><Select placeholder="请选择" style={{ width: 160 }} allowClear options={getDictOptions('communication_tendency')} /></Form.Item>) },
     { key: 'callResult', label: '呼叫结果', group: '跟进情况', render: () => (
-      <Form.Item name="callResult" label={L('呼叫结果')}><Select placeholder="请选择" style={{ width: 140 }} allowClear options={getDictOptions('call_result')} /></Form.Item>) },
+      <Form.Item name="callResult" label={L('呼叫结果')}><Select placeholder="请选择" style={{ width: 160 }} allowClear options={getDictOptions('call_result')} /></Form.Item>) },
     { key: 'intentProduct', label: '意向商品', group: '跟进情况', render: () => (
-      <Form.Item name="intentProduct" label={L('意向商品')}><Input placeholder="请输入商品名称" style={{ width: 150 }} allowClear /></Form.Item>) },
+      <Form.Item name="intentProduct" label={L('意向商品')}><Input placeholder="请输入商品名称" style={{ width: 160 }} allowClear /></Form.Item>) },
     { key: 'intentGift', label: '意向赠品', group: '跟进情况', render: () => (
-      <Form.Item name="intentGift" label={L('意向赠品')}><Input placeholder="请输入赠品名称" style={{ width: 150 }} allowClear /></Form.Item>) },
+      <Form.Item name="intentGift" label={L('意向赠品')}><Input placeholder="请输入赠品名称" style={{ width: 160 }} allowClear /></Form.Item>) },
     { key: 'followDaysMin', label: '跟进天数', group: '跟进情况', render: () => (
-      <Form.Item name="followDaysMin" label={L('跟进天数')}><Input type="number" min={0} placeholder="精确天数" style={{ width: 110 }} /></Form.Item>) },
+      <Form.Item name="followDaysMin" label={L('跟进天数')}><Input type="number" min={0} placeholder="精确天数" style={{ width: 160 }} /></Form.Item>) },
   ];
   const fieldMap: Record<string, typeof searchFieldDefs[number]> = Object.fromEntries(searchFieldDefs.map(f => [f.key, f]));
   const groups = ['基础信息', '车辆信息', '跟进情况'];
