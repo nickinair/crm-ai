@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Checkbox } from 'antd';
-import { SearchOutlined, CloseOutlined, LoadingOutlined } from '@ant-design/icons';
+import { SearchOutlined, CloseOutlined, LoadingOutlined, DeleteOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
 
@@ -370,18 +370,20 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
 
 
 
+  // 与新增线索第三步的已选表格保持一致：表格自带横向滚动，弹框 body 的 overflowX hidden 不再裁掉操作列
   const itemTable = (list: any[], isGift: boolean, onRemove: (id: string) => void) => (
     <Table
       size="small"
       rowKey="id"
       dataSource={list}
       pagination={false}
+      scroll={{ x: 'max-content' }}
       locale={{ emptyText: isGift ? '暂无赠品，请点击右上角添加' : '暂无商品，请点击右上角添加' }}
       columns={[
-        { title: isGift ? '赠品名称' : '商品名称', dataIndex: 'productName', render: (t: string) => <span style={{ wordBreak: 'break-all' }}>{t}</span> },
-        { title: '编码', dataIndex: 'productCode', width: 150, render: (t: string) => <span style={{ whiteSpace: 'nowrap' }}>{t || '-'}</span> },
-        { title: '售价', dataIndex: 'salePrice', width: 100, render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
-        { title: '操作', key: 'op', width: 60, render: (_: any, r: any) => <a style={{ color: '#DC2626' }} onClick={() => onRemove(String(r.id))}>删除</a> },
+        { title: isGift ? '赠品名称' : '商品名称', dataIndex: 'productName' },
+        { title: '编码', dataIndex: 'productCode', render: (t: string) => t || '-' },
+        { title: '售价', dataIndex: 'salePrice', width: 120, render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
+        { title: '操作', key: 'op', width: 80, align: 'center' as const, render: (_: any, r: any) => <Button type="text" danger icon={<DeleteOutlined />} onClick={() => onRemove(String(r.id))} /> },
       ]}
     />
   );
