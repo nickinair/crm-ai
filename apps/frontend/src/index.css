@@ -838,10 +838,19 @@ body {
     max-width: 200px !important;
 }
 
-/* 下拉内层选择器随外层高度 */
-.filter-section .ant-select .ant-select-selector,
-.search-form .ant-select .ant-select-selector {
-    height: 36px !important;
+/* 带前后缀/清除按钮的输入框（.ant-input-affix-wrapper）：高度由外层承担，
+   内层 input 不能再被上面的 36px 命中，否则内层撑出外框、文字整体下移 5px */
+.filter-section .ant-input-affix-wrapper,
+.search-form .ant-input-affix-wrapper {
+    align-items: center !important;
+}
+.filter-section .ant-input-affix-wrapper > .ant-input,
+.search-form .ant-input-affix-wrapper > .ant-input {
+    height: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    flex: 1 1 auto !important;
 }
 /* 日期区间：起止各 200，中间的「至」不受影响 */
 .filter-section .ant-form-item input[type="date"],
@@ -876,6 +885,18 @@ body {
 .crm-unified-modal .ant-modal-body .crm-full-width .ant-select,
 .crm-unified-modal .ant-modal-body .crm-full-width .ant-picker {
     width: 100% !important;
+}
+
+/* 弹框内带前后缀/清除按钮的输入框：同筛选区，内层 input 不受 40px / 325px 约束，
+   否则内层撑出外框、文字整体下移 */
+.crm-unified-modal .ant-modal-body .ant-input-affix-wrapper {
+    align-items: center !important;
+}
+.crm-unified-modal .ant-modal-body .ant-input-affix-wrapper > .ant-input {
+    height: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    flex: 1 1 auto !important;
 }
 
 /* 多行文本框不受固定高度约束 */
