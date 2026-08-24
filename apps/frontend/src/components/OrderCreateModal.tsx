@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Checkbox, Tooltip, AutoComplete } from 'antd';
+import { Modal, Steps, Form, Input, Select, Button, message, Table, Spin, Checkbox } from 'antd';
 import { SearchOutlined, CloseOutlined, LoadingOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
-import { getRecentCustomers, addRecentCustomer, type RecentCustomer } from '../utils/recentCustomers';
 
 /**
  * 三步式创建订单弹框（PRD 4.2.3.2 / 配图 image16~image22）
@@ -48,7 +47,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
   const [customerOptions, setCustomerOptions] = useState<any[]>([]);
   const [customerSearching, setCustomerSearching] = useState(false);
   const [customerKeyword, setCustomerKeyword] = useState('');
-  const [recentCustomers, setRecentCustomers] = useState<RecentCustomer[]>([]);
+  const [defaultCustomers, setDefaultCustomers] = useState<any[]>([]); // 未输入搜索词时展示当前账号可见的关联客户
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null); // {id, customerName, phone}
   const [newCustomerForm] = Form.useForm();
 
@@ -59,6 +58,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
   const [allProducts, setAllProducts] = useState<any[]>([]); // 可选商品（正常状态）
   const [pickerOpen, setPickerOpen] = useState<null | 'product' | 'gift'>(null);
   const [pickerSearch, setPickerSearch] = useState(''); // 弹框内商品搜索（与意向商品弹框一致，测试问题4）
+  const [pickerDraft, setPickerDraft] = useState<any[]>([]); // 面板内勾选暂存：点「确认添加」才真正加入，✕ 放弃
   const [draftId, setDraftId] = useState<string | null>(null);
 
   // ---- 第三步：车辆 ----
@@ -94,7 +94,10 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
       orderForm.resetFields();
       newVehicleForm.resetFields();
       setCustomerKeyword('');
-      setRecentCustomers(getRecentCustomers()); // 未输入搜索词时默认展示最近创建/选择过的客户
+      // 未输入搜索词时默认展示该销售名下所有关联客户（接口按登录身份过滤，非本销售客户不返回）
+      request.get('/customer', { params: { page: 1, limit: 200 } }).then((res: any) => {
+        setDefaultCustomers(res?.items || []);
+      }).catch(() => {});
       // 可选商品：仅正常状态（PRD 4.2.3.2）
       request.get('/product', { params: { status: 1 } }).then((res: any) => {
         setAllProducts(Array.isArray(res) ? res : (res?.data || []));
@@ -145,7 +148,6 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
         return;
       }
       setSelectedCustomer({ id: res.id, customerName: values.customerName, phone: values.phone, isNew: true });
-      addRecentCustomer({ id: String(res.id), customerName: values.customerName, phone: values.phone });
       setStep(1);
     } catch (e: any) {
       if (e?.errorFields) return;
@@ -304,12 +306,14 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
   // ---- 商品/赠品选择弹框 ----
   const openPicker = (mode: 'product' | 'gift') => {
     setPickerSearch('');
+    // 以当前已选为底稿，面板内勾选/取消只改暂存
+    setPickerDraft(mode === 'product' ? [...products] : [...gifts]);
     setPickerOpen(mode);
   };
   /** 内联商品选择面板：与新增线索的添加商品面板同款样式（测试反馈：两处需一致） */
   const renderInlinePicker = (mode: 'product' | 'gift') => {
-    const selectedList = mode === 'product' ? products : gifts;
-    const setList = mode === 'product' ? setProducts : setGifts;
+    const selectedList = pickerDraft;
+    const setList = setPickerDraft;
     const filtered = allProducts.filter((p: any) =>
       !pickerSearch || (p.productName || '').includes(pickerSearch) || (p.productCode || '').includes(pickerSearch));
     const handleCheck = (checked: boolean, item: any) => {
@@ -319,7 +323,13 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
         setList(selectedList.filter((x: any) => String(x.id) !== String(item.id)));
       }
     };
+    // ✕ / 遮罩：放弃本次勾选；「确认添加」：把暂存合入已选（测试反馈：不点确认不应生效）
     const close = () => { setPickerOpen(null); setPickerSearch(''); };
+    const confirm = () => {
+      if (mode === 'product') setProducts([...pickerDraft]);
+      else setGifts([...pickerDraft]);
+      close();
+    };
     return (
       <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
         <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
@@ -330,7 +340,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
             onChange={e => setPickerSearch(e.target.value)}
             style={{ flex: 1, borderRadius: '6px', display: 'flex', alignItems: 'center' }}
           />
-          <Button type="primary" style={{ background: '#4F8DFF', borderRadius: '6px', border: 'none', padding: '0 24px' }} onClick={close}>确认添加</Button>
+          <Button type="primary" style={{ background: '#4F8DFF', borderRadius: '6px', border: 'none', padding: '0 24px' }} onClick={confirm}>确认添加</Button>
           <Button type="text" icon={<CloseOutlined style={{ fontSize: '16px', color: '#94A3B8' }} />} onClick={close} />
         </div>
         <div style={{ maxHeight: 250, overflowY: 'auto' }}>
@@ -366,13 +376,12 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
       rowKey="id"
       dataSource={list}
       pagination={false}
-      tableLayout="fixed"
       locale={{ emptyText: isGift ? '暂无赠品，请点击右上角添加' : '暂无商品，请点击右上角添加' }}
       columns={[
-        { title: isGift ? '赠品名称' : '商品名称', dataIndex: 'productName', ellipsis: { showTitle: false }, render: (t: string) => <Tooltip title={t}><span>{t}</span></Tooltip> },
-        { title: '编码', dataIndex: 'productCode', width: 150, ellipsis: true },
-        { title: isGift ? '单价/价值' : '单价', dataIndex: 'salePrice', width: 110, render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
-        { title: '操作', key: 'op', width: 70, render: (_: any, r: any) => <a style={{ color: '#DC2626' }} onClick={() => onRemove(String(r.id))}>删除</a> },
+        { title: isGift ? '赠品名称' : '商品名称', dataIndex: 'productName', render: (t: string) => <span style={{ wordBreak: 'break-all' }}>{t}</span> },
+        { title: '编码', dataIndex: 'productCode', width: 150, render: (t: string) => <span style={{ whiteSpace: 'nowrap' }}>{t || '-'}</span> },
+        { title: isGift ? '单价/价值' : '单价', dataIndex: 'salePrice', width: 100, render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
+        { title: '操作', key: 'op', width: 60, render: (_: any, r: any) => <a style={{ color: '#DC2626' }} onClick={() => onRemove(String(r.id))}>删除</a> },
       ]}
     />
   );
@@ -449,17 +458,16 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
                       placeholder="输入客户姓名或电话搜索..."
                       filterOption={false}
                       onSearch={searchCustomers}
-                      notFoundContent={customerSearching ? <div style={{ textAlign: 'center', padding: '8px 0' }}><Spin size="small" indicator={<LoadingOutlined style={{ fontSize: 16 }} spin />} /></div> : (customerKeyword.trim() ? '未搜索到客户' : '暂无最近客户，输入姓名或电话搜索')}
+                      notFoundContent={customerSearching ? <div style={{ textAlign: 'center', padding: '8px 0' }}><Spin size="small" indicator={<LoadingOutlined style={{ fontSize: 16 }} spin />} /></div> : (customerKeyword.trim() ? '未搜索到客户' : '暂无关联客户，输入姓名或电话搜索')}
                       value={selectedCustomer?.id}
                       onChange={(id) => {
-                        const pool = customerKeyword.trim() ? customerOptions : recentCustomers;
+                        const pool = customerKeyword.trim() ? customerOptions : defaultCustomers;
                         const c: any = pool.find((o: any) => String(o.id) === String(id));
                         if (c) {
                           setSelectedCustomer({ id: c.id, customerName: c.customerName, phone: c.phone });
-                          addRecentCustomer({ id: String(c.id), customerName: c.customerName, phone: c.phone });
                         }
                       }}
-                      options={(customerKeyword.trim() ? customerOptions : recentCustomers).map((c: any) => ({
+                      options={(customerKeyword.trim() ? customerOptions : defaultCustomers).map((c: any) => ({
                         label: `${c.customerName || '未知'}（${c.phone || '-'}）`,
                         value: c.id,
                       }))}
@@ -566,37 +574,16 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
               <Form form={newVehicleForm} layout="vertical">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
                   <Form.Item name="brand" label="品牌">
-                    <AutoComplete
-                      options={getDictOptions('vehicle_brand')}
-                      filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
-                      placeholder="请选择或输入品牌"
-                      allowClear
-                    >
-                      <Input maxLength={64} />
-                    </AutoComplete>
+                    <Select options={getDictOptions('vehicle_brand')} placeholder="请选择品牌" allowClear />
                   </Form.Item>
                   <Form.Item name="plateNo" label="车牌号">
                     <Input placeholder="请输入车牌号" maxLength={16} />
                   </Form.Item>
                   <Form.Item name="model" label="车型">
-                    <AutoComplete
-                      options={getDictOptions('vehicle_model')}
-                      filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
-                      placeholder="请选择或输入车型"
-                      allowClear
-                    >
-                      <Input maxLength={64} />
-                    </AutoComplete>
+                    <Select options={getDictOptions('vehicle_model')} placeholder="请选择车型" allowClear />
                   </Form.Item>
                   <Form.Item name="style" label="款式">
-                    <AutoComplete
-                      options={getDictOptions('vehicle_style')}
-                      filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
-                      placeholder="请选择或输入款式"
-                      allowClear
-                    >
-                      <Input maxLength={64} />
-                    </AutoComplete>
+                    <Select options={getDictOptions('vehicle_style')} placeholder="请选择款式" allowClear />
                   </Form.Item>
                   <Form.Item name="vin" label="车架号(VIN)" rules={[
                     { required: true, message: '请输入车架号' },

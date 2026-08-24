@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Modal, Form, Input, Select, message, Row, Col, AutoComplete } from 'antd';
+import { Modal, Form, Input, Select, message, Row, Col } from 'antd';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import request from '../utils/request';
@@ -102,38 +102,17 @@ const EditVehicleModal: React.FC<EditVehicleModalProps> = ({ open, onCancel, onS
         <Row gutter={24}>
           <Col span={12}>
             <Form.Item label="品牌" name="brand">
-              <AutoComplete
-                options={brandOptions}
-                filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
-                placeholder="请输入或选择品牌"
-                allowClear
-              >
-                <Input />
-              </AutoComplete>
+              <Select options={brandOptions} placeholder="请选择" allowClear />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item label="车型" name="model">
-              <AutoComplete
-                options={modelOptions}
-                filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
-                placeholder="请输入或选择车型"
-                allowClear
-              >
-                <Input />
-              </AutoComplete>
+              <Select options={modelOptions} placeholder="请选择" allowClear />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item label="款式" name="style">
-              <AutoComplete
-                options={styleOptions}
-                filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
-                placeholder="请输入或选择款式"
-                allowClear
-              >
-                <Input />
-              </AutoComplete>
+              <Select options={styleOptions} placeholder="请选择" allowClear />
             </Form.Item>
           </Col>
           <Col span={12}>

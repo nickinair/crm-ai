@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Modal, Form, Input, Select, Row, Col, Button, Table, message, Checkbox, Spin, AutoComplete, Steps } from 'antd';
+import { Modal, Form, Input, Select, Row, Col, Button, Table, message, Checkbox, Spin, Steps } from 'antd';
 import { DeleteOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
@@ -42,6 +42,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
   
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
   const [isGiftSelectorOpen, setIsGiftSelectorOpen] = useState(false);
+  const [selectorDraft, setSelectorDraft] = useState<any[]>([]); // 面板勾选暂存：点「确认添加」才写入表单
 
   // ===== 三步式新增（PRD 4.3.3 / 4.2.3.3 / 4.2.5.2）：仅新增模式启用，编辑/查看保持单页 =====
   const isThreeStep = !editId && !isView;
@@ -334,16 +335,20 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
   };
 
   const renderInlineSelector = (fieldName: 'intentProducts' | 'intentGifts', options: any[], searchStr: string, setSearchStr: (val: string) => void, onClose: () => void) => {
-    const selectedList = form.getFieldValue(fieldName) || [];
+    const selectedList = selectorDraft;
     const filteredOptions = options.filter(p => (p.productName || '').includes(searchStr) || (p.productCode || '').includes(searchStr));
 
+    // 勾选只改暂存；「确认添加」写入表单，✕ 放弃本次勾选（与创建订单面板交互一致）
     const handleCheck = (checked: boolean, item: any) => {
-      const currentList = form.getFieldValue(fieldName) || [];
       if (checked) {
-        form.setFieldsValue({ [fieldName]: [...currentList, item] });
+        if (!selectorDraft.some((p: any) => p.id === item.id)) setSelectorDraft([...selectorDraft, item]);
       } else {
-        form.setFieldsValue({ [fieldName]: currentList.filter((p: any) => p.id !== item.id) });
+        setSelectorDraft(selectorDraft.filter((p: any) => p.id !== item.id));
       }
+    };
+    const onConfirm = () => {
+      form.setFieldsValue({ [fieldName]: [...selectorDraft] });
+      onClose();
     };
 
     return (
@@ -356,7 +361,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
             onChange={e => setSearchStr(e.target.value)} 
             style={{ flex: 1, borderRadius: '6px', display: 'flex', alignItems: 'center' }}
           />
-          <Button type="primary" style={{ background: '#4F8DFF', borderRadius: '6px', border: 'none', padding: '0 24px' }} onClick={onClose}>确认添加</Button>
+          <Button type="primary" style={{ background: '#4F8DFF', borderRadius: '6px', border: 'none', padding: '0 24px' }} onClick={onConfirm}>确认添加</Button>
           <Button type="text" icon={<CloseOutlined style={{ fontSize: '16px', color: '#94A3B8' }} />} onClick={onClose} />
         </div>
         <div style={{ maxHeight: 250, overflowY: 'auto' }}>
@@ -551,14 +556,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
         <Row gutter={24}>
           <Col span={12}>
             <Form.Item name="carBrand" label="品牌">
-              <AutoComplete
-                options={brandOptions}
-                filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
-                placeholder="请输入或选择品牌"
-                allowClear
-              >
-                <Input />
-              </AutoComplete>
+              <Select options={brandOptions} placeholder="请选择" allowClear />
             </Form.Item>
           </Col>
           <Col span={12}>
@@ -570,26 +568,12 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
         <Row gutter={24}>
           <Col span={12}>
             <Form.Item name="carModel" label="车型">
-              <AutoComplete
-                options={modelOptions}
-                filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
-                placeholder="请输入或选择车型"
-                allowClear
-              >
-                <Input />
-              </AutoComplete>
+              <Select options={modelOptions} placeholder="请选择" allowClear />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item name="carStyle" label="款式">
-              <AutoComplete
-                options={styleOptions}
-                filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
-                placeholder="请输入或选择款式"
-                allowClear
-              >
-                <Input />
-              </AutoComplete>
+              <Select options={styleOptions} placeholder="请选择" allowClear />
             </Form.Item>
           </Col>
         </Row>
@@ -698,7 +682,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
           <Button 
             type="primary" 
             style={{ borderRadius: '6px', background: '#4F8DFF', border: 'none', padding: '0 16px', height: '32px' }} 
-            onClick={() => setIsProductSelectorOpen(true)}
+            onClick={() => (setSelectorDraft(form.getFieldValue('intentProducts') || []), setIsProductSelectorOpen(true))}
           >
             + 添加商品
           </Button>
@@ -730,7 +714,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
           <Button 
             type="primary" 
             style={{ borderRadius: '6px', background: '#4F8DFF', border: 'none', padding: '0 16px', height: '32px' }} 
-            onClick={() => setIsGiftSelectorOpen(true)}
+            onClick={() => (setSelectorDraft(form.getFieldValue('intentGifts') || []), setIsGiftSelectorOpen(true))}
           >
             + 添加赠品
           </Button>

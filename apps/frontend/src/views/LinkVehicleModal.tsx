@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Modal, Form, Input, Select, message, AutoComplete } from 'antd';
+import { Modal, Form, Input, Select, message } from 'antd';
 import request from '../utils/request';
 import { useDict } from '../hooks/useDict';
 import './Customer360.css';
@@ -67,14 +67,7 @@ const LinkVehicleModal: React.FC<LinkVehicleModalProps> = ({ open, onCancel, onS
         style={{ rowGap: 0 }}
       >
         <Form.Item label="车型" name="model">
-          <AutoComplete
-            options={modelOptions}
-            filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
-            placeholder="请输入或选择车型"
-            allowClear
-          >
-            <Input />
-          </AutoComplete>
+          <Select options={modelOptions} placeholder="请选择" allowClear />
         </Form.Item>
         <Form.Item label="车架号" name="vin" rules={[{ max: 25, message: '车架号(VIN)最多25位' }]}>
           <Input placeholder="请输入车架号" maxLength={25} />
@@ -83,14 +76,7 @@ const LinkVehicleModal: React.FC<LinkVehicleModalProps> = ({ open, onCancel, onS
           <Input placeholder="请输入车牌号" />
         </Form.Item>
         <Form.Item label="款式" name="style">
-          <AutoComplete
-            options={styleOptions}
-            filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
-            placeholder="请输入或选择款式"
-            allowClear
-          >
-            <Input />
-          </AutoComplete>
+          <Select options={styleOptions} placeholder="请选择" allowClear />
         </Form.Item>
         <Form.Item label="发票日期" name="purchaseDate">
           <Input type="date" onClick={(e: any) => e.target?.showPicker?.()} style={{ width: '100%', height: '40px', borderRadius: '6px', borderColor: '#d1d5db', color: '#1f2937' }} />

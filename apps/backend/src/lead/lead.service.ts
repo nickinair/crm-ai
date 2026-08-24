@@ -596,7 +596,13 @@ export class LeadService implements OnModuleInit {
       const activeLeads = await queryRunner.manager.find(BizLead, {
         where: { customerId: customerId }
       });
-      const activeLead = activeLeads.find(l => [0, 1, 2, 4, 6].includes(l.leadStatus));
+      // 阻止条件：存在 待分配/待跟进/跟进中/回收待分配 线索；
+      // 或存在 已战败 且分配管控（战败冷却期/战败已复活）未解除的线索。
+      // 已战败且无分配管控 → 允许重新创建线索。
+      const activeLead = activeLeads.find(l =>
+        [0, 1, 2, 6].includes(l.leadStatus) ||
+        (l.leadStatus === 4 && l.assignControl != null)
+      );
       if (activeLead) {
         const statusMap: Record<number, string> = {
           0: '待分配',
@@ -605,12 +611,16 @@ export class LeadService implements OnModuleInit {
           4: '已战败',
           6: '回收待分配'
         };
-        throw { 
-          code: 'LEAD_STATUS_CONFLICT', 
+        let statusName = statusMap[activeLead.leadStatus] || '处理中';
+        if (activeLead.leadStatus === 4) {
+          statusName += activeLead.assignControl === 1 ? '（战败冷却期）' : '（战败已复活）';
+        }
+        throw {
+          code: 'LEAD_STATUS_CONFLICT',
           customerName: customer.customerName,
-          statusName: statusMap[activeLead.leadStatus] || '处理中',
+          statusName,
           leadCode: activeLead.leadCode,
-          message: `客户已存在【${statusMap[activeLead.leadStatus] || '处理中'}】状态的关联线索，无法重复分配`,
+          message: `客户已存在【${statusName}】状态的关联线索，无法重复分配`,
         };
       }
 
