@@ -285,7 +285,7 @@ const Workbench: React.FC = () => {
     { title: '更新时间', dataIndex: 'updatedAt', width: 116, sorter: true, render: (v: string) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-' },
     { title: '更新人', key: 'updater', width: 76, render: (_: any, r: any) => r.updater?.realName || r.updater?.username || '系统' },
     {
-      title: '操作', key: 'op', width: 150,
+      title: '操作', key: 'op', width: 150, fixed: 'right' as const,
       render: (_: any, r: any) => (
         <div className="action-links" style={{ flexWrap: 'wrap' }}>
           {r.orderStatus === 0 && <a onClick={() => handleOrderSign(r, 'sendSign')}>已发送电子签</a>}
@@ -514,6 +514,7 @@ const Workbench: React.FC = () => {
       title: '操作', 
       key: 'action', 
       width: 170, 
+      fixed: 'right' as const,
       render: (_: any, record: any) => {
         return (
           <div className="action-links">
@@ -736,6 +737,7 @@ const Workbench: React.FC = () => {
                 pageSizeOptions: ['10', '20', '50', '100', '200'],
                 onChange: (p: number, s: number) => { setPage(p); setPageSize(s); },
               }}
+              scroll={{ x: 'max-content' }}
             />
             </ConfigProvider>
             </>)}
@@ -809,6 +811,7 @@ const Workbench: React.FC = () => {
                 showTotal: (t) => `共 ${t} 条`,
                 pageSizeOptions: ['10', '20', '50', '100', '200'],
               }}
+              scroll={{ x: 'max-content' }}
             />
             </ConfigProvider>
             </>)}
