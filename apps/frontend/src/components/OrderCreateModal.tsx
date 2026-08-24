@@ -380,7 +380,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
       columns={[
         { title: isGift ? '赠品名称' : '商品名称', dataIndex: 'productName', render: (t: string) => <span style={{ wordBreak: 'break-all' }}>{t}</span> },
         { title: '编码', dataIndex: 'productCode', width: 150, render: (t: string) => <span style={{ whiteSpace: 'nowrap' }}>{t || '-'}</span> },
-        { title: isGift ? '售价/价值' : '售价', dataIndex: 'salePrice', width: 100, render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
+        { title: '售价', dataIndex: 'salePrice', width: 100, render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
         { title: '操作', key: 'op', width: 60, render: (_: any, r: any) => <a style={{ color: '#DC2626' }} onClick={() => onRemove(String(r.id))}>删除</a> },
       ]}
     />

@@ -739,7 +739,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
           columns={[
             { title: '赠品名称', dataIndex: 'productName' },
             { title: '编码', dataIndex: 'productCode' },
-            { title: '售价/价值', dataIndex: 'salePrice', width: 120, render: val => `¥${val || 0}` },
+            { title: '售价', dataIndex: 'salePrice', width: 120, render: val => `¥${val || 0}` },
             { title: '操作', key: 'action', width: 80, align: 'center', render: (_, record: any) => <Button type="text" danger icon={<DeleteOutlined />} onClick={() => {
               const currentList = form.getFieldValue('intentGifts') || [];
               const newGifts = currentList.filter((_: any, idx: number) => idx !== record._index);
