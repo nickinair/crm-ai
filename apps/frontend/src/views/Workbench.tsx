@@ -271,21 +271,21 @@ const Workbench: React.FC = () => {
   // 我的跟单订单列（PRD 配图 image8）
   const orderColumns: any[] = [
     { title: '序号', key: 'idx', width: 56, render: (_: any, __: any, i: number) => (orderPage - 1) * orderPageSize + i + 1 },
-    { title: '订单编码', dataIndex: 'orderCode', width: 150 },
-    { title: '客户姓名', key: 'cname', width: 90, render: (_: any, r: any) => r.customer?.customerName || r.snapCustomerName || '-' },
-    { title: '客户电话', key: 'cphone', width: 120, render: (_: any, r: any) => r.customer?.phone || r.snapCustomerPhone || '-' },
-    { title: '下单平台', dataIndex: 'orderPlatform', width: 100, render: (v: any) => v || '-' },
-    { title: '平台订单编号', dataIndex: 'platformOrderNo', width: 140, render: (v: any) => v || '-' },
-    { title: '三方订单编号', dataIndex: 'thirdOrderNo', width: 140, render: (v: any) => v || '-' },
-    { title: '订单状态', dataIndex: 'orderStatus', width: 115, render: (v: number) => getOrderStatusTag(v) },
-    { title: '实付金额', dataIndex: 'totalAmount', width: 100, render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
-    { title: '跟进人', key: 'sales', width: 90, render: (_: any, r: any) => r.salesperson?.realName || r.salesperson?.username || '-' },
-    { title: '创建时间', dataIndex: 'createdAt', width: 150, sorter: true, render: (v: string) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-' },
-    { title: '创建人', key: 'creator', width: 90, render: (_: any, r: any) => r.creator?.realName || r.creator?.username || '系统' },
-    { title: '更新时间', dataIndex: 'updatedAt', width: 150, sorter: true, render: (v: string) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-' },
-    { title: '更新人', key: 'updater', width: 90, render: (_: any, r: any) => r.updater?.realName || r.updater?.username || '系统' },
+    { title: '订单编码', dataIndex: 'orderCode', width: 130 },
+    { title: '客户姓名', key: 'cname', width: 76, render: (_: any, r: any) => r.customer?.customerName || r.snapCustomerName || '-' },
+    { title: '客户电话', key: 'cphone', width: 104, render: (_: any, r: any) => r.customer?.phone || r.snapCustomerPhone || '-' },
+    { title: '下单平台', dataIndex: 'orderPlatform', width: 80, render: (v: any) => v || '-' },
+    { title: '平台订单编号', dataIndex: 'platformOrderNo', width: 116, render: (v: any) => v || '-' },
+    { title: '三方订单编号', dataIndex: 'thirdOrderNo', width: 116, render: (v: any) => v || '-' },
+    { title: '订单状态', dataIndex: 'orderStatus', width: 96, render: (v: number) => getOrderStatusTag(v) },
+    { title: '实付金额', dataIndex: 'totalAmount', width: 88, render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
+    { title: '跟进人', key: 'sales', width: 76, render: (_: any, r: any) => r.salesperson?.realName || r.salesperson?.username || '-' },
+    { title: '创建时间', dataIndex: 'createdAt', width: 116, sorter: true, render: (v: string) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-' },
+    { title: '创建人', key: 'creator', width: 76, render: (_: any, r: any) => r.creator?.realName || r.creator?.username || '系统' },
+    { title: '更新时间', dataIndex: 'updatedAt', width: 116, sorter: true, render: (v: string) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-' },
+    { title: '更新人', key: 'updater', width: 76, render: (_: any, r: any) => r.updater?.realName || r.updater?.username || '系统' },
     {
-      title: '操作', key: 'op', width: 210, fixed: 'right',
+      title: '操作', key: 'op', width: 150,
       render: (_: any, r: any) => (
         <div className="action-links" style={{ flexWrap: 'wrap' }}>
           {r.orderStatus === 0 && <a onClick={() => handleOrderSign(r, 'sendSign')}>已发送电子签</a>}
@@ -485,14 +485,14 @@ const Workbench: React.FC = () => {
   // 添加微信状态、客户沟通倾向、呼叫结果、是否购买整车延保、是否购买电池延保、订单情况、
   // 最新跟进时间、下次计划跟进时间、操作；首尾列固定
   const columns = [
-    { title: '序号', dataIndex: 'id', width: 60, fixed: 'left' as const, render: (_: any, __: any, index: number) => (page - 1) * pageSize + index + 1 },
-    { title: '线索编码', dataIndex: 'leadCode', width: 110, fixed: 'left' as const },
-    { title: '客户姓名', dataIndex: ['customer', 'customerName'], width: 90, fixed: 'left' as const },
-    { title: '客户电话', dataIndex: ['customer', 'phone'], width: 120, fixed: 'left' as const },
-    { title: '来源时间', dataIndex: 'sourceDate', width: 110, render: (val: any) => val || '-' },
-    { title: '购买意向', dataIndex: 'purchaseIntention', width: 90, render: (val: any) => getPurchaseIntentionTag(val) },
-    { title: '线索状态', dataIndex: 'leadStatus', width: 90, render: (val: any) => getLeadStatusElement(val) },
-    { title: '添加微信状态', dataIndex: 'isAddWechat', width: 110, render: (val: any) => {
+    { title: '序号', dataIndex: 'id', width: 56, render: (_: any, __: any, index: number) => (page - 1) * pageSize + index + 1 },
+    { title: '线索编码', dataIndex: 'leadCode', width: 104 },
+    { title: '客户姓名', dataIndex: ['customer', 'customerName'], width: 76 },
+    { title: '客户电话', dataIndex: ['customer', 'phone'], width: 104 },
+    { title: '来源时间', dataIndex: 'sourceDate', width: 92, render: (val: any) => val || '-' },
+    { title: '购买意向', dataIndex: 'purchaseIntention', width: 76, render: (val: any) => getPurchaseIntentionTag(val) },
+    { title: '线索状态', dataIndex: 'leadStatus', width: 80, render: (val: any) => getLeadStatusElement(val) },
+    { title: '添加微信状态', dataIndex: 'isAddWechat', width: 84, render: (val: any) => {
       if (!val) return '-';
       const cls = val === '已通过' || val === '已添加' ? 'status-success'
         : val === '添加待通过' ? 'status-warning'
@@ -500,21 +500,20 @@ const Workbench: React.FC = () => {
         : 'status-gray';
       return getPillTag(val, cls);
     } },
-    { title: '客户沟通倾向', dataIndex: 'communicationTendency', width: 110, render: (val: any) => getCommunicationTag(val) },
-    { title: '呼叫结果', dataIndex: 'callResult', width: 100, render: (val: any) => getCallResultTag(val) },
-    { title: '是否购买整车延保', key: 'extWarranty', width: 130, render: (_: any, record: any) => record.vehicle ? boolText(record.vehicle.hasExtendedWarranty) : '-' },
-    { title: '是否购买电池延保', key: 'batteryWarranty', width: 130, render: (_: any, record: any) => record.vehicle ? boolText(record.vehicle.hasBatteryWarranty) : '-' },
-    { title: '订单情况', dataIndex: 'orderSituation', width: 130, render: (val: number) => {
+    { title: '客户沟通倾向', dataIndex: 'communicationTendency', width: 84, render: (val: any) => getCommunicationTag(val) },
+    { title: '呼叫结果', dataIndex: 'callResult', width: 80, render: (val: any) => getCallResultTag(val) },
+    { title: '是否购买整车延保', key: 'extWarranty', width: 84, render: (_: any, record: any) => record.vehicle ? boolText(record.vehicle.hasExtendedWarranty) : '-' },
+    { title: '是否购买电池延保', key: 'batteryWarranty', width: 84, render: (_: any, record: any) => record.vehicle ? boolText(record.vehicle.hasBatteryWarranty) : '-' },
+    { title: '订单情况', dataIndex: 'orderSituation', width: 96, render: (val: number) => {
       const m = ORDER_SITUATION[val] || ORDER_SITUATION[0];
       return <span className={`crm-tag ${m.cls}`}>{m.text}</span>;
     } },
-    { title: '最新跟进时间', dataIndex: 'lastFollowAt', width: 120, fixed: 'right' as const, render: (val: any) => val ? dayjs(val).format('YYYY-MM-DD') : '无记录' },
-    { title: '下次计划跟进时间', dataIndex: 'nextFollowAt', width: 140, fixed: 'right' as const, render: (val: any) => val ? dayjs(val).format('YYYY-MM-DD') : <span style={{ color: '#94A3B8' }}>-</span> },
+    { title: '最新跟进时间', dataIndex: 'lastFollowAt', width: 92, render: (val: any) => val ? dayjs(val).format('YYYY-MM-DD') : '无记录' },
+    { title: '下次计划跟进时间', dataIndex: 'nextFollowAt', width: 96, render: (val: any) => val ? dayjs(val).format('YYYY-MM-DD') : <span style={{ color: '#94A3B8' }}>-</span> },
     { 
       title: '操作', 
       key: 'action', 
-      width: 180, 
-      fixed: 'right' as const,
+      width: 170, 
       render: (_: any, record: any) => {
         return (
           <div className="action-links">
@@ -737,7 +736,6 @@ const Workbench: React.FC = () => {
                 pageSizeOptions: ['10', '20', '50', '100', '200'],
                 onChange: (p: number, s: number) => { setPage(p); setPageSize(s); },
               }}
-              scroll={{ x: 1810 }}
             />
             </ConfigProvider>
             </>)}
@@ -811,7 +809,6 @@ const Workbench: React.FC = () => {
                 showTotal: (t) => `共 ${t} 条`,
                 pageSizeOptions: ['10', '20', '50', '100', '200'],
               }}
-              scroll={{ x: 1800 }}
             />
             </ConfigProvider>
             </>)}

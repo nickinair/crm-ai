@@ -62,7 +62,7 @@ const LeadVoidModal: React.FC<Props> = ({ open, leadId, onCancel, onSuccess }) =
     >
       <Form form={form} layout="vertical" style={{ marginTop: '16px' }}>
         <Form.Item name="voidReason" label="请选择作废原因" rules={[{ required: true, message: '请选择作废原因' }]}>
-          <Select placeholder="请选择" options={getDictOptions('lead_void_reason')} />
+          <Select className="crm-full-width" placeholder="请选择" options={getDictOptions('lead_void_reason')} />
         </Form.Item>
         {reason === '其他' && (
           <Form.Item name="voidDetail" rules={[{ required: true, message: '请填写具体原因' }]}>

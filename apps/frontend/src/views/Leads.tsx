@@ -758,6 +758,7 @@ const LeadsManagement: React.FC = () => {
         </Radio.Group>
         <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '6px' }}>请选择分配的销售</div>
         <Select
+          className="crm-full-width"
           style={{ width: '100%' }}
           placeholder="请选择销售"
           showSearch
@@ -799,6 +800,7 @@ const LeadsManagement: React.FC = () => {
           <div style={{ marginBottom: 8, color: '#666' }}>请选择分配的销售</div>
           <Select
             showSearch
+            className="crm-full-width"
             placeholder="请选择销售"
             style={{ width: '100%' }}
             value={assigneeId}

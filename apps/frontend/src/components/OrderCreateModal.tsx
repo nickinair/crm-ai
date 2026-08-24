@@ -454,6 +454,7 @@ const OrderCreateModal: React.FC<Props> = ({ open, onClose, onSuccess, fixedCust
                     </div>
                     <Select
                       showSearch
+                      className="crm-full-width"
                       style={{ width: '100%' }}
                       placeholder="输入客户姓名或电话搜索..."
                       filterOption={false}

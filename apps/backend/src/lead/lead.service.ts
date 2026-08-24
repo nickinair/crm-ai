@@ -597,11 +597,12 @@ export class LeadService implements OnModuleInit {
         where: { customerId: customerId }
       });
       // 阻止条件：存在 待分配/待跟进/跟进中/回收待分配 线索；
-      // 或存在 已战败 且分配管控（战败冷却期/战败已复活）未解除的线索。
-      // 已战败且无分配管控 → 允许重新创建线索。
+      // 或存在 已战败且仍在「战败冷却期」（assignControl=1）的线索。
+      // 「战败已复活」（assignControl=2）是父线索被重新领取后长期保留的历史标识，
+      // 拿它拦截会导致战败过的客户永远无法再建线索，因此不作为阻止条件。
       const activeLead = activeLeads.find(l =>
         [0, 1, 2, 6].includes(l.leadStatus) ||
-        (l.leadStatus === 4 && l.assignControl != null)
+        (l.leadStatus === 4 && l.assignControl === 1)
       );
       if (activeLead) {
         const statusMap: Record<number, string> = {
@@ -613,7 +614,7 @@ export class LeadService implements OnModuleInit {
         };
         let statusName = statusMap[activeLead.leadStatus] || '处理中';
         if (activeLead.leadStatus === 4) {
-          statusName += activeLead.assignControl === 1 ? '（战败冷却期）' : '（战败已复活）';
+          statusName += '（战败冷却期）';
         }
         throw {
           code: 'LEAD_STATUS_CONFLICT',

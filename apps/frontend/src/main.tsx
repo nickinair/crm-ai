@@ -11,7 +11,7 @@ dayjs.updateLocale('zh-cn', {
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ConfigProvider, Spin } from 'antd'
-import { applySelectDefaults } from './utils/selectDefaults'
+import { SELECT_SEARCH } from './utils/selectDefaults'
 import zhCN from 'antd/locale/zh_CN'
 import App from './App'
 import LightningLoading from './components/LightningLoading'
@@ -29,13 +29,12 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { fas } from '@fortawesome/free-solid-svg-icons'
 library.add(fas)
 
-// 全局下拉可搜索（组件规范 8.2）
-applySelectDefaults()
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ConfigProvider 
       locale={zhCN}
+      // 全局下拉可搜索（组件规范 8.2 第 3 条）
+      select={{ showSearch: SELECT_SEARCH }}
       theme={{
         token: {
           colorPrimary: '#1677ff',

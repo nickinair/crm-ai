@@ -879,12 +879,19 @@ body {
     width: 325px !important;
     max-width: 100%;
 }
-/* 跨列/整行控件保持撑满（多行文本、单列表单项、步骤条内整行选择） */
+/* 跨列/整行控件保持撑满（多行文本、单列表单项、步骤条内整行选择）。
+   .crm-full-width 既可标在外层容器上，也可直接标在控件上：
+   弹框内只有一个控件时（如「分配线索」只选销售），固定 325 会显得很窄，标记后撑满弹框 */
 .crm-unified-modal .ant-modal-body textarea.ant-input,
 .crm-unified-modal .ant-modal-body .crm-full-width .ant-input,
 .crm-unified-modal .ant-modal-body .crm-full-width .ant-select,
-.crm-unified-modal .ant-modal-body .crm-full-width .ant-picker {
+.crm-unified-modal .ant-modal-body .crm-full-width .ant-picker,
+.crm-unified-modal .ant-modal-body .ant-input.crm-full-width,
+.crm-unified-modal .ant-modal-body .ant-input-affix-wrapper.crm-full-width,
+.crm-unified-modal .ant-modal-body .ant-select.crm-full-width,
+.crm-unified-modal .ant-modal-body .ant-picker.crm-full-width {
     width: 100% !important;
+    max-width: none !important;
 }
 
 /* 弹框内带前后缀/清除按钮的输入框：同筛选区，内层 input 不受 40px / 325px 约束，
