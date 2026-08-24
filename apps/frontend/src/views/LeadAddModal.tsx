@@ -433,10 +433,12 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
 
         <Row gutter={24}>
           <Col span={24}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            {/* 标题行宽度跟随下方控件：选择客户时只有一个 325 宽的下拉，
+                链接需贴在该下拉的右上角；新增客户时是两列输入框，撑满整行 */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', width: isNewCustomer ? '100%' : 325, maxWidth: '100%', paddingRight: isNewCustomer ? 12 : 0, boxSizing: 'border-box' }}>
               <div><span style={{ color: '#ff4d4f', marginRight: '4px' }}>*</span>客户信息</div>
               {!isView && !lockedCustomer && (
-                <Button type="link" onClick={() => setIsNewCustomer(!isNewCustomer)}>
+                <Button type="link" style={{ padding: 0, height: 'auto' }} onClick={() => setIsNewCustomer(!isNewCustomer)}>
                   {isNewCustomer ? '← 选择已有客户' : '+ 新增客户'}
                 </Button>
               )}
