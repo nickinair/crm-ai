@@ -164,7 +164,7 @@ const OrderDetail: React.FC = () => {
   const itemColumns = (isGift: boolean) => [
     { title: isGift ? '赠品名称' : '商品名称', dataIndex: 'productName', render: (v: any) => fmt(v) },
     { title: '编码', dataIndex: 'productCode', render: (v: any) => fmt(v) },
-    { title: isGift ? '单价/价值' : '单价', dataIndex: 'unitPrice', render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
+    { title: isGift ? '售价/价值' : '售价', dataIndex: 'unitPrice', render: (v: any) => `¥${Number(v || 0).toFixed(2)}` },
     { title: '数量', dataIndex: 'quantity', render: (v: any) => v ?? 1 },
   ];
 

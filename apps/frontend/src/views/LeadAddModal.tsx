@@ -433,9 +433,9 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
 
         <Row gutter={24}>
           <Col span={24}>
-            {/* 标题行宽度跟随下方控件：选择客户时只有一个 325 宽的下拉，
-                链接需贴在该下拉的右上角；新增客户时是两列输入框，撑满整行 */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', width: isNewCustomer ? '100%' : 325, maxWidth: '100%', paddingRight: isNewCustomer ? 12 : 0, boxSizing: 'border-box' }}>
+            {/* 控件宽度规则：第一行独占的控件撑满整行，第二行起的控件保持 325。
+                标题行随之整行铺开，右侧链接与下方控件右边缘对齐 */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <div><span style={{ color: '#ff4d4f', marginRight: '4px' }}>*</span>客户信息</div>
               {!isView && !lockedCustomer && (
                 <Button type="link" style={{ padding: 0, height: 'auto' }} onClick={() => setIsNewCustomer(!isNewCustomer)}>
@@ -446,7 +446,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
             {lockedCustomer ? (
               <>
                 <Form.Item name="customerId" hidden><Input /></Form.Item>
-                <Input disabled value={`${lockedCustomer.customerName} (${lockedCustomer.phone})`} style={{ marginBottom: '16px', color: '#1f2937', backgroundColor: '#f3f4f6' }} />
+                <Input className="crm-full-width" disabled value={`${lockedCustomer.customerName} (${lockedCustomer.phone})`} style={{ marginBottom: '16px', color: '#1f2937', backgroundColor: '#f3f4f6' }} />
               </>
             ) : isNewCustomer ? (
               <Row gutter={24}>
@@ -464,6 +464,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
             ) : (
               <Form.Item name="customerId" rules={[{ required: true, message: '请选择客户' }]}>
                 <Select
+                  className="crm-full-width"
                   showSearch
                   placeholder="搜索客户姓名或电话"
                   filterOption={false}
@@ -545,6 +546,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
           <div style={{ marginBottom: '16px' }}>
             <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '8px' }}>选择车辆</div>
             <Select
+              className="crm-full-width"
               style={{ width: '100%' }}
               placeholder={customerVehicles.length ? '请选择车辆' : '该客户暂无车辆，可点击右上角新增'}
               allowClear
@@ -702,7 +704,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
           columns={[
             { title: '商品名称', dataIndex: 'productName' },
             { title: '编码', dataIndex: 'productCode' },
-            { title: '单价', dataIndex: 'salePrice', width: 120, render: val => `¥${val || 0}` },
+            { title: '售价', dataIndex: 'salePrice', width: 120, render: val => `¥${val || 0}` },
             { title: '操作', key: 'action', width: 80, align: 'center', render: (_, record: any) => <Button type="text" danger icon={<DeleteOutlined />} onClick={() => {
               const currentList = form.getFieldValue('intentProducts') || [];
               const newProducts = currentList.filter((_: any, idx: number) => idx !== record._index);
@@ -734,7 +736,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
           columns={[
             { title: '赠品名称', dataIndex: 'productName' },
             { title: '编码', dataIndex: 'productCode' },
-            { title: '单价/价值', dataIndex: 'salePrice', width: 120, render: val => `¥${val || 0}` },
+            { title: '售价/价值', dataIndex: 'salePrice', width: 120, render: val => `¥${val || 0}` },
             { title: '操作', key: 'action', width: 80, align: 'center', render: (_, record: any) => <Button type="text" danger icon={<DeleteOutlined />} onClick={() => {
               const currentList = form.getFieldValue('intentGifts') || [];
               const newGifts = currentList.filter((_: any, idx: number) => idx !== record._index);

@@ -906,6 +906,19 @@ body {
     flex: 1 1 auto !important;
 }
 
+/* 控件宽度规则：一行只有一个控件且位于第一行 → 撑满整行；第二行起仍为 325。
+   单列表单（Form.Item 直接挂在 form 下）用 :first-child 命中第一行；
+   .grid-2-col 是双列栅格，第一个 Form.Item 与第二个同处一行，需排除 */
+.crm-unified-modal .ant-modal-body form:not(.grid-2-col) > .ant-form-item:first-child .ant-input,
+.crm-unified-modal .ant-modal-body form:not(.grid-2-col) > .ant-form-item:first-child .ant-input-affix-wrapper,
+.crm-unified-modal .ant-modal-body form:not(.grid-2-col) > .ant-form-item:first-child .ant-input-number,
+.crm-unified-modal .ant-modal-body form:not(.grid-2-col) > .ant-form-item:first-child .ant-select,
+.crm-unified-modal .ant-modal-body form:not(.grid-2-col) > .ant-form-item:first-child .ant-picker,
+.crm-unified-modal .ant-modal-body form:not(.grid-2-col) > .ant-form-item:first-child input[type="date"] {
+    width: 100% !important;
+    max-width: none !important;
+}
+
 /* 多行文本框不受固定高度约束 */
 .crm-unified-modal .ant-modal-body textarea.ant-input {
     height: auto !important;

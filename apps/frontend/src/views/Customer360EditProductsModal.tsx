@@ -84,7 +84,7 @@ const EditProductsModal: React.FC<EditProductsModalProps> = ({ visible, onCancel
       render: (text: string) => <span style={{ color: '#8892b0', whiteSpace: 'nowrap' }}>{text || '-'}</span>
     },
     {
-      title: '单价',
+      title: '售价',
       dataIndex: 'salePrice',
       key: 'salePrice',
       render: (price: number) => <span style={{ color: '#6366f1', fontWeight: 600 }}>¥{price}</span>
