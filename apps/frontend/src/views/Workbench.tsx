@@ -896,22 +896,22 @@ const Workbench: React.FC = () => {
         centered title="录入三方订单编号" open={!!thirdTarget}
         onCancel={() => { setThirdTarget(null); setThirdNo(''); }}
         onOk={submitOrderThirdNo} confirmLoading={orderOpLoading}
-        okText="确定" cancelText="取消" width={600} className="crm-unified-modal"
+        okText="确定" cancelText="取消" width={740} className="crm-unified-modal"
       >
         {thirdTarget && (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
               <div>
                 <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>订单编号</div>
-                <input disabled value={thirdTarget.orderCode} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px', boxSizing: 'border-box' }} />
+                <input disabled value={thirdTarget.orderCode} style={{ width: 325, height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px', boxSizing: 'border-box' }} />
               </div>
               <div>
                 <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>下单平台</div>
-                <input disabled value={thirdTarget.orderPlatform || ''} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px', boxSizing: 'border-box' }} />
+                <input disabled value={thirdTarget.orderPlatform || ''} style={{ width: 325, height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px', boxSizing: 'border-box' }} />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}>平台订单编号</div>
-                <input disabled value={thirdTarget.platformOrderNo || ''} style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px', boxSizing: 'border-box' }} />
+                <input disabled value={thirdTarget.platformOrderNo || ''} style={{ width: 325, height: 40, borderRadius: 6, border: '1px solid #d1d5db', background: '#f3f4f6', color: '#6b7280', padding: '0 12px', boxSizing: 'border-box' }} />
               </div>
             </div>
             <div>
@@ -921,7 +921,7 @@ const Workbench: React.FC = () => {
                 onChange={e => setThirdNo(e.target.value)}
                 maxLength={30}
                 placeholder="请输入三方订单编号"
-                style={{ width: '100%', height: 40, borderRadius: 6, border: '1px solid #d1d5db', padding: '0 12px', outline: 'none', boxSizing: 'border-box' }}
+                style={{ width: 325, height: 40, borderRadius: 6, border: '1px solid #d1d5db', padding: '0 12px', outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
           </>

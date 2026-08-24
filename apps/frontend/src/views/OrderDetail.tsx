@@ -296,7 +296,7 @@ const OrderDetail: React.FC = () => {
       <Modal
         centered title="录入三方订单编号" open={thirdOpen}
         onCancel={() => setThirdOpen(false)} onOk={submitThirdNo} confirmLoading={submitting}
-        okText="确定" cancelText="取消" width={600} className="crm-unified-modal"
+        okText="确定" cancelText="取消" width={740} className="crm-unified-modal"
       >
         {/* 其他字段回显不可编辑，仅三方订单编号可填 */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
