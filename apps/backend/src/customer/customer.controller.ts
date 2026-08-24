@@ -46,8 +46,10 @@ export class CustomerController {
   }
 
   @Get('recent-followed')
-  getRecentFollowedCustomers(@Query('accountId') accountId: string) {
-    return this.customerService.getRecentFollowedCustomers(accountId);
+  getRecentFollowedCustomers(@Query('accountId') accountId: string, @Request() req: any) {
+    // 工作台面板只看本人数据：账号取登录态，不信任查询参数（避免传别人 id 越权查看）
+    const selfId = req?.user?.sub;
+    return this.customerService.getRecentFollowedCustomers(selfId ? String(selfId) : accountId);
   }
 
   @RequirePermissions('customer:export', 'workbench')
