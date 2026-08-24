@@ -536,15 +536,18 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
         <div style={{ display: (!isThreeStep || step === 1) ? 'block' : 'none' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', marginTop: '8px' }}>
           <span style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>车辆信息</span>
-          {isThreeStep && (
-            vehicleMode === 'select'
-              ? <Button type="link" onClick={() => setVehicleMode('create')}>+ 新增车辆</Button>
-              : <Button type="link" onClick={() => setVehicleMode('select')}>← 选择已有车辆</Button>
+          {/* 选择模式下入口移到「选择车辆」行；新增模式没有该行，切换入口留在标题行 */}
+          {isThreeStep && vehicleMode === 'create' && (
+            <Button type="link" style={{ padding: 0, height: 'auto' }} onClick={() => setVehicleMode('select')}>← 选择已有车辆</Button>
           )}
         </div>
         {isThreeStep && vehicleMode === 'select' && (
           <div style={{ marginBottom: '16px' }}>
-            <div style={{ color: '#64748b', fontSize: '12px', marginBottom: '8px' }}>选择车辆</div>
+            {/* 标签样式与第一步「客户信息」一致（14px 正文色，非必填不带星），新增入口贴在下拉右上角 */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <div>选择车辆</div>
+              <Button type="link" style={{ padding: 0, height: 'auto' }} onClick={() => setVehicleMode('create')}>+ 新增车辆</Button>
+            </div>
             <Select
               className="crm-full-width"
               style={{ width: '100%' }}
