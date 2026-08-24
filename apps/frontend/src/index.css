@@ -809,3 +809,52 @@ body {
 .workbench-table td.ant-table-column-sort {
     background: rgba(99, 102, 241, 0.04) !important;
 }
+
+/* ===== 组件规范 8.2（2026-08-24）：筛选区控件统一 200×36 =====
+   覆盖 .filter-section / .search-form 内的文本框、下拉、日期；
+   内联 width 会被 !important 统一，避免逐页维护 */
+.filter-section .ant-input,
+.filter-section .ant-input-affix-wrapper,
+.filter-section .ant-select,
+.filter-section .ant-picker,
+.filter-section input[type="date"],
+.search-form .ant-input,
+.search-form .ant-input-affix-wrapper,
+.search-form .ant-select,
+.search-form .ant-picker,
+.search-form input[type="date"] {
+    width: 200px !important;
+    height: 36px !important;
+}
+/* 下拉内层选择器随外层高度 */
+.filter-section .ant-select .ant-select-selector,
+.search-form .ant-select .ant-select-selector {
+    height: 36px !important;
+}
+/* 日期区间：起止各 200，中间的「至」不受影响 */
+.filter-section .ant-form-item input[type="date"],
+.search-form .ant-form-item input[type="date"] {
+    width: 200px !important;
+}
+
+/* ===== 组件规范 8.2（2026-08-24）：新增/编辑弹框控件统一高 40px =====
+   宽度保持栅格自适应（弹框宽度规格 400/600/640/700/720/1000 决定列宽） */
+.crm-unified-modal .ant-modal-body .ant-input,
+.crm-unified-modal .ant-modal-body .ant-input-affix-wrapper,
+.crm-unified-modal .ant-modal-body .ant-input-number,
+.crm-unified-modal .ant-modal-body .ant-select .ant-select-selector,
+.crm-unified-modal .ant-modal-body .ant-picker,
+.crm-unified-modal .ant-modal-body input[type="date"] {
+    height: 40px !important;
+}
+/* 多行文本框不受固定高度约束 */
+.crm-unified-modal .ant-modal-body textarea.ant-input {
+    height: auto !important;
+    min-height: 80px;
+}
+/* 下拉内的搜索输入与选中项垂直居中 */
+.crm-unified-modal .ant-modal-body .ant-select-single .ant-select-selector .ant-select-selection-search-input,
+.crm-unified-modal .ant-modal-body .ant-select-single .ant-select-selector .ant-select-selection-item,
+.crm-unified-modal .ant-modal-body .ant-select-single .ant-select-selector .ant-select-selection-placeholder {
+    line-height: 38px !important;
+}
