@@ -830,7 +830,12 @@ const Workbench: React.FC = () => {
                   <div className="recent-item" key={customer.customerId} onClick={() => navigate(`/customer/detail/${customer.customerId}?from=workbench${customer.leadId ? `&leadId=${customer.leadId}` : ''}`)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                     <div className="recent-avatar">{customer.customerName ? customer.customerName.charAt(0) : '客'}</div>
                     <div className="recent-info" style={{ flex: 1 }}>
-                      <div className="recent-name">{customer.customerName}</div>
+                      {/* 客户名可能为空或为「未知」，附手机号与跟进时间才能分辨是谁 */}
+                      <div className="recent-name">
+                        {customer.customerName || '未命名客户'}
+                        {customer.phone && <span style={{ color: '#94a3b8', fontSize: '12px', marginLeft: '8px' }}>{customer.phone}</span>}
+                        {customer.lastFollowAt && <span style={{ color: '#64748b', fontSize: '12px', marginLeft: '8px' }}>{dayjs(customer.lastFollowAt).format('MM-DD HH:mm')} 跟进</span>}
+                      </div>
                       <div className="recent-desc">{customer.latestNote}</div>
                     </div>
                     <button

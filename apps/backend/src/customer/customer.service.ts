@@ -497,7 +497,7 @@ export class CustomerService {
     // 3) 可见性与「我的客户」一致：有效私域关系 或 名下未完结线索（待跟进/跟进中），
     //    原实现硬要求私域关系，客户仅靠未完结线索可达时会漏掉
     const customers: any[] = await this.customerRepo.query(
-      `SELECT c.id AS customerId, c.customer_name AS customerName, rf.last_at AS lastFollowAt
+      `SELECT c.id AS customerId, c.customer_name AS customerName, c.phone AS phone, rf.last_at AS lastFollowAt
        FROM biz_customer c
        JOIN (
          SELECT f.customer_id AS cid, MAX(f.created_at) AS last_at
