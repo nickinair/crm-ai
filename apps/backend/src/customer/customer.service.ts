@@ -491,23 +491,31 @@ export class CustomerService {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    // 近一周创建过跟进记录的客户（PRD 8.6.1.3）。三点口径：
-    // 1) 按记录创建时间过滤（跟进时间可由用户回填历史日期，不能作为「近一周创建过」的依据）
-    // 2) 本人写的记录，以及挂在本人名下线索上的系统记录（订单/电子签流转，操作人记为「系统」account_id=0）都算
-    // 3) 可见性与「我的客户」一致：有效私域关系 或 名下未完结线索（待跟进/跟进中），
-    //    原实现硬要求私域关系，客户仅靠未完结线索可达时会漏掉
+    // 工作台「最近跟进客户」的数据来源（PRD 8.6.1.3 + 业务补充）：近一周内
+    //   a) 本人创建过跟进记录的客户 —— 记录创建时间为准（跟进时间可回填历史日期，不能代表「近一周创建过」），
+    //      本人写的记录与挂在本人名下线索上的系统记录（订单/电子签流转，操作人记为「系统」account_id=0）都算；
+    //   b) 新关联到本人名下的客户 —— 建立私域关系即展示，不必等到有跟进记录，
+    //      否则销售刚接手的客户在这里始终是空的，与「我的客户」列表对不上。
+    // 可见性与「我的客户」一致：有效私域关系 或 名下未完结线索（待跟进/跟进中）。
     const customers: any[] = await this.customerRepo.query(
-      `SELECT c.id AS customerId, c.customer_name AS customerName, c.phone AS phone, rf.last_at AS lastFollowAt
+      `SELECT c.id AS customerId, c.customer_name AS customerName, MAX(t.at) AS lastFollowAt
        FROM biz_customer c
        JOIN (
-         SELECT f.customer_id AS cid, MAX(f.created_at) AS last_at
+         SELECT f.customer_id AS cid, MAX(f.created_at) AS at
          FROM biz_follow_record f
          LEFT JOIN biz_lead fl ON fl.id = f.lead_id
          WHERE f.created_at >= ?
            AND f.customer_id IS NOT NULL
            AND (f.account_id = ? OR fl.assigned_account_id = ?)
          GROUP BY f.customer_id
-       ) rf ON rf.cid = c.id
+         UNION ALL
+         SELECT pr.customer_id AS cid, MAX(COALESCE(pr.first_bindtime, pr.created_at)) AS at
+         FROM biz_private_relation pr
+         WHERE pr.account_id = ?
+           AND pr.status = 1
+           AND COALESCE(pr.first_bindtime, pr.created_at) >= ?
+         GROUP BY pr.customer_id
+       ) t ON t.cid = c.id
        WHERE EXISTS (
                SELECT 1 FROM biz_private_relation pr
                WHERE pr.customer_id = c.id AND pr.account_id = ? AND pr.status = 1
@@ -516,8 +524,9 @@ export class CustomerService {
                SELECT 1 FROM biz_lead bl
                WHERE bl.customer_id = c.id AND bl.assigned_account_id = ? AND bl.lead_status IN (1, 2)
              )
-       ORDER BY rf.last_at DESC`,
-      [oneWeekAgo, accountId, accountId, accountId, accountId],
+       GROUP BY c.id, c.customer_name
+       ORDER BY MAX(t.at) DESC`,
+      [oneWeekAgo, accountId, accountId, accountId, oneWeekAgo, accountId, accountId],
     );
 
     for (const c of customers) {
