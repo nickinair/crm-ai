@@ -57,7 +57,7 @@ const LinkVehicleModal: React.FC<LinkVehicleModalProps> = ({ open, onCancel, onS
       onOk={handleOk}
       okText="确定关联"
       cancelText="取消"
-      width={700}
+      width={740}
       className="crm-unified-modal"
     >
       <Form

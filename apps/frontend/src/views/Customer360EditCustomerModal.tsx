@@ -64,7 +64,7 @@ const EditCustomerModal: React.FC<EditCustomerModalProps> = ({ visible, onCancel
       confirmLoading={loading}
       okText="保存"
       cancelText="取消"
-      width={600}
+      width={740}
       className="crm-unified-modal"
     >
       <Form form={form} layout="vertical" className="dark-form">

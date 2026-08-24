@@ -313,7 +313,7 @@ const AccountManagement: React.FC = () => {
         onCancel={() => setIsModalOpen(false)}
         okText={modalType === 'add' ? "确认新增" : "确定修改"}
         cancelText="取消"
-        width={600}
+        width={740}
         className="crm-unified-modal"
       >
         <Form form={addForm} layout="vertical">

@@ -351,7 +351,7 @@ const CustomerManagement: React.FC = () => {
         onCancel={() => setIsModalOpen(false)}
         okText="确认"
         cancelText="取消"
-        width={640}
+        width={740}
         className="crm-unified-modal"
       >
         <Form form={addForm} layout="vertical" requiredMark={(label, { required }) => (
@@ -412,7 +412,7 @@ const CustomerManagement: React.FC = () => {
         onCancel={() => setIsEditOpen(false)}
         okText="保存"
         cancelText="取消"
-        width={640}
+        width={740}
         className="crm-unified-modal"
       >
         <Form form={editForm} layout="vertical" requiredMark={(label, { required }) => (

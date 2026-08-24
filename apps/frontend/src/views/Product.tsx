@@ -378,7 +378,7 @@ const ProductManagement: React.FC = () => {
         </ConfigProvider>
       </div>
 
-      <Modal title={editingProduct ? "编辑商品" : "新增商品"} open={isModalOpen} onOk={handleAdd} onCancel={() => { setIsModalOpen(false); form.resetFields(); setEditingProduct(null); setFormProductType(undefined); }} centered className="crm-unified-modal" width={720} okText="保存" cancelText="关闭">
+      <Modal title={editingProduct ? "编辑商品" : "新增商品"} open={isModalOpen} onOk={handleAdd} onCancel={() => { setIsModalOpen(false); form.resetFields(); setEditingProduct(null); setFormProductType(undefined); }} centered className="crm-unified-modal" width={740} okText="保存" cancelText="关闭">
         <Form form={form} layout="vertical">
           <Row gutter={24}>
             {editingProduct && (

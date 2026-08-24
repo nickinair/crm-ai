@@ -400,7 +400,7 @@ const LeadAddModal: React.FC<Props> = ({ open, onCancel, onSuccess, editId, isVi
       title={isView ? "线索详情" : editId ? "编辑线索" : "新增线索"}
       open={open}
       onCancel={onCancel}
-      width={720}
+      width={740}
       okText="保存"
       cancelText="取消"
       onOk={() => form.submit()}

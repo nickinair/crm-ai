@@ -826,6 +826,18 @@ body {
     width: 200px !important;
     height: 36px !important;
 }
+/* 像素级：禁止栅格/flex 把筛选控件拉伸或压缩 */
+.filter-section .ant-form-item .ant-input,
+.filter-section .ant-form-item .ant-select,
+.filter-section .ant-form-item .ant-picker,
+.search-form .ant-form-item .ant-input,
+.search-form .ant-form-item .ant-select,
+.search-form .ant-form-item .ant-picker {
+    flex: 0 0 200px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
+}
+
 /* 下拉内层选择器随外层高度 */
 .filter-section .ant-select .ant-select-selector,
 .search-form .ant-select .ant-select-selector {
@@ -847,6 +859,25 @@ body {
 .crm-unified-modal .ant-modal-body input[type="date"] {
     height: 40px !important;
 }
+/* 像素级统一：控件固定宽 325（双列弹框宽 740 = 325*2 + 24 间距 + 48 内边距 + 余量）
+   单列区块（如整行的备注、客户选择）用 .crm-full-width 覆盖为撑满 */
+.crm-unified-modal .ant-modal-body .ant-input,
+.crm-unified-modal .ant-modal-body .ant-input-affix-wrapper,
+.crm-unified-modal .ant-modal-body .ant-input-number,
+.crm-unified-modal .ant-modal-body .ant-select,
+.crm-unified-modal .ant-modal-body .ant-picker,
+.crm-unified-modal .ant-modal-body input[type="date"] {
+    width: 325px !important;
+    max-width: 100%;
+}
+/* 跨列/整行控件保持撑满（多行文本、单列表单项、步骤条内整行选择） */
+.crm-unified-modal .ant-modal-body textarea.ant-input,
+.crm-unified-modal .ant-modal-body .crm-full-width .ant-input,
+.crm-unified-modal .ant-modal-body .crm-full-width .ant-select,
+.crm-unified-modal .ant-modal-body .crm-full-width .ant-picker {
+    width: 100% !important;
+}
+
 /* 多行文本框不受固定高度约束 */
 .crm-unified-modal .ant-modal-body textarea.ant-input {
     height: auto !important;

@@ -81,7 +81,7 @@ const FollowAddModal: React.FC<FollowAddModalProps> = ({ open, onCancel, onSucce
       confirmLoading={loading}
       okText="确认提交"
       cancelText="取消"
-      width={600}
+      width={740}
       centered
       destroyOnClose
       className="crm-unified-modal"
