@@ -16,6 +16,7 @@ import { ProductModule } from './product/product.module';
 import { OrderModule } from './order/order.module';
 import { RoleModule } from './role/role.module';
 import { PermissionModule } from './permission/permission.module';
+import { OpenAgentModule } from './open-agent/open-agent.module';
 
 import { PermissionsGuard } from './auth/permissions.guard';
 
@@ -48,6 +49,7 @@ import { PermissionsGuard } from './auth/permissions.guard';
     OrderModule,
     RoleModule,
     PermissionModule,
+    OpenAgentModule,
   ],
   controllers: [AppController],
   providers: [
